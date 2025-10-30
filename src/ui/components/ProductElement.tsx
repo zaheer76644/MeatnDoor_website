@@ -18,9 +18,9 @@ export function ProductElement({
 							loading={loading}
 							src={product.thumbnail.url}
 							alt={product.thumbnail.alt ?? ""}
-							width={512}
-							height={512}
-							sizes={"512px"}
+							width={150}
+							height={150}
+							sizes={"150px"}
 							priority={priority}
 						/>
 					)}

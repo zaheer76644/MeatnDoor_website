@@ -3,7 +3,7 @@ import { invariant } from "ts-invariant";
 import { RootWrapper } from "./pageWrapper";
 
 export const metadata = {
-	title: "Checkout · Saleor Storefront example",
+	title: "Checkout · MeatnDoor",
 };
 
 export default async function CheckoutPage(props: {
@@ -21,7 +21,7 @@ export default async function CheckoutPage(props: {
 			<section className="mx-auto flex min-h-dvh max-w-7xl flex-col p-8">
 				<div className="flex items-center font-bold">
 					<Link aria-label="homepage" href="/">
-						ACME
+						MeatnDoor
 					</Link>
 				</div>
 				<h1 className="mt-8 text-3xl font-bold text-neutral-900">Checkout</h1>
