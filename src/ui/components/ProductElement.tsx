@@ -10,7 +10,7 @@ export function ProductElement({
 	priority,
 }: { product: ProductListItemFragment } & { loading: "eager" | "lazy"; priority?: boolean }) {
 	return (
-		<li data-testid="ProductElement">
+		<li data-testid="ProductElement" className="rounded border-2 border-[#47141e]  ">
 			<LinkWithChannel href={`/products/${product.slug}`} key={product.id}>
 				<div>
 					{product?.thumbnail?.url && (
@@ -24,22 +24,27 @@ export function ProductElement({
 							priority={priority}
 						/>
 					)}
-					<div className="mt-2 flex justify-between">
-						<div>
-							<h3 className="mt-1 text-sm font-semibold text-neutral-900">{product.name}</h3>
-							<p className="mt-1 text-sm text-neutral-500" data-testid="ProductElement_Category">
-								{product.category?.name}
-							</p>
-						</div>
-						<p className="mt-1 text-sm font-medium text-neutral-900" data-testid="ProductElement_PriceRange">
-							{formatMoneyRange({
-								start: product?.pricing?.priceRange?.start?.gross,
-								stop: product?.pricing?.priceRange?.stop?.gross,
-							})}
-						</p>
-					</div>
 				</div>
 			</LinkWithChannel>
+			<div className="mt-2 flex h-20 justify-between border-t-2 border-[#ed4264] px-4 py-2">
+				<div className="w-[60%]">
+					<h3 className="mt-1 text-sm font-semibold text-neutral-900">{product.name}</h3>
+					<p className="mt-1 text-sm text-neutral-500" data-testid="ProductElement_Category">
+						{product.category?.name}
+					</p>
+				</div>
+				<div className="w-[40%] text-right">
+					<p className="mt-1 text-sm font-medium text-neutral-900" data-testid="ProductElement_PriceRange">
+						{formatMoneyRange({
+							start: product?.pricing?.priceRange?.start?.gross,
+							stop: product?.pricing?.priceRange?.stop?.gross,
+						})}
+					</p>
+					{/* <button>add to cart</button> */}
+				</div>
+			</div>
+			{/* </div> */}
+			{/* </LinkWithChannel> */}
 		</li>
 	);
 }

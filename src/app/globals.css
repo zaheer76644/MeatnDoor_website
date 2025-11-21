@@ -5,3 +5,29 @@
 body {
 	overflow-x: hidden;
 }
+
+@keyframes openLeft {
+	0% {
+		transform: translateX(0);
+	}
+	100% {
+		transform: translateX(-100%);
+	}
+}
+
+@keyframes openRight {
+	0% {
+		transform: translateX(0);
+	}
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+.animate-openLeft {
+	animation: openLeft 2s ease forwards;
+}
+
+.animate-openRight {
+	animation: openRight 2s ease forwards;
+}

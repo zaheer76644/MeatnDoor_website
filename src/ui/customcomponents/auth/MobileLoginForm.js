@@ -155,7 +155,7 @@
 // }
 
 "use client";
-
+import { setTokenCookie } from "./validateCode";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSaleorAuthClient } from "@saleor/auth-sdk";
@@ -174,10 +174,10 @@ export function MobileLoginForm() {
 
 	// 🔹 Send OTP
 	const generateOtp = async () => {
-		if (!phone || phone.length !== 10) {
-			alert("Please enter a valid 10-digit phone number");
-			return;
-		}
+		// if (!phone || phone.length !== 10) {
+		// 	alert("Please enter a valid 10-digit phone number");
+		// 	return;
+		// }
 		try {
 			const response = await fetch(apiConfig.SEND_OTP_ENDPOINT, {
 				method: "POST",
@@ -242,23 +242,37 @@ export function MobileLoginForm() {
 			const data = await response.json();
 			console.log("Verify Response:", data);
 
-			if (response.ok && data.access_token && data.refresh_token) {
-				// Always store in localStorage first
-				localStorage.setItem("access_token", data.access_token);
-				localStorage.setItem("refresh_token", data.refresh_token);
+			// if (response.ok && data.access_token && data.refresh_token) {
+			// 	// Always store in localStorage first
+			// 	localStorage.setItem("access_token", data.access_token);
+			// 	localStorage.setItem("refresh_token", data.refresh_token);
 
-				// Then try Saleor client
-				await saveTokensToSaleorClient(data.access_token, data.refresh_token);
+			// 	// Then try Saleor client
+			// 	await saveTokensToSaleorClient(data.access_token, data.refresh_token);
 
-				// Debug check
-				console.log("✅ Tokens saved successfully");
-				console.log("Access token:", data.access_token);
-				console.log("Refresh token:", data.refresh_token);
+			// 	// Debug check
+			// 	console.log("✅ Tokens saved successfully");
+			// 	console.log("Access token:", data.access_token);
+			// 	console.log("Refresh token:", data.refresh_token);
 
-				alert("✅ Login successful!");
-				router.push("/");
-			} else {
-				alert(data.error || "❌ Invalid OTP. Please try again.");
+			// 	alert("✅ Login successful!");
+			// 	router.push("/");
+			// } else {
+			// 	alert(data.error || "❌ Invalid OTP. Please try again.");
+			// }
+			if (data.access_token) {
+				await setTokenCookie(data);
+				// window.opener.location.href = '/in/orders/';
+				localStorage.setItem(
+					process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_module_auth_state",
+					"signedIn",
+				);
+				localStorage.setItem(
+					process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_module_refresh_token",
+					data?.refresh_token,
+				);
+				// window.opener.location.reload();
+				// window.close();
 			}
 		} catch (error) {
 			console.error("Error verifying OTP:", error);
