@@ -124,6 +124,48 @@ export default async function Page(props: {
 		revalidatePath("/cart");
 	}
 
+	// for testing without updated email
+	// async function addItem() {
+	// 	"use server";
+
+	// 	const checkoutId = await Checkout.getIdFromCookies(params.channel);
+
+	// 	let checkout = await Checkout.findOrCreate({
+	// 		checkoutId,
+	// 		channel: params.channel,
+	// 	});
+
+	// 	// If findOrCreate returned null, manually create a new one
+	// 	if (!checkout) {
+	// 		console.warn("No checkout found — creating new one.");
+
+	// 		const created = await Checkout.create({ channel: params.channel });
+	// 		const createdCheckout = created.checkoutCreate?.checkout;
+
+	// 		if (!createdCheckout) {
+	// 			console.error("Checkout creation failed:", created.checkoutCreate?.errors);
+	// 			throw new Error("Could not create checkout");
+	// 		}
+
+	// 		checkout = createdCheckout;
+	// 		await Checkout.saveIdToCookie(params.channel, checkout.id);
+	// 	} else {
+	// 		await Checkout.saveIdToCookie(params.channel, checkout.id);
+	// 	}
+
+	// 	if (!selectedVariantID) return;
+
+	// 	await executeGraphQL(CheckoutAddLineDocument, {
+	// 		variables: {
+	// 			id: checkout.id,
+	// 			productVariantId: decodeURIComponent(selectedVariantID),
+	// 		},
+	// 		cache: "no-cache",
+	// 	});
+
+	// 	revalidatePath("/cart");
+	// }
+
 	const isAvailable = variants?.some((variant) => variant.quantityAvailable) ?? false;
 
 	const price = selectedVariant?.pricing?.price?.gross
