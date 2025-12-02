@@ -176,7 +176,7 @@ export default function CustomCarousel({ products }: { products: ProductListItem
 	// };
 
 	return (
-		<div className="w-full p-16 shadow-xl">
+		<div className="mx-auto w-full p-16 shadow-xl">
 			{/* Heading */}
 			<div className="flex items-center justify-between">
 				<h2 className="text-2xl font-bold">Best Seller</h2>

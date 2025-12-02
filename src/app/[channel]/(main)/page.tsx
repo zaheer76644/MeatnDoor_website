@@ -57,7 +57,7 @@ export default async function Page() {
 	// const productList = data.products?.edges.map((edge) => edge.node) || [];
 
 	return (
-		<section className="mx-auto max-w-7xl p-8 pb-16">
+		<section className="pb-16">
 			{/* <CustomPage products={productList} /> */}
 			<CustomPage />
 		</section>

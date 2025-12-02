@@ -1,3 +1,5 @@
+"use client";
+
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
 
@@ -9,6 +11,9 @@ export function ProductElement({
 	loading,
 	priority,
 }: { product: ProductListItemFragment } & { loading: "eager" | "lazy"; priority?: boolean }) {
+	const handleAddToCart = () => {
+		console.log(" add to cart clicked");
+	};
 	return (
 		<li data-testid="ProductElement" className="rounded border-2 border-[#47141e]  ">
 			<LinkWithChannel href={`/products/${product.slug}`} key={product.id}>
@@ -40,7 +45,7 @@ export function ProductElement({
 							stop: product?.pricing?.priceRange?.stop?.gross,
 						})}
 					</p>
-					{/* <button>add to cart</button> */}
+					<button onClick={handleAddToCart}>add to cart</button>
 				</div>
 			</div>
 			{/* </div> */}
