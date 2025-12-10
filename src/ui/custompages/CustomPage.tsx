@@ -1,4 +1,3 @@
-// import React from "react";
 // import CustomCarousel from "../customcomponents/CustomCarousel";
 // import { CustomSlider } from "../customcomponents/CustomSlider";
 // import { type ProductListItemFragment } from "@/gql/graphql";
