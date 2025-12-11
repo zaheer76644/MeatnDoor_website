@@ -491,3 +491,45 @@ export const OrderListItem = ({ order }: Props) => {
 		</li>
 	);
 };
+
+// needed to test for processing bf 2 hours
+// const OrderStatusTimeline = ({ status, createdAt }: OrderStatusTimelineProps) => {
+// 	const currentIndex = getCurrentIndex(status, createdAt);
+// 	const stageColors = ["#8c223c", "#f3ac63", "#4CAF50"];
+
+// 	return (
+// 		<div className="mt-6 flex w-full items-center">
+// 			{steps.map((step, index) => {
+// 				const isActive = index <= currentIndex;
+// 				const circleColor = isActive ? stageColors[index] : "#BDBDBD";
+// 				const textColor = isActive ? stageColors[index] : "#777";
+// 				const lineColor = isActive && index < steps.length - 1 ? stageColors[index] : "#BDBDBD";
+
+// 				return (
+// 					<div key={step} className="items-left flex flex-1 flex-col">
+// 						<div className="ml-9 flex w-full items-center">
+// 							<div
+// 								className="z-10 flex items-center justify-center rounded-full text-center font-semibold text-white"
+// 								style={{
+// 									width: 28,
+// 									height: 28,
+// 									backgroundColor: circleColor,
+// 								}}
+// 							>
+// 								{index + 1}
+// 							</div>
+
+// 							{index < steps.length - 1 && (
+// 								<div className="h-1 flex-1" style={{ backgroundColor: lineColor }} />
+// 							)}
+// 						</div>
+
+// 						<div className="mt-2 text-sm font-medium" style={{ color: textColor }}>
+// 							{step}
+// 						</div>
+// 					</div>
+// 				);
+// 			})}
+// 		</div>
+// 	);
+// };

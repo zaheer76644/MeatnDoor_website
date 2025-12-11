@@ -16,12 +16,12 @@ export const getSummaryLineProps = (line: OrderLineFragment | CheckoutLineFragme
 				variantName: line.variant.translation?.name || line.variant.name,
 				productName: line.variant.product.translation?.name || line.variant.product.name,
 				productImage: getThumbnailFromLine(line),
-		  }
+			}
 		: {
 				variantName: line.variantName,
 				productName: line.productName,
 				productImage: line.thumbnail,
-		  };
+			};
 
 export const useSummaryLineLineAttributesText = (line: CheckoutLineFragment | OrderLineFragment): string => {
 	const parsedValues =
@@ -45,3 +45,41 @@ export const useSummaryLineLineAttributesText = (line: CheckoutLineFragment | Or
 
 	return compact(parsedValues).join(", ");
 };
+// export const useSummaryLineLineAttributesText = (line: CheckoutLineFragment | OrderLineFragment): string => {
+// 	console.log("line:", line);
+
+// 	const parsedValues =
+// 		line.variant?.attributes?.reduce<Array<MightNotExist<string>>>((result, { values }, index) => {
+// 			console.log(`attribute[${index}] values:`, values);
+
+// 			const mapped = values.map(({ name, dateTime, translation }) => {
+// 				console.log("name:", name, "dateTime:", dateTime, "translation:", translation);
+
+// 				if (translation?.name) {
+// 					console.log("→ using translation.name:", translation.name);
+// 					return translation.name;
+// 				}
+
+// 				if (dateTime) {
+// 					const formatted = new Intl.DateTimeFormat("EN-US", {
+// 						dateStyle: "medium",
+// 					}).format(new Date(dateTime));
+
+// 					console.log("→ using formatted date:", formatted);
+// 					return formatted;
+// 				}
+
+// 				console.log("→ using name:", name);
+// 				return name;
+// 			});
+
+// 			return [...result, ...mapped];
+// 		}, []) || [];
+
+// 	console.log("parsedValues:", parsedValues);
+
+// 	const result = compact(parsedValues).join(", ");
+// 	console.log("final result:", result);
+
+// 	return result;
+// };
