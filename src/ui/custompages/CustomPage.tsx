@@ -49,6 +49,36 @@ const BEST_SELLERS_QUERY = `
           name
           slug
           thumbnail { url alt }
+		  variants {
+				id
+				name
+				sku
+				pricing {
+				price {
+					gross {
+					amount
+					currency
+					}
+				}
+				}
+				quantityAvailable
+				media {
+				url
+				alt
+				}
+				attributes {
+				attribute {
+					id
+					name
+					slug
+				}
+				values {
+					id
+					name
+					value
+				}
+				}
+			}
           category { id name slug }  # <-- ADD THIS
           pricing {
             priceRange {
@@ -82,7 +112,7 @@ async function getBestSellerProducts(): Promise<ProductListItemFragment[]> {
 // eslint-disable-next-line import/no-default-export
 export default async function CustomPage() {
 	const products = await getBestSellerProducts();
-
+console.log('productsproductsproducts',products)
 	return (
 		<div>
 			<CustomSlider />

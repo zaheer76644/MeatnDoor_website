@@ -3,7 +3,6 @@ import { ErrorBoundary } from "react-error-boundary";
 import { EmptyCartPage } from "../EmptyCartPage";
 import { PageNotFound } from "../PageNotFound";
 import { useUser } from "../../hooks/useUser";
-import { Summary, SummarySkeleton } from "@/checkout/sections/Summary";
 import { CheckoutForm, CheckoutFormSkeleton } from "@/checkout/sections/CheckoutForm";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { CheckoutSkeleton } from "@/checkout/views/Checkout/CheckoutSkeleton";
@@ -28,13 +27,13 @@ export const Checkout = () => {
 				{isEmptyCart ? (
 					<EmptyCartPage />
 				) : (
-					<div className="grid min-h-screen grid-cols-1 gap-x-16 lg:grid-cols-2">
+					<div className="grid min-h-screen">
 						<Suspense fallback={<CheckoutFormSkeleton />}>
 							<CheckoutForm />
 						</Suspense>
-						<Suspense fallback={<SummarySkeleton />}>
+						{/* <Suspense fallback={<SummarySkeleton />}>
 							<Summary {...checkout} />
-						</Suspense>
+						</Suspense> */}
 					</div>
 				)}
 			</div>

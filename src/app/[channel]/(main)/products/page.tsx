@@ -71,7 +71,7 @@ export default async function Page(props: {
 		) || {};
 
 	return (
-		<section className="mx-auto max-w-7xl p-8 pb-16">
+		<section className="container mx-auto  p-8 pb-16">
 			<h2 className="sr-only">Product list</h2>
 			<div className="flex flex-col md:flex-row">
 				{categories?.edges && (

@@ -176,12 +176,12 @@ export default function CustomCarousel({ products }: { products: ProductListItem
 	// };
 
 	return (
-		<div className="mx-auto w-full p-16 shadow-xl">
+		<div className="container mx-auto w-full my-10">
 			{/* Heading */}
 			<div className="flex items-center justify-between">
 				<h2 className="text-2xl font-bold">Best Seller</h2>
 				<Link href="/in/products">
-					<button className="rounded-l border-2 border-pink-400 p-2 px-4 hover:bg-red-300 hover:text-white">
+					<button className="rounded-l border-2 border-[#ed2464] p-2 px-4 hover:bg-[#ed2464] hover:text-white">
 						View All
 					</button>
 				</Link>

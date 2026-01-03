@@ -122,6 +122,7 @@
 
 import { Suspense, useState } from "react";
 import DeliverySlotPicker from "../../../ui/customcomponents/DeliverySlotPicker";
+import { Summary, SummarySkeleton } from "../Summary";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { Contact } from "@/checkout/sections/Contact";
 import { DeliveryMethods } from "@/checkout/sections/DeliveryMethods";
@@ -691,8 +692,9 @@ export const CheckoutForm = () => {
 
 	return (
 		<div className="flex flex-col items-end">
-			<div className="flex w-full flex-col rounded">
+			<div className="flex w-full flex rounded gap-16">
 				{/* Delivery Slot Picker */}
+				<div>
 				<div className="hidden">
 					<Suspense fallback={<ContactSkeleton />}>
 						<Contact setShowOnlyContact={setShowOnlyContact} />
@@ -700,7 +702,6 @@ export const CheckoutForm = () => {
 				</div>
 				<DeliverySlotPicker selectedSlot={selectedSlot} setSelectedSlot={setSelectedSlot} />
 
-				<>
 					{checkout?.isShippingRequired && (
 						<Suspense fallback={<AddressSectionSkeleton />}>
 							<CollapseSection collapse={showOnlyContact}>
@@ -718,20 +719,29 @@ export const CheckoutForm = () => {
 							<DeliveryMethods collapsed={showOnlyContact} />
 						</Suspense>
 					</div>
+					</div>
+					<Suspense fallback={<SummarySkeleton />}>
+												<Summary {...checkout} />
+											</Suspense>
 
-					<div className="w-full">
+						</div>
+					<div className="w-[56%] mt-5">
 						<Divider />
 						<h1 className="mb-4 text-lg font-semibold">Payment Method</h1>
+						<div className="flex items-center gap-5">
+
 						{/* ✅ Place Order Button */}
 						<Button
-							className="w-full rounded-md py-3 text-white"
+							className="w-full rounded-md py-3 text-white bg-[#ed2464] hover:bg-[#ed2464]"
+							// hover:bg-[white] hover:border-2 hover:text-[#ed2464] hover:border-[#ed2464]
 							onClick={onPlaceOrder}
 							disabled={loading}
 							label={loading ? "Placing Order..." : "Pay In Cash"}
 						/>
 						<Button
 							label={loadingOnline ? "Placing Order..." : "Pay Online"}
-							className="w-full py-3"
+							className="w-full rounded-md py-3 text-[#ed2464] bg-[white] border-[#ed2464] hover:bg-[white]"
+							// hover:bg-[#ed2464] hover:border-2 hover:text-[white] hover:border-[#ed2464]
 							// onClick={handlePayOnline}
 							onClick={() => handlePayOnline(checkout, user, GRAPHQL_ENDPOINT, selectedSlot)}
 							disabled={loadingOnline}
@@ -740,8 +750,7 @@ export const CheckoutForm = () => {
 							Place Order
 						</Button> */}
 					</div>
-				</>
-			</div>
+					</div>
 		</div>
 	);
 };

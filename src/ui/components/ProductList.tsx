@@ -1,3 +1,4 @@
+// import { useEffect, useState } from "react";
 import { ProductElement } from "./ProductElement";
 import { type ProductListItemFragment } from "@/gql/graphql";
 
@@ -8,11 +9,40 @@ export const ProductList = ({
 	products: readonly ProductListItemFragment[];
 	cartItems?: Record<string, { lineId: string; quantity: number }>;
 }) => {
+
+// 	const isOutOfStock = (item: any) =>
+//   item?.variants?.every(
+//     (variant: any) => variant?.quantityAvailable === 0
+//   );
+
+// const getSortIndex = (item: any) =>
+//   item?.attributes
+//     ?.find((attr: any) => attr.attribute?.name === "Sort index")
+//     ?.values?.[0]?.name;
+//     const filteredProducts = [...products]
+//     .filter((item) => item.category?.name)
+//     .sort((a, b) => {
+//       const aOut = isOutOfStock(a);
+//       const bOut = isOutOfStock(b);
+
+//       // 🔴 Out-of-stock to bottom
+//       if (aOut && !bOut) return 1;
+//       if (!aOut && bOut) return -1;
+
+//       const aVal = Number(getSortIndex(a)) || 0;
+//       const bVal = Number(getSortIndex(b)) || 0;
+
+//       if (!aVal && !bVal) return 0;
+//       if (!aVal) return 1;
+//       if (!bVal) return -1;
+
+//       return aVal - bVal;
+//     });
 	return (
 		<ul
 			role="list"
 			data-testid="ProductList"
-			className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"
+			className="grid grid-cols-1 gap-8 sm:grid-cols-3 lg:grid-cols-4"
 		>
 			{products.map((product, index) => (
 				<ProductElement

@@ -60,9 +60,9 @@ export function ProductElement({
 	// console.log("Product prop:", product); // ✅ logs on every render
 
 	return (
-		<li data-testid="ProductElement" className="rounded border-2 border-[#47141e]  ">
+		<li data-testid="ProductElement" className="bg-white shadow-2xl" style={{borderRadius:16}}>
 			<LinkWithChannel href={`/products/${product.slug}`} key={product.id}>
-				<div className="h-[260px]">
+				<div className="h-[260px]" style={{background:'#F6F6F6', borderTopLeftRadius:16,borderTopRightRadius:16, filter: product?.variants?.[0]?.quantityAvailable === 0 ? 'grayscale(100%)' : 'null'}}>
 					{product?.thumbnail?.url && (
 						<ProductImageWrapper
 							loading={loading}
@@ -75,8 +75,8 @@ export function ProductElement({
 					)}
 				</div>
 			</LinkWithChannel>
-			<div className="mt-2 flex h-32 justify-between border-t-2 border-[#ed4264] px-4 py-2">
-				<div className=" w-[60%] items-center justify-center ">
+			<div className="h-38 px-4 py-2">
+				<div className="items-center justify-center ">
 					{/* <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-neutral-900"> */}
 					<h3 className="mt-1 whitespace-normal break-words text-sm font-semibold text-neutral-900">
 						{product.name}
@@ -115,9 +115,9 @@ export function ProductElement({
 						</p>
 					</div>
 				</div>
-				<div className="flex w-[40%] flex-col items-end justify-between  pt-2 text-right">
+				<div className="flex items-center justify-between">
 					<p
-						className="mr-1 mt-1 text-sm font-medium text-neutral-900"
+						className="mr-1 mt-1 text-l font-bold text-neutral-900"
 						data-testid="ProductElement_PriceRange"
 					>
 						{formatMoneyRange({
@@ -125,6 +125,9 @@ export function ProductElement({
 							stop: product?.pricing?.priceRange?.stop?.gross,
 						})}
 					</p>
+					{product?.variants?.[0]?.quantityAvailable === 0 ?
+					<p className="text-sm font-bold" style={{color:'#ed2464'}}>No Stock Available</p>
+					:
 					<div className="center mt-2 flex justify-end pb-2">
 						{cartItem ? (
 							<div className="flex items-center gap-2 rounded-md bg-[#ed4264]">
@@ -156,14 +159,14 @@ export function ProductElement({
 								{isPending ? (
 									<ClipLoader size={12} />
 								) : (
-									<div className="flex items-center justify-between rounded-md border border-[#ed2464] px-4 py-1">
+									<div className="flex items-center justify-between rounded-md border border-[#ed2464] px-4 py-1 hover:bg-[#ffdfe9]">
 										<FaShoppingCart size={14} color="#ed2464" />
 										<span className="ml-1 text-[#ed4264]">ADD</span>
 									</div>
 								)}
 							</button>
 						)}
-					</div>
+					</div>}
 				</div>
 			</div>
 			{/* </div> */}
