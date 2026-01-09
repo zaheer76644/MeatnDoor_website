@@ -1,7 +1,7 @@
 import { clsx } from "clsx";
 import { redirect } from "next/navigation";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
-import { type ProductListItemFragment, type VariantDetailsFragment } from "@/gql/graphql";
+import { type VariantDetailsFragment } from "@/gql/graphql";
 import { getHrefForVariant } from "@/lib/utils";
 
 export function VariantSelector({
@@ -11,7 +11,7 @@ export function VariantSelector({
 	channel,
 }: {
 	variants: readonly VariantDetailsFragment[];
-	product: ProductListItemFragment;
+	product: { slug: string };
 	selectedVariant?: VariantDetailsFragment;
 	channel: string;
 }) {
