@@ -21,6 +21,9 @@ export interface BestSellerProduct {
 	name: string;
 	slug: string;
 	thumbnail: { url: string; alt: string | null } | null;
+	category: { id: string; name: string; slug: string } | null;
+	variants: { id: string; name: string; pricing: any }[] | null;
+	attributes: { attribute: { name: string }; values: { name: string }[] }[];
 	pricing: {
 		priceRange: {
 			start: { gross: { amount: number; currency: string } };
@@ -113,7 +116,7 @@ async function getBestSellerProducts(): Promise<ProductListItemFragment[]> {
 	});
 
 	const { data } = (await response.json()) as { data: BestSellerCollectionResponse };
-	return data.collection?.products.edges.map((edge) => edge.node) ?? [];
+	return (data.collection?.products.edges.map((edge) => edge.node) as unknown as ProductListItemFragment[]) ?? [];
 }
 
 // Page component
