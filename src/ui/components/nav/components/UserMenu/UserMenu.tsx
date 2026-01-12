@@ -14,6 +14,15 @@ type Props = {
 };
 
 export function UserMenu({ user }: Props) {
+	const handleLogout = async () => {
+    	localStorage.clear();
+    	sessionStorage.clear();
+		document.cookie =
+      	"checkoutId-in=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    	document.cookie =
+      	"checkoutId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    	await logout();
+  	};
 	return (
 		<Menu as="div" className="relative">
 			<Menu.Button className="relative flex rounded-full bg-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-neutral-800">
@@ -49,7 +58,7 @@ export function UserMenu({ user }: Props) {
 					<div className="flex flex-col px-1 py-1">
 						<Menu.Item>
 							{({ active }) => (
-								<form action={logout}>
+								<form action={handleLogout}>
 									<button
 										type="submit"
 										className={clsx(

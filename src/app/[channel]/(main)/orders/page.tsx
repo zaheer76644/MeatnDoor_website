@@ -1,8 +1,10 @@
+import { PackageX } from "lucide-react";
 import { CurrentUserOrderListDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 // import { LoginForm } from "@/ui/components/LoginForm";
 import { OrderListItem } from "@/ui/components/OrderListItem";
 import { MobileLoginForm } from "@/ui/customcomponents/auth/MobileLoginForm";
+import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
 export default async function OrderPage() {
 	const { me: user } = await executeGraphQL(CurrentUserOrderListDocument, {
@@ -24,10 +26,20 @@ export default async function OrderPage() {
 			</h1>
 
 			{orders.length === 0 ? (
-				<div className="mt-8">
-					<div className="rounded border border-neutral-100 bg-white p-4">
-						<div className="flex items-center">No orders found</div>
+				<div className="mt-8 flex flex-col items-center justify-center py-16 px-4">
+					<div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#ed4264]/10 to-[#47141e]/10">
+						<PackageX className="h-12 w-12 text-[#ed4264]" strokeWidth={1.5} />
 					</div>
+					<h2 className="mb-3 text-2xl font-bold text-[#47141e]">No orders yet</h2>
+					<p className="mb-6 max-w-md text-center text-gray-600">
+						You haven&apos;t placed any orders yet. Start shopping to see your order history here.
+					</p>
+					<LinkWithChannel
+						href="/products"
+						className="inline-block rounded-md border border-transparent bg-[#ed4264] px-6 py-3 text-center font-medium text-white transition-colors hover:bg-[#47141e]"
+					>
+						Browse Products
+					</LinkWithChannel>
 				</div>
 			) : (
 				<ul className="mt-8 space-y-6">

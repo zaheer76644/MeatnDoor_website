@@ -1,5 +1,5 @@
 import { SelectBox, type SelectBoxProps } from "@/checkout/components/SelectBox";
-import { Button } from "@/checkout/components/Button";
+// import { Button } from "@/checkout/components/Button";
 import { Address } from "@/checkout/components/Address";
 import { type AddressFragment } from "@/checkout/graphql";
 import { type AddressField } from "@/checkout/components/AddressForm/types";
@@ -20,21 +20,22 @@ export const AddressSelectBox = <TFieldName extends string>({
 	...rest
 }: AddressSelectBoxProps<TFieldName>) => {
 	return (
-		<SelectBox {...rest} disabled={unavailable}>
+		<SelectBox {...rest} disabled={unavailable} className="rounded-xl border-gray-200 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md">
 			<div className="flex w-full flex-col justify-between pe-8">
 				<Address address={address as AddressFragment}>
-					{unavailable && <p className="font-xs my-1">Can&apos;t ship to this address</p>}
+					{unavailable && <p className="font-xs my-1 text-red-500">Can&apos;t ship to this address</p>}
 				</Address>
-				<Button
-					variant="tertiary"
+				<button
+					type="button"
 					onClick={(event) => {
 						event.stopPropagation();
 						onEdit();
 					}}
-					ariaLabel="edit"
-					className="s pointer-events-auto absolute right-2 top-2 h-6 w-6 p-0"
-					label={<EditIcon />}
-				/>
+					aria-label="edit"
+					className="group/edit pointer-events-auto absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 p-0 text-gray-600 transition-all duration-200 hover:bg-gray-100"
+				>
+					<EditIcon className="h-5 w-5 transition-colors duration-200 group-hover/edit:text-[#ed4264]" />
+				</button>
 			</div>
 		</SelectBox>
 	);

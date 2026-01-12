@@ -23,16 +23,17 @@ export const SummaryItemMoneyInfo: React.FC<SummaryItemMoneyInfoProps> = ({
 	return (
 		<div className="flex flex-col items-end justify-end">
 			<div className="flex flex-row flex-wrap justify-end gap-x-2">
-				{onSale && (
+				{onSale ? (
 					<Money
 						ariaLabel="undiscounted price"
 						money={{
 							currency: undiscountedUnitPrice.currency,
 							amount: undiscountedUnitPrice.amount * quantity,
 						}}
-						className="line-through"
+						// className="line-through"
 					/>
-				)}
+				)
+			:
 				<Money
 					ariaLabel="total price"
 					money={{
@@ -43,6 +44,7 @@ export const SummaryItemMoneyInfo: React.FC<SummaryItemMoneyInfoProps> = ({
 						"!text-text-error": onSale,
 					})}
 				/>
+			}
 			</div>
 
 			{multiplePieces && (

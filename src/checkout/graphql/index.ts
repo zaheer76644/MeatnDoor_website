@@ -26323,6 +26323,12 @@ export type CheckoutLineFragment = {
 		name: string;
 		attributes: Array<{
 			__typename?: "SelectedAttribute";
+			attribute?: {
+				__typename?: "Attribute";
+				id: string;
+				name?: string | null;
+				slug?: string | null;
+			} | null;
 			values: Array<{
 				__typename?: "AttributeValue";
 				name?: string | null;
@@ -28783,6 +28789,11 @@ export const CheckoutLineFragmentDoc = gql`
 		}
 		variant {
 			attributes(variantSelection: ALL) {
+				attribute {
+					id
+					name
+					slug
+				}
 				values {
 					name
 					dateTime

@@ -113,76 +113,98 @@ import {
 	IoLogoPinterest,
 } from "react-icons/io5";
 
-type FooterProps = {
-	channel: string;
-};
+// type FooterProps = {
+// 	channel: string;
+// };
 
-export function Footer({ channel }: FooterProps) {
+export function Footer() {
+	const currentYear = new Date().getFullYear();
+
 	return (
-		<footer className="border-t border-gray-200 bg-[#47141e]">
-			{/* Footer Top */}
-			<div className="py-16">
-				<div className="container mx-auto px-4">
-					<div className="flex flex-wrap">
-						{/* Left Section */}
-						<div className="w-full pr-12 md:w-4/12">
-							<div>
-								<Link href="/">
-									<Image src="/log.png" alt="Logo" width={400} height={60} />
+		<footer className="relative overflow-hidden border-t border-[#47141e]/30 bg-gradient-to-br from-[#47141e] via-[#5a1a2a] to-[#47141e]">
+			{/* Decorative Background Elements */}
+			<div className="absolute inset-0 opacity-10">
+				<div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(237,66,100,0.3),transparent_50%)]"></div>
+				<div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(255,107,157,0.2),transparent_50%)]"></div>
+			</div>
+
+			{/* Animated Grid Pattern */}
+			<div className="absolute inset-0 opacity-[0.03]">
+				<div
+					className="absolute inset-0"
+					style={{
+						backgroundImage: `
+							linear-gradient(rgba(237, 66, 100, 0.1) 1px, transparent 1px),
+							linear-gradient(90deg, rgba(237, 66, 100, 0.1) 1px, transparent 1px)
+						`,
+						backgroundSize: "40px 40px",
+					}}
+				></div>
+			</div>
+
+			{/* Footer Content */}
+			<div className="relative z-10 py-12 md:py-16">
+				<div className="container mx-auto px-4 sm:px-0">
+					<div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+						{/* Left Section - Brand */}
+						<div className="lg:col-span-4">
+							<div className="mb-6">
+								<Link href="/" className="inline-block transition-transform duration-300 hover:scale-105">
+									<Image src="/img/log.png" alt="MEATnDOOR Logo" width={200} height={60} />
 								</Link>
-
-								<p className="mt-4 text-neutral-200">
-									Making the world a better place through constructing elegant hierarchies.
-								</p>
-
-								{/* Social Icons */}
-								<ul className="mt-4 flex space-x-4 text-neutral-200">
-									<li>
-										<Link href="/coming-soon">
-											<IoLogoFacebook className="text-2xl transition hover:text-red-600" />
-										</Link>
-									</li>
-									<li>
-										<Link href="/coming-soon">
-											<IoLogoTwitter className="text-2xl transition hover:text-red-600" />
-										</Link>
-									</li>
-									<li>
-										<Link href="/coming-soon">
-											<IoLogoInstagram className="text-2xl transition hover:text-red-600" />
-										</Link>
-									</li>
-									<li>
-										<Link href="/coming-soon">
-											<IoLogoLinkedin className="text-2xl transition hover:text-red-600" />
-										</Link>
-									</li>
-									<li>
-										<Link href="/coming-soon">
-											<IoLogoYoutube className="text-2xl transition hover:text-red-600" />
-										</Link>
-									</li>
-									<li>
-										<Link href="/coming-soon">
-											<IoLogoPinterest className="text-2xl transition hover:text-red-600" />
-										</Link>
-									</li>
-								</ul>
-
-								<p className="mt-4 text-sm text-white">© 2025 MEATnDOOR Fresh Foods. All rights reserved.</p>
 							</div>
+
+							<p className="mb-6 text-base leading-relaxed text-gray-200 md:text-lg">
+								Quality fresh meat delivered right to your doorstep. Experience convenience, freshness, and excellence with{" "}
+								<span className="font-semibold text-white">MEATnDOOR</span>.
+							</p>
+
+							{/* Social Icons - Enhanced */}
+							<div className="mb-6">
+								<p className="mb-3 text-sm font-semibold text-white">Follow Us</p>
+								<ul className="flex flex-wrap gap-3">
+									{[
+										{ Icon: IoLogoFacebook, href: "https://www.facebook.com/people/MeatnDoor/61581651580735/#", label: "Facebook" },
+										{ Icon: IoLogoTwitter, href: "/coming-soon", label: "Twitter" },
+										{ Icon: IoLogoInstagram, href: "https://www.instagram.com/meatndoor/", label: "Instagram" },
+										{ Icon: IoLogoLinkedin, href: "/coming-soon", label: "LinkedIn" },
+										{ Icon: IoLogoYoutube, href: "/coming-soon", label: "YouTube" },
+										{ Icon: IoLogoPinterest, href: "/coming-soon", label: "Pinterest" },
+									].map(({ Icon, href, label }) => (
+										<li key={label}>
+											<Link
+												href={href}
+												aria-label={label}
+												target="_blank"
+												className="group flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-gradient-to-br hover:from-[#ed4264] hover:to-[#ff6b9d] hover:shadow-lg hover:shadow-[#ed4264]/50"
+											>
+												<Icon className="text-xl text-white transition-transform duration-300 group-hover:scale-110" />
+											</Link>
+										</li>
+									))}
+								</ul>
+							</div>
+
+							<p className="text-sm text-gray-300">
+								© {currentYear} <span className="font-semibold text-white">MEATnDOOR</span> Fresh Foods. All rights reserved.
+							</p>
 						</div>
-						<h1 className="hidden">{channel} hi</h1>
-						{/* Right Section */}
-						<div className="mt-12 w-full md:mt-24 md:w-8/12">
+
+						{/* Right Section - Links */}
+						<div className="lg:col-span-8">
 							<div className="grid grid-cols-2 gap-8 md:grid-cols-4">
 								{/* Solutions */}
 								<div>
-									<h3 className="mb-4 text-lg font-semibold text-white">Solutions</h3>
-									<ul className="space-y-2 text-neutral-200">
+									<h3 className="mb-4 text-lg font-bold text-white">Solutions</h3>
+									<ul className="space-y-2.5">
 										{["Marketing", "Analytics", "Commerce", "Insights", "Promotion"].map((item) => (
 											<li key={item}>
-												<Link href="/coming-soon">{item}</Link>
+												<Link
+													href="/coming-soon"
+													className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+												>
+													{item}
+												</Link>
 											</li>
 										))}
 									</ul>
@@ -190,11 +212,16 @@ export function Footer({ channel }: FooterProps) {
 
 								{/* Support */}
 								<div>
-									<h3 className="mb-4 text-lg font-semibold text-white">Support</h3>
-									<ul className="space-y-2 text-neutral-200">
+									<h3 className="mb-4 text-lg font-bold text-white">Support</h3>
+									<ul className="space-y-2.5">
 										{["Pricing", "Documentation", "Guides", "API Status", "Live Support"].map((item) => (
 											<li key={item}>
-												<Link href="/coming-soon">{item}</Link>
+												<Link
+													href="/coming-soon"
+													className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+												>
+													{item}
+												</Link>
 											</li>
 										))}
 									</ul>
@@ -202,50 +229,119 @@ export function Footer({ channel }: FooterProps) {
 
 								{/* Company */}
 								<div>
-									<h3 className="mb-4 text-lg font-semibold text-white">Company</h3>
-									<ul className="space-y-2 text-neutral-200">
+									<h3 className="mb-4 text-lg font-bold text-white">Company</h3>
+									<ul className="space-y-2.5">
 										<li>
-											<Link href="/About-Us">About Us</Link>
+											<Link
+												href="/About-Us"
+												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+											>
+												About Us
+											</Link>
 										</li>
 										<li>
-											<Link href="/coming-soon">Our Blog</Link>
+											<Link
+												href="/coming-soon"
+												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+											>
+												Our Blog
+											</Link>
 										</li>
 										<li>
-											<Link href="/coming-soon">Jobs</Link>
+											<Link
+												href="/coming-soon"
+												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+											>
+												Jobs
+											</Link>
 										</li>
 										<li>
-											<Link href="/coming-soon">Press</Link>
+											<Link
+												href="/coming-soon"
+												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+											>
+												Press
+											</Link>
 										</li>
 										<li>
-											<Link href="https://meatndoor.com/contact-us.html">Contact Us</Link>
+											<Link
+												href="https://meatndoor.com/contact-us.html"
+												target="_blank"
+												rel="noopener noreferrer"
+												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+											>
+												Contact Us
+											</Link>
 										</li>
 									</ul>
 								</div>
 
 								{/* Legal */}
 								<div>
-									<h3 className="mb-4 text-lg font-semibold text-white">Legal</h3>
-									<ul className="space-y-2 text-neutral-200">
+									<h3 className="mb-4 text-lg font-bold text-white">Legal</h3>
+									<ul className="space-y-2.5">
 										<li>
-											<Link href="https://meatndoor.com/terms-and-conditions.html">Terms & Conditions</Link>
+											<Link
+												href="https://meatndoor.com/terms-and-conditions.html"
+												target="_blank"
+												rel="noopener noreferrer"
+												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+											>
+												Terms & Conditions
+											</Link>
 										</li>
 										<li>
-											<Link href="https://meatndoor.com/privacy-policy.html">Privacy Policy</Link>
+											<Link
+												href="https://meatndoor.com/privacy-policy.html"
+												target="_blank"
+												rel="noopener noreferrer"
+												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+											>
+												Privacy Policy
+											</Link>
 										</li>
 										<li>
-											<Link href="/coming-soon">Catering Services</Link>
+											<Link
+												href="/coming-soon"
+												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+											>
+												Catering Services
+											</Link>
 										</li>
 										<li>
-											<Link href="/coming-soon">Customer Relations</Link>
+											<Link
+												href="/coming-soon"
+												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+											>
+												Customer Relations
+											</Link>
 										</li>
 										<li>
-											<Link href="/coming-soon">Innovation</Link>
+											<Link
+												href="/coming-soon"
+												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
+											>
+												Innovation
+											</Link>
 										</li>
 									</ul>
 								</div>
 							</div>
 						</div>
 					</div>
+
+					{/* Bottom Border */}
+					{/* <div className="mt-12 border-t border-white/10 pt-8">
+						<div className="flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+							<p className="text-sm text-gray-300">
+								Made with <span className="text-[#ed4264]">❤️</span> for fresh food lovers
+							</p>
+							<p className="text-sm text-gray-300">
+								<span className="hidden sm:inline">Quality at Doorstep</span>
+								<span className="sm:hidden">MEATnDOOR</span>
+							</p>
+						</div>
+					</div> */}
 				</div>
 			</div>
 		</footer>

@@ -1,8 +1,12 @@
 "use client";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { ChevronDown } from "lucide-react";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { formatDate, formatMoney, getHrefForVariant } from "@/lib/utils";
 import { type OrderDetailsFragment } from "@/gql/graphql";
+import { type OrderLineFragment } from "@/checkout/graphql";
+import { getSummaryLineProps } from "@/checkout/sections/Summary/utils";
 // import { PaymentStatus } from "@/ui/components/PaymentStatus";
 
 type Props = {
@@ -142,7 +146,7 @@ const OrderStatusTimeline = ({ status, deliveryDate, deliveryTime }: OrderStatus
 	const stageColors = ["#8c223c", "#f3ac63", "#4CAF50"];
 
 	return (
-		<div className="mt-6 flex w-full items-center ">
+		<div className="mt-2 flex w-full items-center ">
 			{steps.map((step, index) => {
 				const isActive = index <= currentIndex;
 				const circleColor = isActive ? stageColors[index] : "#BDBDBD";
@@ -154,7 +158,7 @@ const OrderStatusTimeline = ({ status, deliveryDate, deliveryTime }: OrderStatus
 				return (
 					<div key={step} className="items-left flex flex-1 flex-col ">
 						{/* Circle + Right Line */}
-						<div className="ml-9 flex w-full items-center">
+						<div className="md:ml-9 flex w-full items-center">
 							{/* Circle */}
 							<div
 								className="z-10 flex items-center justify-center rounded-full text-center font-semibold text-white"
@@ -174,7 +178,7 @@ const OrderStatusTimeline = ({ status, deliveryDate, deliveryTime }: OrderStatus
 						</div>
 
 						{/* Label below circle */}
-						<div className="mt-2 text-sm font-medium" style={{ color: textColor }}>
+						<div className="mt-2 text-sm font-medium md:ml-6" style={{ color: textColor}}>
 							{step}
 						</div>
 					</div>
@@ -185,13 +189,38 @@ const OrderStatusTimeline = ({ status, deliveryDate, deliveryTime }: OrderStatus
 };
 
 export const OrderListItem = ({ order }: Props) => {
+	console.log('order===============', order)
+	const [isOpen, setIsOpen] = useState(false);
+	const [handlingFeeAmount, setHandlingFeeAmount] = useState<{ amount: number; currency: string } | null>(null);
+
+	// Extract and store handling fee amount from order lines
+	useEffect(() => {
+		const handlingFeeLine = order.lines.find((line) => {
+			const { productName } = getSummaryLineProps(line as OrderLineFragment);
+			return productName?.toLowerCase() === "handling fee";
+		});
+
+		if (handlingFeeLine && "totalPrice" in handlingFeeLine && handlingFeeLine.totalPrice) {
+			setHandlingFeeAmount(handlingFeeLine.totalPrice.gross);
+		} else {
+			setHandlingFeeAmount(null);
+		}
+	}, [order.lines]);
+
 	// console.log(order);
 	const cancelOrder = () => {
 		alert("please download our app to cancel your order");
 	};
 
+	const toggleAccordion = () => {
+		setIsOpen(!isOpen);
+	};
+	const filteredLines = order.lines.filter((line) => {
+		const { productName } = getSummaryLineProps(line as OrderLineFragment);
+		return productName?.toLowerCase() !== "handling fee" && productName?.toLowerCase() !== "delivery fee";
+	});
 	return (
-		<li className="bg-white">
+		<li className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-md">
 			{/* <div className="flex flex-col gap-2 border bg-neutral-200/20 px-6 py-4 md:grid md:grid-cols-4 md:gap-8">
 				<dl className="flex flex-col divide-y divide-neutral-200 text-sm md:col-span-3 md:grid md:grid-cols-4 md:gap-6 md:divide-none lg:col-span-2">
 					<div className="flex flex-row items-center justify-between py-4 md:flex-col md:items-start md:gap-y-1">
@@ -291,256 +320,321 @@ export const OrderListItem = ({ order }: Props) => {
 					</LinkWithChannel>
 				</div>  
 			</div> */}
-			<div className="flex flex-col md:flex-row md:items-start md:gap-8">
-				{/* Order number */}
-				<div className="flex flex-col md:flex-[0.5]">
-					<dt className="font-medium text-neutral-900">Order number</dt>
-					<dd className="text-neutral-600">{order.number}</dd>
-				</div>
+			{/* Accordion Header */}
+			<button
+				type="button"
+				onClick={toggleAccordion}
+				className="w-full px-6 py-4 text-left transition-colors hover:bg-neutral-50"
+			>
+				<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+					<div className="flex flex-1 flex-col gap-4 md:flex-row md:items-center md:gap-8 md:justify-between">
+						{/* Order number */}
+						<div className="flex flex-col">
+							<dt className="text-xs font-medium text-neutral-500">Order number</dt>
+							<dd className="mt-1 text-sm font-semibold text-neutral-900">{order.number}</dd>
+						</div>
 
-				{/* Date placed */}
-				<div className="flex flex-col md:flex-[0.5]">
-					<dt className="font-medium text-neutral-900">Order placed at</dt>
-					<dd className="text-neutral-600">
-						<time dateTime={order.created}>{formatDate(new Date(order.created))}</time>
-					</dd>
-				</div>
+						{/* Date placed */}
+						<div className="flex flex-col">
+							<dt className="text-xs font-medium text-neutral-500">Order placed</dt>
+							<dd className="mt-1 text-sm text-neutral-600">
+								<time dateTime={order.created}>{formatDate(new Date(order.created))}</time>
+							</dd>
+						</div>
 
-				{/* Coupon Applied (optional) */}
-				{order?.voucherCode && (
-					<div className="flex flex-col md:flex-[0.5]">
-						<dt className="font-medium text-neutral-900">Coupon Applied</dt>
-						<dd className="text-green-500">{order.voucherCode}</dd>
-					</div>
-				)}
+						{/* Delivery Date */}
+						<div className="flex flex-col">
+							<dt className="text-xs font-medium text-neutral-500">Delivery Date</dt>
+							<dd className="mt-1 text-sm text-neutral-900">
+								{order?.metadata?.find((a) => a.key === "Delivery_Date")?.value || "N/A"}
+							</dd>
+						</div>
 
-				{/* Status */}
-				<div className="flex flex-col md:flex-[1]">
-					<dt className="text-center font-medium text-neutral-900">Status</dt>
-					<dd className="text-center">
-						{/* <OrderStatusTimeline status={order.status} /> */}
-						<OrderStatusTimeline
-							status={order.status}
-							deliveryDate={order?.metadata?.find((a) => a.key === "Delivery_Date")?.value}
-							deliveryTime={order?.metadata?.find((a) => a.key === "Delivery_Time")?.value}
-						/>
-					</dd>
-				</div>
+						{/* Delivery Time */}
+						<div className="flex flex-col">
+							<dt className="text-xs font-medium text-neutral-500">Delivery Time</dt>
+							<dd className="mt-1 text-sm text-neutral-900">
+								{order?.metadata?.find((a) => a.key === "Delivery_Time")?.value || "N/A"}
+							</dd>
+						</div>
 
-				{/* Buttons */}
-				<div className="flex flex-col md:flex-[0.5]">
-					<dt className="font-medium text-neutral-900">Delivery at:</dt>
-					<dt className="font-medium text-neutral-900">
-						{order?.metadata?.find((a) => a.key === "Delivery_Date")?.value}
-					</dt>
-					<dt className="font-medium text-neutral-900">Between:</dt>
-					<dt className="font-medium text-neutral-900">
-						{order?.metadata?.find((a) => a.key === "Delivery_Time")?.value}
-					</dt>
-				</div>
-
-				<div className="flex flex-col md:flex-[0.5]">
-					<button onClick={cancelOrder} className="rounded border bg-white px-4 py-2">
-						cancel
-					</button>
-				</div>
-			</div>
-
-			{order.lines.length > 0 && (
-				<>
-					<div className="md:border-x md:px-6">
-						<table className="w-full text-sm text-neutral-500">
-							<thead className="sr-only">
-								<tr>
-									<td>product</td>
-									<td className="max-md:hidden">quantity and unit price</td>
-									<td>price</td>
-								</tr>
-							</thead>
-							<tbody className="md:divide-y">
-								{order.lines.map((item) => {
-									if (!item.variant) {
-										return null;
+						{/* Order Type */}
+						<div className="flex flex-col">
+							<dt className="text-xs font-medium text-neutral-500">Payment Method</dt>
+							<dd className="mt-1 text-sm text-neutral-900">
+								{(() => {
+									const deliveryMethod = order?.metadata?.find((a) => a.key === "delivery_method")?.value;
+									if (deliveryMethod === 'cash_on_delivery') {
+										return "Cash on Delivery";
 									}
+									if (deliveryMethod) {
+										return "Online Payment";
+									}
+									return "N/A";
+								})()}
+							</dd>
+						</div>
 
-									const product = item.variant.product;
+						{/* Total amount */}
+						<div className="flex flex-col">
+							<dt className="text-xs font-medium text-neutral-500">Total amount</dt>
+							<dd className="mt-1 text-sm font-semibold text-[#ed4264]">
+								{formatMoney(order.total.gross.amount, order.total.gross.currency)}
+							</dd>
+						</div>
+					</div>
 
-									return (
-										<tr key={product.id}>
-											<td className="py-6 pr-6 md:w-[60%] lg:w-[70%]">
-												<div className="flex flex-row items-center">
-													{product.thumbnail && (
-														<div className="mr-3 aspect-square h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border bg-neutral-50 md:mr-6 md:h-24 md:w-24">
-															<Image
-																src={product.thumbnail.url}
-																alt={product.thumbnail.alt ?? ""}
-																width={200}
-																height={200}
-																className="h-full w-full object-contain object-center"
-															/>
-														</div>
-													)}
-													<div>
-														<LinkWithChannel
-															href={getHrefForVariant({
-																productSlug: product.slug,
-																variantId: item.variant.id,
-															})}
-															className="font-medium text-neutral-900"
-														>
-															{product.name}
-														</LinkWithChannel>
-														{item.variant.name !== item.variant.id && Boolean(item.variant.name) && (
-															<p className="mt-1">Variant: {item.variant.name}</p>
-														)}
-													</div>
-												</div>
-											</td>
-											<td className="py-6 pr-6 max-md:hidden">
-												{item.quantity} ×{" "}
-												{item.variant.pricing?.price &&
-													formatMoney(
-														item.variant.pricing.price.gross.amount,
-														item.variant.pricing.price.gross.currency,
-													)}
-											</td>
-											<td className="py-6 text-end">
-												<div className="flex flex-col gap-1 text-neutral-900">
-													{item.variant.pricing?.price &&
-														formatMoney(
-															item.variant.pricing.price.gross.amount * item.quantity,
-															item.variant.pricing.price.gross.currency,
-														)}
-													{item.quantity > 1 && (
-														<span className="text-xs md:hidden">
+					{/* Chevron Icon */}
+					<div className="flex items-center justify-end">
+						<ChevronDown color="#ed4264"
+							className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${
+								isOpen ? "rotate-180" : ""
+							}`}
+						/>
+					</div>
+				</div>
+			</button>
+
+			{/* Accordion Content */}
+			<div
+				className={`overflow-hidden transition-all duration-300 ease-in-out ${
+					isOpen ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+				}`}
+			>
+				<div className="border-t border-neutral-200 px-6 py-6">
+					<div className="space-y-6">
+						{/* Order Details Row */}
+						<div className="flex flex-col gap-4 border-b border-neutral-200 pb-6 md:flex-row md:items-center md:justify-between">
+							<div className="flex flex-1 flex-col gap-4 md:flex-row md:items-center gap-10">
+								{/* Coupon Applied */}
+							{order?.voucherCode && (
+								<div className="flex flex-col">
+									<dt className="mb-2 text-xs font-medium text-neutral-500">Coupon Applied</dt>
+									<dd className="inline-flex items-center gap-2 rounded-lg border-2 border-dashed border-green-400 bg-green-50 px-3 py-1.5">
+										<span className="text-sm font-bold text-green-700">{order.voucherCode}</span>
+										<svg
+											className="h-4 w-4 text-green-600"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+											xmlns="http://www.w3.org/2000/svg"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+											/>
+										</svg>
+									</dd>
+								</div>
+							)}
+
+								{/* Status Timeline */}
+								<div className="flex flex-1 flex-col">
+									<dt className="mb-2 text-xs font-medium text-neutral-500">Status</dt>
+									<dd>
+										<OrderStatusTimeline
+											status={order.status}
+											deliveryDate={order?.metadata?.find((a) => a.key === "Delivery_Date")?.value}
+											deliveryTime={order?.metadata?.find((a) => a.key === "Delivery_Time")?.value}
+										/>
+									</dd>
+								</div>
+							</div>
+
+							{/* Cancel Button - Aligned to end */}
+							<div className="flex flex-col justify-end md:ml-auto">
+								<button
+									onClick={cancelOrder}
+									className="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+								>
+									Cancel Order
+								</button>
+							</div>
+						</div>
+
+						{/* Products List */}
+						{order.lines.length > 0 ? (
+							<div>
+								<h3 className="mb-4 text-sm font-semibold text-neutral-900">Order Items</h3>
+								<div className="rounded-lg border border-neutral-200">
+									<table className="w-full text-sm">
+										<thead className="sr-only">
+											<tr>
+												<td>product</td>
+												<td className="max-md:hidden">quantity and unit price</td>
+												<td>price</td>
+											</tr>
+										</thead>
+										<tbody className="divide-y divide-neutral-200">
+											{filteredLines.map((item) => {
+												if (!item.variant) {
+													return null;
+												}
+
+												const product = item.variant.product;
+
+												return (
+													<tr key={product.id} className="hover:bg-neutral-50">
+														<td className="p-4 md:w-[60%] lg:w-[70%]">
+															<div className="flex flex-row items-center">
+																{product.thumbnail && (
+																	<div className="mr-3 aspect-square h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border bg-neutral-50 md:mr-6 md:h-20 md:w-20">
+																		<Image
+																			src={product.thumbnail.url}
+																			alt={product.thumbnail.alt ?? ""}
+																			width={200}
+																			height={200}
+																			className="h-full w-full object-contain object-center"
+																		/>
+																	</div>
+																)}
+																<div>
+																	<LinkWithChannel
+																		href={getHrefForVariant({
+																			productSlug: product.slug,
+																			variantId: item.variant.id,
+																		})}
+																		className="font-medium text-neutral-900 hover:text-[#ed4264]"
+																	>
+																		{product.name}
+																	</LinkWithChannel>
+																	{item.variant.name !== item.variant.id && Boolean(item.variant.name) && (
+																		<p className="mt-1 text-xs text-neutral-500">Variant: {item.variant.name}</p>
+																	)}
+																</div>
+															</div>
+														</td>
+														<td className="py-4 pr-6 text-neutral-600 max-md:hidden">
 															{item.quantity} ×{" "}
 															{item.variant.pricing?.price &&
 																formatMoney(
 																	item.variant.pricing.price.gross.amount,
 																	item.variant.pricing.price.gross.currency,
 																)}
-														</span>
-													)}
-												</div>
-											</td>
-										</tr>
-									);
-								})}
-							</tbody>
-						</table>
-					</div>
-					{/* <div className="flex w-full flex-col items-center py-4">
-						<dt className="mb-4 text-center font-medium text-neutral-900">Status</dt>
-
-						<div className="flex w-full items-center">
-							{["Ordered", "Processing", "Delivered"].map((step, index, arr) => {
-								let isActive = false;
-
-								if (order.status === "UNCONFIRMED") isActive = index === 0;
-								else if (order.status === "UNFULFILLED") isActive = index <= 1;
-								else if (order.status === "FULFILLED") isActive = true;
-								else if (order.status === "CANCELED") isActive = false;
-
-								const colors = ["#8c223c", "#f3ac63", "#4CAF50"];
-								const circleColor = isActive ? colors[index] : "#BDBDBD";
-								const textColor = isActive ? colors[index] : "#777";
-
-								return (
-									<div key={step} className="flex flex-1 items-center">
-										{/* Circle  
-										<div
-											className="z-10 flex items-center justify-center rounded-full font-semibold text-white"
-											style={{
-												width: 28,
-												height: 28,
-												backgroundColor: circleColor,
-											}}
-										>
-											{index + 1}
-										</div>
-
-										{/* Line  
-										{index < arr.length - 1 && (
-											<div
-												className="mx-2 h-[2px] flex-1"
-												style={{
-													backgroundColor:
-														index <
-														(order.status === "UNCONFIRMED" ? 0 : order.status === "UNFULFILLED" ? 1 : 2)
-															? colors[index]
-															: "#BDBDBD",
-												}}
-											/>
+														</td>
+														<td className="p-4 text-end">
+															<div className="flex flex-col gap-1">
+																<span className="font-semibold text-neutral-900">
+																	{item.variant.pricing?.price &&
+																		formatMoney(
+																			item.variant.pricing.price.gross.amount * item.quantity,
+																			item.variant.pricing.price.gross.currency,
+																		)}
+																</span>
+																{item.quantity > 1 && (
+																	<span className="text-xs text-neutral-500 md:hidden">
+																		{item.quantity} ×{" "}
+																		{item.variant.pricing?.price &&
+																			formatMoney(
+																				item.variant.pricing.price.gross.amount,
+																				item.variant.pricing.price.gross.currency,
+																			)}
+																	</span>
+																)}
+															</div>
+														</td>
+													</tr>
+												);
+											})}
+										</tbody>
+									</table>
+								</div>
+							</div>
+						) : (
+							<div className="py-4 text-center text-sm text-neutral-500">No items in this order</div>
+						)}
+						{/* Address and Billing Details */}
+						<div className="grid grid-cols-1 gap-6 border-t border-neutral-200 pt-6 md:grid-cols-2">
+							{/* Delivery Address */}
+							{order.shippingAddress && (
+								<div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+									<h3 className="mb-3 text-sm font-semibold text-neutral-900">Delivery Address</h3>
+									<p className="text-sm text-neutral-600">
+										{order.shippingAddress.streetAddress1}
+										{order.shippingAddress.streetAddress2 && (
+											<>
+												<br />
+												{order.shippingAddress.streetAddress2}
+											</>
 										)}
+										<br />
+										{order.shippingAddress.city} - {order.shippingAddress.postalCode}
+										<br />
+										{order.shippingAddress.country.country}
+										<br />
+										<span className="font-medium">Phone:</span> {order.shippingAddress.phone}
+									</p>
+								</div>
+							)}
 
-										{/* Label 
-										<span
-											className="absolute mt-8 w-20 text-center text-sm font-medium"
-											style={{ color: textColor }}
-										>
-											{step}
+							{/* Bill Details */}
+							<div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+								<h3 className="mb-3 text-sm font-semibold text-neutral-900">Bill Details</h3>
+								<div className="space-y-2 text-sm">
+									<div className="flex justify-between">
+										<span className="text-neutral-600">Items total:</span>
+										<span className="font-medium text-neutral-900">
+											{formatMoney(
+												order.lines.reduce((sum, item) => {
+													if (!item.variant?.pricing?.price) return sum;
+													return sum + item.variant.pricing.price.gross.amount * item.quantity;
+												}, 0) - (handlingFeeAmount?.amount || 0),
+												order.lines[0]?.variant?.pricing?.price?.gross.currency || "INR",
+											)}
 										</span>
 									</div>
-								);
-							})}
-						</div>
-					</div> */}
-
-					<div className="flex justify-between">
-						{order.shippingAddress && (
-							<div className="border-t px-6 py-4 text-sm">
-								<h3 className="font-medium text-neutral-900">Delivery Address</h3>
-
-								<p className="mt-1 text-neutral-600">
-									{order.shippingAddress.streetAddress1}
-									<br />
-									{order.shippingAddress.streetAddress2 && (
-										<>
-											{order.shippingAddress.streetAddress2}
-											<br />
-										</>
-									)}
-									{order.shippingAddress.city} - {order.shippingAddress.postalCode}
-									<br />
-									{order.shippingAddress.country.country}
-									<br />
-									Phone: {order.shippingAddress.phone}
-								</p>
-							</div>
-						)}
-						<div>
-							<h3 className="font-medium text-neutral-900">Bill Details</h3>
-							<div>
-								<p>
-									items total:
-									{formatMoney(
-										order.lines.reduce((sum, item) => {
-											if (!item.variant?.pricing?.price) return sum;
-											return sum + item.variant.pricing.price.gross.amount * item.quantity;
-										}, 0),
-										order.lines[0]?.variant?.pricing?.price?.gross.currency || "INR",
-									)}
-								</p>
-								<p>
-									Delivery Charge:{" "}
-									{order.shippingPrice.gross.amount === 0 ? "free" : order.shippingPrice.gross.amount}{" "}
-								</p>
-								<p>Handling fee: </p>
-								<p>
-									Discount applied:
-									{order?.discount?.amount || 0}
-								</p>
-								<p>Instant discount: 0</p>
-								<p>MeatnDoor cash: 0</p>
+									<div className="flex justify-between">
+										<span className="text-neutral-600">Delivery Charge:</span>
+										<span className="font-medium text-neutral-900">
+											{order.shippingPrice.gross.amount === 0
+												? "Free"
+												: formatMoney(order.shippingPrice.gross.amount, order.shippingPrice.gross.currency)}
+										</span>
+									</div>
+									<div className="flex justify-between">
+										<span className="text-neutral-600">Handling fee:</span>
+										<span className="font-medium text-neutral-900">
+											{handlingFeeAmount
+												? formatMoney(handlingFeeAmount.amount, handlingFeeAmount.currency)
+												: formatMoney(0, order.total.gross.currency)}
+										</span>
+									</div>
+									<div className="flex justify-between">
+										<span className="text-neutral-600">Discount applied:</span>
+										<span className="font-medium text-green-600">
+											{order?.discount?.amount
+												? formatMoney(order.discount.amount, order.discount.currency)
+												: formatMoney(0, order.total.gross.currency)}
+										</span>
+									</div>
+									<div className="flex justify-between">
+										<span className="text-neutral-600">Instant discount:</span>
+										<span className="font-medium text-neutral-900">
+											{formatMoney(0, order.total.gross.currency)}
+										</span>
+									</div>
+									<div className="flex justify-between">
+										<span className="text-neutral-600">MeatnDoor cash:</span>
+										<span className="font-medium text-neutral-900">
+											{formatMoney(0, order.total.gross.currency)}
+										</span>
+									</div>
+									<div className="border-t border-neutral-300 pt-2">
+										<div className="flex justify-between">
+											<span className="font-semibold text-neutral-900">Total amount:</span>
+											<span className="text-lg font-bold text-[#ed4264]">
+												{formatMoney(order.total.gross.amount, order.total.gross.currency)}
+											</span>
+										</div>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
-					<dl className="flex justify-between border-y py-6 text-sm font-medium text-neutral-900 md:border md:px-6">
-						<dt>Total amount including delivery</dt>
-						<dd>{formatMoney(order.total.gross.amount, order.total.gross.currency)}</dd>
-					</dl>
-				</>
-			)}
+				</div>
+			</div>
 		</li>
 	);
 };

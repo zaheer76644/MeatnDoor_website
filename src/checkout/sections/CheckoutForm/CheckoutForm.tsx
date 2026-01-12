@@ -131,7 +131,7 @@ import { DeliveryMethodsSkeleton } from "@/checkout/sections/DeliveryMethods/Del
 import { AddressSectionSkeleton } from "@/checkout/components/AddressSectionSkeleton";
 import { getQueryParams } from "@/checkout/lib/utils/url";
 import { CollapseSection } from "@/checkout/sections/CheckoutForm/CollapseSection";
-import { Button, Divider } from "@/checkout/components";
+import { Divider } from "@/checkout/components";
 import { UserShippingAddressSection } from "@/checkout/sections/UserShippingAddressSection";
 import { GuestShippingAddressSection } from "@/checkout/sections/GuestShippingAddressSection";
 import { UserBillingAddressSection } from "@/checkout/sections/UserBillingAddressSection";
@@ -404,6 +404,7 @@ export const CheckoutForm = () => {
 				{ key: "Delivery_Date", value: "${deliveryDate}" },
 				{ key: "Delivery_Time", value: "${selectedSlot.slot}" },
 				{ key: "delivery_method", value: "cash_on_delivery" }
+				{ key: "ordered_platform", value: "Website" }
 				]
 				) {
 					errors { field message }
@@ -691,8 +692,8 @@ export const CheckoutForm = () => {
 	// };
 
 	return (
-		<div className="flex flex-col items-end">
-			<div className="flex w-full flex rounded gap-16">
+		<div className="">
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-8 ">
 				{/* Delivery Slot Picker */}
 				<div>
 				<div className="hidden">
@@ -725,32 +726,45 @@ export const CheckoutForm = () => {
 											</Suspense>
 
 						</div>
-					<div className="w-[56%] mt-5">
-						<Divider />
-						<h1 className="mb-4 text-lg font-semibold">Payment Method</h1>
-						<div className="flex items-center gap-5">
-
-						{/* ✅ Place Order Button */}
-						<Button
-							className="w-full rounded-md py-3 text-white bg-[#ed2464] hover:bg-[#ed2464]"
-							// hover:bg-[white] hover:border-2 hover:text-[#ed2464] hover:border-[#ed2464]
-							onClick={onPlaceOrder}
-							disabled={loading}
-							label={loading ? "Placing Order..." : "Pay In Cash"}
-						/>
-						<Button
-							label={loadingOnline ? "Placing Order..." : "Pay Online"}
-							className="w-full rounded-md py-3 text-[#ed2464] bg-[white] border-[#ed2464] hover:bg-[white]"
-							// hover:bg-[#ed2464] hover:border-2 hover:text-[white] hover:border-[#ed2464]
-							// onClick={handlePayOnline}
-							onClick={() => handlePayOnline(checkout, user, GRAPHQL_ENDPOINT, selectedSlot)}
-							disabled={loadingOnline}
-						/>
-						{/* {loading ? "Placing Order..." : "Place Order"}
-							Place Order
-						</Button> */}
+						<div className="flex justify-end">
+							<div className="w-full md:w-[49%] mt-5">
+								<Divider />
+								<h1 className="mb-4 text-lg font-semibold">Payment Method</h1>
+								<div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
+									{/* ✅ Cash on Delivery Button */}
+									<button
+										type="button"
+										onClick={onPlaceOrder}
+										disabled={loading}
+										className="group relative h-14 w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] px-8 py-4 text-center text-lg font-bold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#ed4264]/50 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
+									>
+										{/* Shimmer effect */}
+										<div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>
+										{/* Button content */}
+										<span className="relative z-10 flex items-center justify-center gap-2">
+											{loading ? "Placing Order..." : "Cash on Delivery"}
+										</span>
+									</button>
+									{/* Pay Online Button */}
+									<button
+										type="button"
+										onClick={() => handlePayOnline(checkout, user, GRAPHQL_ENDPOINT, selectedSlot)}
+										disabled={loadingOnline}
+										className="group relative h-14 w-full overflow-hidden rounded-xl border-2 border-[#ed4264] bg-transparent px-8 py-4 text-center text-lg font-bold text-[#ed4264] shadow-md transition-all duration-300 hover:scale-105 hover:border-transparent hover:bg-gradient-to-r hover:from-[#ed4264] hover:to-[#ff6b9d] hover:text-white hover:shadow-xl hover:shadow-[#ed4264]/50 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
+									>
+										{/* Shimmer effect */}
+										<div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>
+										{/* Button content */}
+										<span className="relative z-10 flex items-center justify-center gap-2">
+											{loadingOnline ? "Placing Order..." : "Pay Online"}
+										</span>
+									</button>
+								</div>
+								{/* {loading ? "Placing Order..." : "Place Order"}
+									Place Order
+								</Button> */}
+							</div>
 					</div>
 					</div>
-		</div>
 	);
 };

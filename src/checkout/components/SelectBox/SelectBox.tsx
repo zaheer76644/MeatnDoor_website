@@ -27,9 +27,11 @@ export const SelectBox = <TFieldName extends string>({
 	return (
 		<label
 			className={clsx(
-				"relative mb-2 flex cursor-pointer flex-row items-center justify-start rounded border border-neutral-400 px-3 py-2",
-				"hover:border hover:border-neutral-500",
-				{ "border border-neutral-500": selected, "pointer-events-none hover:border-neutral-400": disabled },
+				"relative mb-3 flex cursor-pointer flex-row items-start justify-start rounded-xl border transition-all duration-200",
+				selected
+					? "border-[#ed4264] bg-gradient-to-br from-[#ed4264]/5 to-[#ff6b9d]/5 shadow-md"
+					: "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm",
+				disabled && "pointer-events-none opacity-50",
 				className,
 			)}
 		>
@@ -39,9 +41,9 @@ export const SelectBox = <TFieldName extends string>({
 				onChange={handleChange}
 				value={value}
 				checked={selected}
-				className="rounded-full border-neutral-300 text-neutral-600 shadow-sm focus:border-neutral-300 focus:ring focus:ring-neutral-200 focus:ring-opacity-50 focus:ring-offset-0"
+				className="mt-4 ml-4 h-5 w-5 flex-shrink-0 rounded-full border-gray-300 text-[#ed4264] shadow-sm focus:border-[#ed4264] focus:ring-2 focus:ring-[#ed4264]/30 focus:ring-offset-0"
 			/>
-			<span className="ml-2 block w-full">{children}</span>
+			<span className="ml-3 block w-full py-4 pr-4">{children}</span>
 		</label>
 	);
 };

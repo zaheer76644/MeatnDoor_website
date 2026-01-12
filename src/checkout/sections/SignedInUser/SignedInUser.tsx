@@ -16,8 +16,6 @@ export const SignedInUser: React.FC<SignedInUserProps> = ({ onSectionChange, onS
 	const handleLogout = async () => {
 		signOut();
 		onSignOutSuccess();
-		localStorage.clear();
-  		sessionStorage.clear();
 	};
 
 	return (

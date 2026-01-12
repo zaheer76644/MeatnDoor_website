@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import { ClipLoader } from "react-spinners";
 import { FaShoppingCart } from "react-icons/fa";
 
@@ -10,7 +11,8 @@ import { addToCart, updateCartItem } from "@/app/actions";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
 
 import type { ProductListItemFragment } from "@/gql/graphql";
-import { formatMoneyRange } from "@/lib/utils";
+
+type ProductVariant = NonNullable<ProductListItemFragment["variants"]>[number];
 
 export function ProductElement({
 	product,
@@ -57,116 +59,219 @@ export function ProductElement({
 		});
 	};
 
-	// console.log("Product prop:", product); // ✅ logs on every render
-
 	return (
-		<li data-testid="ProductElement" className="bg-white shadow-2xl" style={{borderRadius:16}}>
+		<li
+			data-testid="ProductElement"
+			className="group relative overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
+		>
+			{/* Discount Badge */}
+			{product?.variants?.map((variant: ProductVariant, i: number) => {
+				const saving = variant?.attributes?.find(
+					(attr) => attr?.attribute?.name === "Saving Amount"
+				)?.values?.[0]?.name;
+
+				if (!saving) return null;
+
+				const originalPrice = parseFloat(String(saving));
+				const discountedPrice = parseFloat(
+					String(variant.pricing?.price?.gross?.amount || "0")
+				);
+				const discountPercent = (
+					((originalPrice - discountedPrice) / originalPrice) * 100
+				).toFixed(0);
+
+				return (
+					<div
+						key={i}
+						className="absolute left-2 top-2 z-10 flex"
+					>
+						<Image
+							src="/special-offer.png"
+							alt="discount"
+							width={60}
+							height={60}
+							className="drop-shadow-[0_12px_25px_rgba(0,0,0,0.35)]"
+							style={{ position: "relative", zIndex: 1 }}
+						/>
+						<div
+							style={{
+								position: "absolute",
+								top: "50%",
+								left: "50%",
+								transform: "translate(-50%, -50%)",
+								color: "white",
+								fontWeight: "bold",
+								fontSize: 10,
+								textAlign: "center",
+								lineHeight: 1.2,
+								letterSpacing: "0.5px",
+								fontFamily: "sans-serif",
+								zIndex: 2,
+								pointerEvents: "none",
+							}}
+						>
+							{discountPercent}%<br />Off
+						</div>
+					</div>
+				);
+			})}
+			{/* Best Seller Badge */}
+			{product?.collections?.[0] && (
+				<div className="absolute right-2 top-2 z-10">
+					<Image
+						src="/best-seller-icon.png"
+						alt="best seller"
+						width={60}
+						height={60}
+						className="drop-shadow-lg"
+					/>
+				</div>
+			)}
 			<LinkWithChannel href={`/products/${product.slug}`} key={product.id}>
-				<div className="h-[260px]" style={{background:'#F6F6F6', borderTopLeftRadius:16,borderTopRightRadius:16, filter: product?.variants?.[0]?.quantityAvailable === 0 ? 'grayscale(100%)' : 'null'}}>
+				<div
+					className={`relative h-[260px] overflow-hidden rounded-t-2xl bg-gradient-to-br from-gray-50 to-gray-100 transition-transform duration-300 group-hover:scale-105 ${
+						product?.variants?.[0]?.quantityAvailable === 0 ? "grayscale" : ""
+					}`}
+				>
 					{product?.thumbnail?.url && (
 						<ProductImageWrapper
 							loading={loading}
 							src={product.thumbnail.url}
 							alt={product.thumbnail.alt ?? ""}
-							width={80}
-							height={80}
+							width={1024}
+							height={1024}
 							priority={priority}
 						/>
 					)}
+					{/* Overlay on hover */}
+					<div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/5"></div>
 				</div>
 			</LinkWithChannel>
-			<div className="h-38 px-4 py-2">
-				<div className="items-center justify-center ">
-					{/* <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-neutral-900"> */}
-					<h3 className="mt-1 whitespace-normal break-words text-sm font-semibold text-neutral-900">
+			<div className="p-4">
+				<div className="space-y-2">
+					{/* Product Name */}
+					<h3 className="line-clamp-2 min-h-[2.5rem] text-base font-bold text-neutral-900 transition-colors group-hover:text-[#ed4264]">
 						{product.name}
 					</h3>
-					<div className="mt-1">
-						<p className="text-sm">
-							Net:{" "}
-							{
-								product?.variants?.[0]?.attributes?.find((a) => a.attribute?.slug === "net-weight")
-									?.values?.[0]?.name
-							}
-						</p>
-						<p className="text-sm">
-							Serves:
-							{product?.attributes?.find((a) => a.attribute?.slug === "serves-for")?.values?.[0]?.name}
-						</p>
-						{/* <p className="text-sm">
-							{product?.attributes?.find((a) => a.attribute?.slug === "number-of-pieces")?.values?.[0]?.name}{" "}
-							pieces
-						</p> */}
+					
+					{/* Product Details */}
+					<div className="space-y-1 text-xs text-neutral-600">
+						{product?.variants?.[0]?.attributes?.find((a) => a.attribute?.slug === "net-weight")
+							?.values?.[0]?.name && (
+							<div className="flex items-center gap-1">
+								<span className="font-medium">Net:</span>
+								<span>
+									{
+										product?.variants?.[0]?.attributes?.find(
+											(a) => a.attribute?.slug === "net-weight"
+										)?.values?.[0]?.name
+									}
+								</span>
+							</div>
+						)}
+						{product?.attributes?.find((a) => a.attribute?.slug === "serves-for")?.values?.[0]
+							?.name && (
+							<div className="flex items-center gap-1">
+								<span className="font-medium">Serves:</span>
+								<span>
+									{
+										product?.attributes?.find((a) => a.attribute?.slug === "serves-for")
+											?.values?.[0]?.name
+									}
+								</span>
+							</div>
+						)}
 						{product?.attributes?.find((a) => a.attribute?.slug === "number-of-pieces")?.values?.[0]
 							?.name && (
-							<>
-								<p className="text-sm">
+							<div className="flex items-center gap-1">
+								<span className="font-medium">
 									{
 										product.attributes.find((a) => a.attribute?.slug === "number-of-pieces")?.values?.[0]
 											?.name
-									}{" "}
-									pieces
-								</p>
-							</>
+									}
+								</span>
+								<span>pieces</span>
+							</div>
 						)}
-
-						<p className="mt-1 hidden text-sm text-neutral-500" data-testid="ProductElement_Category">
-							{product.category?.name}
-						</p>
 					</div>
 				</div>
-				<div className="flex items-center justify-between">
-					<p
-						className="mr-1 mt-1 text-l font-bold text-neutral-900"
-						data-testid="ProductElement_PriceRange"
-					>
-						{formatMoneyRange({
-							start: product?.pricing?.priceRange?.start?.gross,
-							stop: product?.pricing?.priceRange?.stop?.gross,
-						})}
-					</p>
-					{product?.variants?.[0]?.quantityAvailable === 0 ?
-					<p className="text-sm font-bold" style={{color:'#ed2464'}}>No Stock Available</p>
-					:
-					<div className="center mt-2 flex justify-end pb-2">
-						{cartItem ? (
-							<div className="flex items-center gap-2 rounded-md bg-[#ed4264]">
-								<button
-									onClick={handleDecrease}
-									disabled={isPending}
-									className="flex h-8 w-8 items-center justify-center text-white hover:bg-[#47141e] disabled:opacity-50"
-								>
-									-
-								</button>
-								<span className="w-4 text-center text-sm font-medium text-white">
-									{isPending ? <ClipLoader size={12} /> : cartItem.quantity}
-								</span>
-								<button
-									onClick={handleIncrease}
-									disabled={isPending}
-									className="flex h-8 w-8 items-center justify-center text-white  hover:bg-[#47141e] disabled:opacity-50"
-								>
-									+
-								</button>
-							</div>
-						) : (
-							// per product add to cart button
-							<button
-								onClick={handleAddToCart}
-								disabled={isPending}
-								className="text-sm font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50"
-							>
-								{isPending ? (
-									<ClipLoader size={12} />
-								) : (
-									<div className="flex items-center justify-between rounded-md border border-[#ed2464] px-4 py-1 hover:bg-[#ffdfe9]">
-										<FaShoppingCart size={14} color="#ed2464" />
-										<span className="ml-1 text-[#ed4264]">ADD</span>
+				<div className={`mt-4 flex items-end justify-between ${product?.variants?.[0]?.quantityAvailable === 0 ? 'mt-6' : ''}`}>
+					{/* Price Section */}
+					<div className="flex-1">
+						{product?.variants?.map((variant: ProductVariant, i: number) => {
+							const saving = variant?.attributes?.find(
+								(attr) => attr?.attribute?.name === "Saving Amount"
+							)?.values?.[0]?.name;
+
+							const discountedPrice = parseFloat(
+								String(variant?.pricing?.price?.gross?.amount || "0")
+							);
+
+							return saving ? (
+								<div key={i} className="space-y-1">
+									<div className="flex items-baseline gap-2">
+										<span className="text-2xl font-bold text-[#ed4264]">₹{discountedPrice}</span>
+										<span className="text-sm font-medium text-neutral-400 line-through">₹{saving}</span>
 									</div>
-								)}
-							</button>
-						)}
-					</div>}
+									<p className="text-xs font-semibold text-green-600">Special Price for you</p>
+								</div>
+							) : (
+								<div key={i} className="space-y-1">
+									<p
+										className="text-2xl font-bold text-[#ed4264]"
+										data-testid="ProductElement_PriceRange"
+									>
+										₹{discountedPrice}
+									</p>
+								</div>
+							);
+						})}
+					</div>
+					{/* Action Section */}
+					{product?.variants?.[0]?.quantityAvailable === 0 ? (
+						<div className="rounded-lg bg-red-50 px-3 py-2">
+							<p className="text-xs font-bold text-[#ed4264]">Out of Stock</p>
+						</div>
+					) : (
+						<div className="flex items-center">
+							{cartItem ? (
+								<div className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] p-1 shadow-md">
+									<button
+										onClick={handleDecrease}
+										disabled={isPending}
+										className="flex h-8 w-8 items-center justify-center rounded-md text-white transition-colors hover:bg-[#47141e]/20 disabled:cursor-not-allowed disabled:opacity-50"
+									>
+										-
+									</button>
+									<span className="min-w-[2rem] text-center text-sm font-bold text-white">
+										{isPending ? <ClipLoader size={12} color="#ffffff" /> : cartItem.quantity}
+									</span>
+									<button
+										onClick={handleIncrease}
+										disabled={isPending}
+										className="flex h-8 w-8 items-center justify-center rounded-md text-white transition-colors hover:bg-[#47141e]/20 disabled:cursor-not-allowed disabled:opacity-50"
+									>
+										+
+									</button>
+								</div>
+							) : (
+								<button
+									onClick={handleAddToCart}
+									disabled={isPending}
+									className="group/btn flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] px-4 py-2.5 font-semibold text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+								>
+									{isPending ? (
+										<ClipLoader size={14} color="#ffffff" />
+									) : (
+										<>
+											<FaShoppingCart size={16} />
+											<span>Add</span>
+										</>
+									)}
+								</button>
+							)}
+						</div>
+					)}
 				</div>
 			</div>
 			{/* </div> */}

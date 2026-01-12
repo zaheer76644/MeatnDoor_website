@@ -30,7 +30,7 @@ export const Logo = () => {
 		<div className="flex items-center font-bold">
 			<LinkWithChannel aria-label="homepage" href="/">
 				{/* {companyName} */}
-				<Image alt={companyName} src={Logo2} width={180} height={50} />
+				<Image alt={companyName} src={Logo2} width={200} height={50} />
 			</LinkWithChannel>
 		</div>
 	);

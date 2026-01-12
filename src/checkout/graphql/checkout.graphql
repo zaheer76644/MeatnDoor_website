@@ -126,6 +126,11 @@ fragment CheckoutLineFragment on CheckoutLine {
 	}
 	variant {
 		attributes(variantSelection: ALL) {
+			attribute {
+				id
+				name
+				slug
+			}
 			values {
 				name
 				dateTime

@@ -2,9 +2,7 @@ import { find } from "./checkout";
 import {
 	CheckoutAddLineDocument,
 	CheckoutLineUpdateDocument,
-	ProductOrderField,
-	OrderDirection,
-	SearchProductsDocument,
+	ProductDetailsDocument,
 } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 
@@ -22,23 +20,19 @@ export async function ensureHandlingFee(checkoutId: string) {
 	console.log(`Checkout found. Channel: ${channel}`);
 
 	// 2. Find the "Handling Fee" product in this channel
-	const searchResult = await executeGraphQL(SearchProductsDocument, {
+	const searchResult = await executeGraphQL(ProductDetailsDocument, {
 		variables: {
-			search: "Handling Fee",
+			slug: "handling-fee",
 			channel,
-			sortBy: ProductOrderField.Rank,
-			sortDirection: OrderDirection.Desc,
-			first: 1,
 		},
 		cache: "no-cache",
 	});
-
-	const handlingFeeProduct = searchResult.products?.edges[0]?.node;
+	
+	const handlingFeeProduct = searchResult.product;
 
 	if (!handlingFeeProduct || !handlingFeeProduct.variants?.length) {
 		console.warn(`Handling Fee product not found in channel ${channel}`);
 		// Log what was found to be sure
-		console.log("Search result count:", searchResult.products?.totalCount);
 		return;
 	}
 

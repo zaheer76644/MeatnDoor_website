@@ -286,7 +286,7 @@ export function MobileLoginForm() {
 				// window.opener.location.reload();
 				// window.close();
 				alert("✅ Login successful!");
-				router.push("/in/cart");
+				router.push("/in");
 			}
 		} catch (error) {
 			console.error("Error verifying OTP:", error);
@@ -301,55 +301,100 @@ export function MobileLoginForm() {
 	};
 
 	return (
-		<div className="mx-auto mt-16 w-full max-w-lg">
-			<form onSubmit={handleSubmit}>
-				<h2 className="mb-4 text-center text-2xl font-semibold">Login with OTP</h2>
-				{!otpSent ? (
-					<div className="mb-4">
-						<label htmlFor="phone" className="mb-1 block text-sm font-medium">
-							Phone number
-						</label>
-						<div className="flex">
-							<span className="inline-flex items-center rounded-l border bg-neutral-100 px-3 text-neutral-800">
-								+91
-							</span>
-							<input
-								type="tel"
-								id="phone"
-								value={phone}
-								onChange={(e) => setPhone(e.target.value)}
-								placeholder="Enter your mobile number"
-								className="w-full rounded border bg-neutral-50 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-neutral-700"
-								required
-							/>
+		<div className="mx-auto mt-8 w-full max-w-lg px-4 md:mt-16">
+			<div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg md:p-8">
+				<form onSubmit={handleSubmit} className="space-y-6">
+					{/* Header */}
+					<div className="text-center">
+						<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#ed4264] to-[#ff6b9d] shadow-md">
+							<svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+							</svg>
 						</div>
-						<button
-							type="submit"
-							className="mt-4 w-full rounded bg-neutral-800 px-4 py-2 text-neutral-200 hover:bg-neutral-700"
-						>
-							Generate OTP
-						</button>
+						<h2 className="text-2xl font-bold text-[#47141e] md:text-3xl">Login with OTP</h2>
+						<p className="mt-2 text-sm text-gray-600">Enter your phone number to receive a verification code</p>
 					</div>
-				) : (
-					<div className="mb-4">
-						<label htmlFor="otp" className="mb-1 block text-sm font-medium">
-							Enter OTP
-						</label>
-						<input
-							type="text"
-							id="otp"
-							value={otp}
-							onChange={(e) => setOtp(e.target.value)}
-							placeholder="Enter OTP"
-							className="w-full rounded border bg-neutral-50 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-neutral-700"
-							required
-						/>
-						<button
-							type="submit"
-							className="mt-4 w-full rounded bg-neutral-800 px-4 py-2 text-neutral-200 hover:bg-neutral-700"
-						>
-							Verify OTP
-						</button>
+					{!otpSent ? (
+						<div className="space-y-4">
+							{/* Phone Input */}
+							<div>
+								<label htmlFor="phone" className="mb-2 block text-sm font-semibold text-gray-700">
+									Phone number
+								</label>
+								<div className="flex overflow-hidden rounded-xl border-2 border-gray-200 shadow-sm transition-all duration-200 focus-within:border-[#ed4264] focus-within:ring-2 focus-within:ring-[#ed4264]/20">
+									<span className="inline-flex items-center border-r border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 px-4 text-sm font-semibold text-gray-700">
+										+91
+									</span>
+									<input
+										type="tel"
+										id="phone"
+										value={phone}
+										onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+										placeholder="Enter your mobile number"
+										className="w-full border-0 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+										required
+										maxLength={10}
+										style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
+										onFocus={(e) => e.target.style.outline = 'none'}
+									/>
+								</div>
+							</div>
+
+							{/* Generate OTP Button */}
+							<button
+								type="submit"
+								className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] px-6 py-3.5 text-center text-lg font-bold text-white shadow-xl transition-all duration-300 hover:shadow-2xl hover:shadow-[#ed4264]/50"
+							>
+								{/* Shimmer effect */}
+								<div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>
+								{/* Button content */}
+								<span className="relative z-10 flex items-center justify-center gap-2">
+									<svg className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+									</svg>
+									<span>Generate OTP</span>
+								</span>
+							</button>
+						</div>
+					) : (
+						<div className="space-y-4">
+							{/* OTP Input */}
+							<div>
+								<label htmlFor="otp" className="mb-2 block text-sm font-semibold text-gray-700">
+									Enter OTP
+								</label>
+								<input
+									type="text"
+									id="otp"
+									value={otp}
+									onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+									placeholder="Enter 6-digit OTP"
+									className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3.5 text-center text-2xl font-bold tracking-widest text-gray-900 shadow-sm transition-all duration-200 focus:border-gray-200 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+									required
+									maxLength={6}
+									style={{ border: '2px solid #e5e7eb', outline: 'none', boxShadow: 'none' }}
+									onFocus={(e) => {
+										e.target.style.outline = 'none';
+										e.target.style.borderColor = '#e5e7eb';
+									}}
+								/>
+							</div>
+
+							{/* Verify OTP Button */}
+							<button
+								type="submit"
+								className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] px-6 py-3.5 text-center text-lg font-bold text-white shadow-xl transition-all duration-300 hover:shadow-2xl hover:shadow-[#ed4264]/50"
+							>
+								{/* Shimmer effect */}
+								<div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>
+								{/* Button content */}
+								<span className="relative z-10 flex items-center justify-center gap-2">
+									<svg className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+									</svg>
+									<span>Verify OTP</span>
+								</span>
+							</button>
 
 						{/* <p className="mt-2 text-sm text-gray-500">
 							Didn’t receive OTP?{" "}
@@ -358,20 +403,22 @@ export function MobileLoginForm() {
 							</span>
 						</p> */}
 						<p className="mt-2 text-sm text-gray-500">
-							Didn’t receive OTP?{" "}
-							<span
-								onClick={() => {
-									setOtpSent(false); // go back to phone input
-									setOtp(""); // clear previous OTP
-								}}
-								className="cursor-pointer text-blue-600"
-							>
-								Verify Number Again
-							</span>
-						</p>
-					</div>
-				)}
-			</form>
+							{`Didn’t receive OTP?`}{" "}
+								<button
+									type="button"
+									onClick={() => {
+										setOtpSent(false); // go back to phone input
+										setOtp(""); // clear previous OTP
+									}}
+									className="font-semibold text-[#ed4264] transition-colors hover:text-[#47141e] hover:underline"
+								>
+									Verify Number Again
+								</button>
+							</p>
+						</div>
+					)}
+				</form>
+			</div>
 		</div>
 	);
 }

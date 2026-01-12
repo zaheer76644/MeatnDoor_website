@@ -239,7 +239,7 @@ export function CustomSlider() {
 							{/* Glow effect behind image */}
 							<div className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] opacity-20 blur-3xl"></div>
 							<Image
-								src="/image.png"
+								src="/banner_image.png"
 								width={500}
 								height={500}
 								alt="MEATnDOOR - Quality at Doorstep"
