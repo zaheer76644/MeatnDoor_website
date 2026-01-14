@@ -22,6 +22,7 @@ export const OrderConfirmation = () => {
 			</div>
 			<Suspense fallback={<SummarySkeleton />}>
 				<Summary
+				shippingMethods={[]}
 					{...order}
 					// for now there can only be one voucher per order in the api
 					discount={order?.discounts?.find(({ type }) => type === "VOUCHER")?.amount}

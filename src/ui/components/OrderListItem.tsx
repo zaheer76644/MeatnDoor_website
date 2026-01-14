@@ -189,7 +189,6 @@ const OrderStatusTimeline = ({ status, deliveryDate, deliveryTime }: OrderStatus
 };
 
 export const OrderListItem = ({ order }: Props) => {
-	console.log('order===============', order)
 	const [isOpen, setIsOpen] = useState(false);
 	const [handlingFeeAmount, setHandlingFeeAmount] = useState<{ amount: number; currency: string } | null>(null);
 
