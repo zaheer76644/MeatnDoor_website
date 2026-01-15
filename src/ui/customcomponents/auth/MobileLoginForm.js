@@ -179,7 +179,7 @@ export function MobileLoginForm() {
 			return;
 		}
 		try {
-			const response = await fetch("/api/auth/send-otp", {
+			const response = await fetch(apiConfig.SEND_OTP_ENDPOINT, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ phone }),
@@ -247,7 +247,7 @@ export function MobileLoginForm() {
 			return;
 		}
 		try {
-			const response = await fetch("/api/auth/verify-otp", {
+			const response = await fetch(apiConfig.VERIFY_OTP_ENDPOINT, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ phone, code: otp }),
