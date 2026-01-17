@@ -34,7 +34,7 @@ export const AddressList: React.FC<AddressListProps> = ({
 	return (
 		<FormProvider form={form}>
 			<div className="flex flex-col">
-				<Title className="mb-4">{title}</Title>
+				<Title className="mb-4 text-[#47141e]">{title}</Title>
 				{addressList.length < 1 && (
 					<p className="mb-4 text-sm text-gray-600">You currently have no saved addresses.</p>
 				)}

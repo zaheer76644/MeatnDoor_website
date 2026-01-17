@@ -184,8 +184,7 @@ export default function AboutPage() {
 				<div className="mb-16 rounded-2xl bg-white p-8 shadow-lg md:p-12">
 					<p className="text-lg leading-relaxed text-gray-700 md:text-xl">
 						We are a modern meat delivery platform built on generations of trust and expertise, combining
-						traditional knowledge with cutting-edge technology. Founded by{" "}
-						<span className="font-semibold text-[#47141e]">Imran Qureshi</span>, a 4th-generation meat
+						traditional knowledge with cutting-edge technology. Founded by Imran Qureshi, a 4th-generation meat
 						dealer and wholesaler, Indian government-certified agent with 20 years of experience from Deonar,
 						Govandi, our mission is to deliver hygienic, high-quality fresh meat right to your doorstep. We
 						source meat only from trusted suppliers, maintain strict hygiene standards, and use sealed

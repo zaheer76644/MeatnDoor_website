@@ -3,7 +3,7 @@ import NextImage, { type ImageProps } from "next/image";
 export const ProductImageWrapper = (props: ImageProps) => {
 	return (
 		<div className="aspect-square overflow-hidden ">
-			<NextImage {...props} className="h-[300px] w-full object-contain object-center p-2" />
+			<NextImage {...props} className="h-[300px] md:h-[500px] w-full object-contain object-center p-2" />
 		</div>
 	);
 };

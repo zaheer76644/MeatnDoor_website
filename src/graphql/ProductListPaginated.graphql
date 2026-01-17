@@ -10,6 +10,8 @@ query ProductListPaginated($first: Int!, $after: String, $channel: String!, $fil
 		pageInfo {
 			endCursor
 			hasNextPage
+			startCursor
+			hasPreviousPage
 		}
 	}
 }

@@ -60,6 +60,7 @@ export function ProductElement({
 	};
 
 	return (
+		<LinkWithChannel href={`/products/${product.slug}`} key={product.id}>
 		<li
 			data-testid="ProductElement"
 			className="group relative overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
@@ -127,7 +128,7 @@ export function ProductElement({
 					/>
 				</div>
 			)}
-			<LinkWithChannel href={`/products/${product.slug}`} key={product.id}>
+			{/* <LinkWithChannel href={`/products/${product.slug}`} key={product.id}> */}
 				<div
 					className={`relative h-[260px] overflow-hidden rounded-t-2xl bg-gradient-to-br from-gray-50 to-gray-100 transition-transform duration-300 group-hover:scale-105 ${
 						product?.variants?.[0]?.quantityAvailable === 0 ? "grayscale" : ""
@@ -138,15 +139,16 @@ export function ProductElement({
 							loading={loading}
 							src={product.thumbnail.url}
 							alt={product.thumbnail.alt ?? ""}
-							width={1024}
-							height={1024}
+							width={1440}
+							height={1440}
 							priority={priority}
+							style={{ height: '260px' }}
 						/>
 					)}
 					{/* Overlay on hover */}
 					<div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/5"></div>
 				</div>
-			</LinkWithChannel>
+			{/* </LinkWithChannel> */}
 			<div className="p-4">
 				<div className="space-y-2">
 					{/* Product Name */}
@@ -283,5 +285,6 @@ export function ProductElement({
 			{/* </div> */}
 			{/* </LinkWithChannel> */}
 		</li>
+		</LinkWithChannel>
 	);
 }

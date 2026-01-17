@@ -112,6 +112,7 @@ import {
 	IoLogoYoutube,
 	IoLogoPinterest,
 } from "react-icons/io5";
+import { NavLink } from "./nav/components/NavLink";
 
 // type FooterProps = {
 // 	channel: string;
@@ -147,14 +148,14 @@ export function Footer() {
 				<div className="container mx-auto px-4 sm:px-0">
 					<div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
 						{/* Left Section - Brand */}
-						<div className="lg:col-span-4">
+						<div className="lg:col-span-6">
 							<div className="mb-6">
 								<Link href="/" className="inline-block transition-transform duration-300 hover:scale-105">
 									<Image src="/img/log.png" alt="MEATnDOOR Logo" width={200} height={60} />
 								</Link>
 							</div>
 
-							<p className="mb-6 text-base leading-relaxed text-gray-200 md:text-lg">
+							<p className="mb-6 text-base leading-relaxed text-gray-200 md:text-lg w-full md:w-1/2">
 								Quality fresh meat delivered right to your doorstep. Experience convenience, freshness, and excellence with{" "}
 								<span className="font-semibold text-white">MEATnDOOR</span>.
 							</p>
@@ -191,10 +192,10 @@ export function Footer() {
 						</div>
 
 						{/* Right Section - Links */}
-						<div className="lg:col-span-8">
-							<div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+						<div className="lg:col-span-6">
+							<div className="grid grid-cols-2 gap-8 md:grid-cols-3 md:justify-items-end">
 								{/* Solutions */}
-								<div>
+								{/* <div>
 									<h3 className="mb-4 text-lg font-bold text-white">Solutions</h3>
 									<ul className="space-y-2.5">
 										{["Marketing", "Analytics", "Commerce", "Insights", "Promotion"].map((item) => (
@@ -208,71 +209,62 @@ export function Footer() {
 											</li>
 										))}
 									</ul>
-								</div>
+								</div> */}
 
-								{/* Support */}
+								{/* Download Our App */}
 								<div>
-									<h3 className="mb-4 text-lg font-bold text-white">Support</h3>
-									<ul className="space-y-2.5">
-										{["Pricing", "Documentation", "Guides", "API Status", "Live Support"].map((item) => (
-											<li key={item}>
-												<Link
-													href="/coming-soon"
-													className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
-												>
-													{item}
-												</Link>
-											</li>
-										))}
-									</ul>
+									<h3 className="mb-4 text-lg font-bold text-white">Download Our App</h3>
+									<div className="flex flex-col gap-3">
+										{/* App Store Button */}
+										<a
+											href="https://apps.apple.com/in/app/meatndoor/id6755533727"
+											target="_blank"
+											rel="noopener noreferrer"
+											className="group flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 font-semibold text-[#47141e] shadow-md transition-all duration-300 hover:scale-105 hover:bg-[#ed4264] hover:text-white hover:shadow-lg"
+										>
+											<svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+												<path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+											</svg>
+											<span className="text-sm">App Store</span>
+										</a>
+
+										{/* Google Play Button */}
+										<a
+											href="https://play.google.com/store/apps/details?id=com.themanagemate.meatndoor&hl=en_IN"
+											target="_blank"
+											rel="noopener noreferrer"
+											className="group flex items-center justify-center gap-2 rounded-lg border-2 border-white bg-transparent px-4 py-2.5 font-semibold text-white shadow-md transition-all duration-300 hover:scale-105 hover:bg-white hover:text-[#47141e] hover:shadow-lg"
+										>
+											<svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+												<path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" />
+											</svg>
+											<span className="text-sm">Google Play</span>
+										</a>
+									</div>
 								</div>
 
 								{/* Company */}
 								<div>
 									<h3 className="mb-4 text-lg font-bold text-white">Company</h3>
 									<ul className="space-y-2.5">
-										<li>
-											<Link
-												href="/About-Us"
+										<div>
+										<NavLink href="/about">About</NavLink>
+										</div>
+										<NavLink href="/contact">Contact Us</NavLink>
+											{/* <Link
+												href="/about"
 												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
 											>
 												About Us
-											</Link>
-										</li>
-										<li>
-											<Link
-												href="/coming-soon"
-												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
-											>
-												Our Blog
-											</Link>
-										</li>
-										<li>
-											<Link
-												href="/coming-soon"
-												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
-											>
-												Jobs
-											</Link>
-										</li>
-										<li>
-											<Link
-												href="/coming-soon"
-												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
-											>
-												Press
-											</Link>
-										</li>
-										<li>
-											<Link
+											</Link> */}
+											{/* <Link
 												href="https://meatndoor.com/contact-us.html"
 												target="_blank"
 												rel="noopener noreferrer"
 												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
 											>
 												Contact Us
-											</Link>
-										</li>
+											</Link> */}
 									</ul>
 								</div>
 
@@ -298,30 +290,6 @@ export function Footer() {
 												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
 											>
 												Privacy Policy
-											</Link>
-										</li>
-										<li>
-											<Link
-												href="/coming-soon"
-												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
-											>
-												Catering Services
-											</Link>
-										</li>
-										<li>
-											<Link
-												href="/coming-soon"
-												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
-											>
-												Customer Relations
-											</Link>
-										</li>
-										<li>
-											<Link
-												href="/coming-soon"
-												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
-											>
-												Innovation
 											</Link>
 										</li>
 									</ul>

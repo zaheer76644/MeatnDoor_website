@@ -169,7 +169,7 @@ export const PromoCodeAdd: FC<PromoCodeAddProps> = ({ className, inputCouponLabe
 								</svg>
 							</div>
 							<div>
-								<h3 className="text-sm font-semibold text-gray-800">Have a promo code?</h3>
+								<h3 className="text-sm font-semibold text-[#47141e]">Have a promo code?</h3>
 								<p className="text-xs text-gray-500">Enter your code below to apply discount</p>
 							</div>
 						</div>

@@ -295,7 +295,6 @@ export default async function Page(props: {
 									width={1024}
 									height={1024} 
 									src={firstImage.url}
-									style={{height: '500px'}}
 								/>
 							</div>
 						)}

@@ -730,7 +730,7 @@ export const CheckoutForm = () => {
 						<div className="flex justify-end">
 							<div className="w-full md:w-[49%] mt-5">
 								<Divider />
-								<h1 className="mb-4 text-lg font-semibold">Payment Method</h1>
+								<h1 className="mb-4 text-lg font-semibold text-[#47141e] mt-3">Payment Method</h1>
 								<div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
 									{/* ✅ Cash on Delivery Button */}
 									<button
