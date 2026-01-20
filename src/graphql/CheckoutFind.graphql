@@ -11,6 +11,10 @@ query CheckoutFind($id: ID!) {
 					currency
 				}
 			}
+			undiscountedUnitPrice {
+				amount
+				currency
+			}
 			variant {
 				product {
 					id

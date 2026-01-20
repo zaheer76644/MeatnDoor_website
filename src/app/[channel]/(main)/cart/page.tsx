@@ -119,7 +119,14 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 										</div>
 										<div className="text-right">
 											<p className="text-lg font-bold text-[#47141e]">
-												{formatMoney(item.totalPrice.gross.amount, item.totalPrice.gross.currency)}
+												{item.undiscountedUnitPrice
+													? formatMoney(
+															// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+															(item.undiscountedUnitPrice.amount ) * item.quantity,
+															// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+															item.undiscountedUnitPrice.currency ,
+														)
+													: formatMoney(item.totalPrice.gross.amount, item.totalPrice.gross.currency)}
 											</p>
 										</div>
 									</div>
@@ -142,13 +149,29 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 				{/* Summary Section */}
 				<div className="mt-8 rounded-xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-6 shadow-lg md:mt-12">
 					<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-						<div>
+						<div className="flex-1">
 							<p className="text-xl font-bold text-gray-900">Your Total</p>
 							<p className="mt-1 text-sm text-gray-500">Shipping will be calculated in the next step</p>
+							
+							{/* Free Delivery Badge */}
+							<div className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-2 shadow-md">
+								<div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20">
+									<svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+									</svg>
+								</div>
+								<span className="text-sm font-bold text-white">Free Delivery on order above ₹499</span>
+							</div>
 						</div>
 						<div className="text-2xl font-bold text-[#ed4264]">
 							{formatMoney(
-								visibleLines.reduce((acc, line) => acc + line.totalPrice.gross.amount, 0),
+								visibleLines.reduce((acc, line) => {
+									if (line.undiscountedUnitPrice) {
+										// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+										return acc + ((line.undiscountedUnitPrice.amount ) * line.quantity);
+									}
+									return acc + line.totalPrice.gross.amount;
+								}, 0),
 								checkout.totalPrice.gross.currency,
 							)}
 						</div>

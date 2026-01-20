@@ -46,6 +46,7 @@ export const Summary: FC<SummaryProps> = ({
 	const [handlingFeeAmount, setHandlingFeeAmount] = useState<{ amount: number; currency: string } | null>(null);
 	const [totalSavings, setTotalSavings] = useState<{ amount: number; currency: string } | null>(null);
 	const [shippingPriceAmount, setShippingPriceAmount] = useState<{ amount: number; currency: string } | null>(null);
+	const [maxShippingPriceAmount, setMaxShippingPriceAmount] = useState<{ amount: number; currency: string } | null>(null);
 	const [includesShippingSavings, setIncludesShippingSavings] = useState(false);
 	useEffect(() => {
 		if (shippingMethods?.length > 0) {
@@ -53,6 +54,10 @@ export const Summary: FC<SummaryProps> = ({
 				method.price.amount < min.price.amount ? method : min
 			);
 			setShippingPriceAmount(minShippingPrice?.price);
+			const maxShippingPrice = shippingMethods?.reduce((min, method) =>
+				method.price.amount > min.price.amount ? method : min
+			);
+			setMaxShippingPriceAmount(maxShippingPrice?.price);
 		}
 	}, [shippingMethods]);
 	// Filter out "Handling Fee" product from the lines (memoized to prevent infinite loops)
@@ -134,8 +139,8 @@ export const Summary: FC<SummaryProps> = ({
 
 		// Add shipping savings if minimum shipping price is 0 but user is being charged
 		let shippingSavingsAdded = false;
-		if (shippingPriceAmount?.amount === 0 && shippingPrice?.gross?.amount && shippingPrice.gross.amount > 0) {
-			savings += shippingPrice.gross.amount;
+		if (shippingPriceAmount?.amount === 0 &&  maxShippingPriceAmount?.amount && maxShippingPriceAmount.amount > 0) {
+			savings += maxShippingPriceAmount?.amount ?? 0;
 			shippingSavingsAdded = true;
 			if (!currency && shippingPrice.gross.currency) {
 				currency = shippingPrice.gross.currency;
@@ -148,8 +153,7 @@ export const Summary: FC<SummaryProps> = ({
 		} else {
 			setTotalSavings(null);
 		}
-	}, [filteredLines, shippingPriceAmount, shippingPrice]);
-
+	}, [filteredLines, shippingPriceAmount, shippingPrice, maxShippingPriceAmount]);
 	return (
 		<div
 			className={clsx(
