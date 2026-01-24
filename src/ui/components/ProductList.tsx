@@ -10,49 +10,41 @@ export const ProductList = ({
 	cartItems?: Record<string, { lineId: string; quantity: number }>;
 }) => {
 
-// 	const isOutOfStock = (item: any) =>
-//   item?.variants?.every(
-//     (variant: any) => variant?.quantityAvailable === 0
-//   );
+	const isOutOfStock = (item: ProductListItemFragment) =>
+		item?.variants?.every(
+			(variant) => variant?.quantityAvailable === 0
+		) ?? false;
 
-// const getSortIndex = (item: any) =>
-//   item?.attributes
-//     ?.find((attr: any) => attr.attribute?.name === "Sort index")
-//     ?.values?.[0]?.name;
-//     const filteredProducts = [...products]
-//     .filter((item) => item.category?.name)
-//     .sort((a, b) => {
-//       const aOut = isOutOfStock(a);
-//       const bOut = isOutOfStock(b);
+	const getSortIndex = (item: ProductListItemFragment) =>
+		item?.attributes
+			?.find((attr) => attr.attribute?.name === "Sort index")
+			?.values?.[0]?.name;
+    const filteredProducts = [...products]
+    .filter((item) => item.category?.name)
+    .sort((a, b) => {
+      const aOut = isOutOfStock(a);
+      const bOut = isOutOfStock(b);
 
-//       // 🔴 Out-of-stock to bottom
-//       if (aOut && !bOut) return 1;
-//       if (!aOut && bOut) return -1;
+      // 🔴 Out-of-stock to bottom
+      if (aOut && !bOut) return 1;
+      if (!aOut && bOut) return -1;
 
-//       const aVal = Number(getSortIndex(a)) || 0;
-//       const bVal = Number(getSortIndex(b)) || 0;
+      const aVal = Number(getSortIndex(a)) || 0;
+      const bVal = Number(getSortIndex(b)) || 0;
 
-//       if (!aVal && !bVal) return 0;
-//       if (!aVal) return 1;
-//       if (!bVal) return -1;
+      if (!aVal && !bVal) return 0;
+      if (!aVal) return 1;
+      if (!bVal) return -1;
 
-//       return aVal - bVal;
-//     });
+      return aVal - bVal;
+    });
 	return (
 		<ul
 			role="list"
 			data-testid="ProductList"
 			className="grid grid-cols-1 gap-8 sm:grid-cols-3 lg:grid-cols-4"
 		>
-			{[...products]
-				.sort((a, b) => {
-					const qtyA = a.variants?.[0]?.quantityAvailable ?? 0;
-					const qtyB = b.variants?.[0]?.quantityAvailable ?? 0;
-					if (qtyA > 0 && qtyB <= 0) return -1;
-					if (qtyA <= 0 && qtyB > 0) return 1;
-					return 0;
-				})
-				.map((product, index) => (
+			{filteredProducts.map((product, index) => (
 				<ProductElement
 					key={product.id}
 					product={product}

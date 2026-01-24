@@ -1,13 +1,35 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { SearchIcon, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 export const SearchBar = ({ channel }: { channel: string }) => {
 	const router = useRouter();
+	const pathname = usePathname();
 	const [searchValue, setSearchValue] = useState("");
 	const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+	// Track previous pathname to detect navigation away from search page
+	const prevPathnameRef = useRef<string>(pathname);
+	
+	// Clear search bar when navigating away from search page (but not while typing)
+	useEffect(() => {
+		const isOnSearchPage = pathname.includes("/search");
+		const wasOnSearchPage = prevPathnameRef.current.includes("/search");
+		
+		// Only clear if we're navigating AWAY from search page (not when arriving at search page)
+		if (wasOnSearchPage && !isOnSearchPage) {
+			// User navigated away from search page, clear the search bar
+			setSearchValue("");
+			if (timeoutRef.current) {
+				clearTimeout(timeoutRef.current);
+			}
+		}
+		
+		// Update the previous pathname
+		prevPathnameRef.current = pathname;
+	}, [pathname]);
 
 	useEffect(() => {
 		// Clear previous timeout

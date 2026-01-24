@@ -80,9 +80,11 @@ export const AddressForm: FC<PropsWithChildren<AddressFormProps>> = ({
 			<Title className="mb-4">{title}</Title>
 			<div className="mt-2 grid grid-cols-1 gap-3">
 				<CountrySelect only={availableCountries} />
-				{orderedAddressFields.map((field) => {
-					const isRequired = isRequiredField(field);
-					const label = getFieldLabel(field);
+				{orderedAddressFields
+					.filter((field) => field !== "companyName") // Remove companyName field
+					.map((field) => {
+					const isRequired = field === "phone" ? true : isRequiredField(field); // Make phone required
+					const label = field === "postalCode" ? "Postal Code" : getFieldLabel(field);
 
 					const commonProps = {
 						key: field,

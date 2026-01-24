@@ -1,4 +1,3 @@
-import { ShoppingBagIcon } from "lucide-react";
 import clsx from "clsx";
 import * as Checkout from "@/lib/checkout";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
@@ -19,7 +18,9 @@ export const CartNavItem = async ({ channel }: { channel: string }) => {
 			className="relative flex items-center text-white hover:text-[#ed4264]"
 			data-testid="CartNavItem"
 		>
-			<ShoppingBagIcon className="h-6 w-6 shrink-0" aria-hidden="true" />
+			<svg className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+			</svg>
 			{lineCount > 0 ? (
 				<div
 					className={clsx(

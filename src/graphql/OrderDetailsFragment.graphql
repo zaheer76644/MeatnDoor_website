@@ -56,11 +56,27 @@ fragment OrderDetails on Order {
 		... on ShippingMethod {
 			id
 			name
+			price {
+				amount
+				currency
+			}
+			minimumDeliveryDays
+			maximumDeliveryDays
 		}
 		... on Warehouse {
 			id
 			name
 		}
+	}
+	shippingMethods {
+		id
+		name
+		price {
+			amount
+			currency
+		}
+		minimumDeliveryDays
+		maximumDeliveryDays
 	}
 	shippingPrice {
 		gross {
@@ -73,10 +89,36 @@ fragment OrderDetails on Order {
 	lines {
 		quantity
 		productName
+		unitPrice {
+			gross {
+				amount
+				currency
+			}
+		}
+		undiscountedUnitPrice {
+			gross {
+				amount
+				currency
+			}
+		}
 		variant {
 			id
 			name
 			sku
+			attributes(variantSelection: ALL) {
+				attribute {
+					id
+					name
+					slug
+				}
+				values {
+					id
+					name
+					translation(languageCode: EN) {
+						name
+					}
+				}
+			}
 			product {
 				id
 				name

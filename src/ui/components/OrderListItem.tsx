@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
+import { GeneratePDFInvoice } from "./GeneratePDFInvoice";
 import { formatDate, formatMoney, getHrefForVariant } from "@/lib/utils";
 import { type OrderDetailsFragment } from "@/gql/graphql";
 import { type OrderLineFragment } from "@/checkout/graphql";
@@ -106,27 +107,45 @@ const getCurrentIndex = (status: string, deliveryDate?: string, deliveryTime?: s
 	 * deliveryTime example: "4:30 PM - 6:30 PM"
 	 */
 
-	const timePart = deliveryTime.split("-")[0].trim(); // "4:30 PM"
+	const timePart = deliveryTime.split("-")[0].trim(); // Handles: "4:30 PM", "04:30PM", "4:30PM", "10:30", etc.
 
-	const [time, modifier] = timePart.split(" ");
-	const [hoursStr, minutesStr] = time.split(":");
+	// Extract AM/PM modifier (handles all formats: with/without space, with/without leading zero, 24-hour format)
+	let modifier = "";
+	let timeStr = timePart;
+	
+	// Check if timePart ends with AM or PM (case-insensitive, handles both "4:30PM" and "4:30 PM")
+	if (timePart.toUpperCase().endsWith("PM")) {
+		modifier = "PM";
+		timeStr = timePart.slice(0, -2).trim(); // Remove "PM" from end: "4:30PM" → "4:30"
+	} else if (timePart.toUpperCase().endsWith("AM")) {
+		modifier = "AM";
+		timeStr = timePart.slice(0, -2).trim(); // Remove "AM" from end: "4:30AM" → "4:30"
+	} else {
+		// Fallback: Try splitting by space (for formats like "4:30 PM")
+		const parts = timePart.split(" ");
+		if (parts.length > 1) {
+			timeStr = parts[0];
+			modifier = parts[1].toUpperCase();
+		}
+		// If no modifier found, assume 24-hour format (e.g., "10:30" = 10:30, "22:30" = 22:30)
+	}
+	
+	const [hoursStr, minutesStr] = timeStr.split(":");
 	let hours = parseInt(hoursStr, 10);
 	const minutes = parseInt(minutesStr, 10);
 
+	// Convert 12-hour format to 24-hour format (only if modifier exists)
 	if (modifier === "PM" && hours < 12) hours += 12;
 	if (modifier === "AM" && hours === 12) hours = 0;
-
+	// If no modifier, hours are already in 24-hour format (0-23)
 	const [year, month, day] = deliveryDate.split("-").map(Number);
 
 	// Create a Date object in IST
 	// IST = UTC + 5:30
 	const deliveryDateTimeIST = new Date(Date.UTC(year, month - 1, day, hours - 5, minutes - 30));
-
 	// Current IST time
-	const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-
+	const nowIST = new Date();
 	const processingTimeIST = new Date(deliveryDateTimeIST.getTime() - 2 * 60 * 60 * 1000);
-
 	if (nowIST >= processingTimeIST) {
 		return 1; // Processing
 	}
@@ -189,8 +208,38 @@ const OrderStatusTimeline = ({ status, deliveryDate, deliveryTime }: OrderStatus
 };
 
 export const OrderListItem = ({ order }: Props) => {
+	
 	const [isOpen, setIsOpen] = useState(false);
 	const [handlingFeeAmount, setHandlingFeeAmount] = useState<{ amount: number; currency: string } | null>(null);
+	const [totalSavings, setTotalSavings] = useState<{ amount: number; currency: string } | null>(null);
+	const [_shippingPriceAmount, setShippingPriceAmount] = useState<{ amount: number; currency: string } | null>(null);
+	const [_maxShippingPriceAmount, setMaxShippingPriceAmount] = useState<{ amount: number; currency: string } | null>(null);
+	useEffect(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		if (order?.shippingMethods && Array.isArray(order.shippingMethods) && order.shippingMethods.length > 0) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			const minShippingPrice = (order.shippingMethods as Array<{ price: { amount: number; currency: string } }>).reduce((min, method) => {
+				const methodAmount = method.price?.amount ?? 0;
+				const minAmount = min.price?.amount ?? 0;
+				return methodAmount < minAmount ? method : min;
+			});
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+			if (minShippingPrice?.price) {
+				setShippingPriceAmount(minShippingPrice.price as { amount: number; currency: string });
+			}
+			
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			const maxShippingPrice = (order.shippingMethods as Array<{ price: { amount: number; currency: string } }>).reduce((min, method) => {
+				const methodAmount = method.price?.amount ?? 0;
+				const minAmount = min.price?.amount ?? 0;
+				return methodAmount > minAmount ? method : min;
+			});
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+			if (maxShippingPrice?.price) {
+				setMaxShippingPriceAmount(maxShippingPrice.price as { amount: number; currency: string });
+			}
+		}
+	}, [order?.shippingMethods]);
 
 	// Extract and store handling fee amount from order lines
 	useEffect(() => {
@@ -206,6 +255,80 @@ export const OrderListItem = ({ order }: Props) => {
 		}
 	}, [order.lines]);
 
+	// Calculate total savings from all lines
+	useEffect(() => {
+		let savings = 0;
+		let currency = "";
+
+		const filteredLines = order.lines.filter((line) => {
+			const { productName } = getSummaryLineProps(line as OrderLineFragment);
+			return productName?.toLowerCase() !== "handling fee" && productName?.toLowerCase() !== "delivery fee";
+		});
+		filteredLines.forEach((line) => {
+			if (line.variant && line.unitPrice) {
+				let lineSavings = 0;
+				let foundSaving = false;
+
+				// Method 1: Try to find "Saving Amount" attribute
+				if (line.variant.attributes) {
+					for (const attr of line.variant.attributes) {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+						const attributeName = (attr.attribute as { name?: string })?.name;
+						if (attributeName === "Saving Amount" || attributeName === "saving-amount") {
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+							const savingValue = (attr.values as Array<{ translation?: { name?: string }; name?: string }>)?.[0];
+							if (savingValue) {
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+								const savingAmountStr = savingValue.translation?.name || savingValue.name;
+								if (savingAmountStr) {
+									const originalPrice = parseFloat(savingAmountStr);
+									// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+									const discountedPrice = parseFloat(String(line.unitPrice.gross.amount || 0));
+									lineSavings = (originalPrice - discountedPrice) * line.quantity;
+									foundSaving = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+
+				// Method 2: Fallback to undiscountedUnitPrice vs unitPrice
+				if (!foundSaving && line.undiscountedUnitPrice) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					const originalPrice = parseFloat(String(line.undiscountedUnitPrice.gross?.amount || 0));
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					const discountedPrice = parseFloat(String(line.unitPrice.gross.amount || 0));
+					
+					// Only calculate savings if there's a difference
+					if (originalPrice > discountedPrice) {
+						lineSavings = (originalPrice - discountedPrice) * line.quantity;
+					}
+				}
+				
+				if (lineSavings > 0) {
+					savings += lineSavings;
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+					if (!currency && line.unitPrice.gross.currency) {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+						currency = line.unitPrice.gross.currency ;
+					}
+				}
+				if (_shippingPriceAmount?.amount === 0 &&  _maxShippingPriceAmount?.amount && _maxShippingPriceAmount.amount > 0) {
+					savings += _maxShippingPriceAmount?.amount ?? 0;
+					if (!currency && _shippingPriceAmount?.currency) {
+						currency = _shippingPriceAmount?.currency;
+					}
+				}
+			}
+		});
+
+		if (savings > 0 && currency) {
+			setTotalSavings({ amount: savings, currency });
+		} else {
+			setTotalSavings(null);
+		}
+	}, [order.lines, _shippingPriceAmount, _maxShippingPriceAmount]);
 	// console.log(order);
 	const cancelOrder = () => {
 		alert("please download our app to cancel your order");
@@ -362,7 +485,7 @@ export const OrderListItem = ({ order }: Props) => {
 							<dt className="text-xs font-medium text-neutral-500">Payment Method</dt>
 							<dd className="mt-1 text-sm text-neutral-900">
 								{(() => {
-									const deliveryMethod = order?.metadata?.find((a) => a.key === "delivery_method")?.value;
+									const deliveryMethod = order?.metadata?.find((a) => a.key === "paymentMode")?.value;
 									if (deliveryMethod === 'cash_on_delivery') {
 										return "Cash on Delivery";
 									}
@@ -443,14 +566,18 @@ export const OrderListItem = ({ order }: Props) => {
 							</div>
 
 							{/* Cancel Button - Aligned to end */}
-							<div className="flex flex-col justify-end md:ml-auto">
+							{String(order.status) === "UNCONFIRMED" && <div className="flex flex-col justify-end md:ml-auto">
 								<button
 									onClick={cancelOrder}
 									className="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
 								>
 									Cancel Order
 								</button>
-							</div>
+							</div>}
+							{String(order.status) === "CANCELED" && 
+							<div className="flex flex-col justify-end md:ml-auto">
+								<p className="text-sm text-[#ed4264]">Already canceled</p>
+							</div>}
 						</div>
 
 						{/* Products List */}
@@ -628,8 +755,29 @@ export const OrderListItem = ({ order }: Props) => {
 											</span>
 										</div>
 									</div>
+									{totalSavings && totalSavings.amount > 0 && (
+										<div className="mt-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-3">
+											<div className="flex flex-row items-center justify-between">
+												<div className="flex items-center gap-2">
+													<p className="font-semibold text-green-700">You saved</p>
+												</div>
+												<span className="text-green-600 font-bold text-lg">
+													{formatMoney(totalSavings.amount, totalSavings.currency)}
+												</span>
+											</div>
+										</div>
+									)}
 								</div>
 							</div>
+							<div></div>
+									{String(order.status) === "FULFILLED" && (
+										<GeneratePDFInvoice
+											order={order}
+											deliveryDate={order.metadata?.find((m) => m.key === "Delivery_Date")?.value}
+											deliveryTime={order.metadata?.find((m) => m.key === "Delivery_Time")?.value}
+											handlingFee={handlingFeeAmount?.amount || 0}
+										/>
+									)}
 						</div>
 					</div>
 				</div>

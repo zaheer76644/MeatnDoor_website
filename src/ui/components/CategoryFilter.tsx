@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type CategoriesQuery } from "@/gql/graphql";
 
@@ -14,8 +14,27 @@ export const CategoryFilter = ({ categories }: { categories: CategoryNode[] }) =
 	const pathname = usePathname();
 	const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 	const [isFilterExpanded, setIsFilterExpanded] = useState(true);
+	const [isPending, startTransition] = useTransition();
+	const [optimisticSelected, setOptimisticSelected] = useState<Set<string>>(new Set());
 
 	const selectedCategories = searchParams.getAll("categories");
+	const effectiveSelected = optimisticSelected.size > 0 
+		? Array.from(optimisticSelected)
+		: selectedCategories;
+
+	// Sync optimistic state with actual searchParams when they change
+	useEffect(() => {
+		if (optimisticSelected.size > 0) {
+			const currentSelected = new Set(selectedCategories);
+			const optimisticArray = Array.from(optimisticSelected);
+			
+			// If searchParams match optimistic state, clear optimistic state
+			if (optimisticArray.length === currentSelected.size && 
+				optimisticArray.every(id => currentSelected.has(id))) {
+				setOptimisticSelected(new Set());
+			}
+		}
+	}, [searchParams, optimisticSelected, selectedCategories]);
 
 	const toggleCategory = (categoryId: string) => {
 		setExpandedCategories((prev) => {
@@ -30,20 +49,84 @@ export const CategoryFilter = ({ categories }: { categories: CategoryNode[] }) =
 	};
 
 	const handleCategoryChange = (categoryId: string, checked: boolean) => {
-		const newParams = new URLSearchParams(searchParams.toString());
-		const currentSelected = newParams.getAll("categories");
+		// Find the category to check if it has children
+		const category = categories.find((cat) => cat.id === categoryId);
+		const childCategoryIds = category?.children?.edges?.map((edge) => edge.node.id) || [];
 
-		if (checked) {
-			newParams.append("categories", categoryId);
-		} else {
-			newParams.delete("categories");
-			currentSelected.filter((id) => id !== categoryId).forEach((id) => newParams.append("categories", id));
-		}
+		// Check if this is a child category (find parent)
+		const parentCategory = categories.find((cat) => 
+			cat.children?.edges?.some((edge) => edge.node.id === categoryId)
+		);
+		const parentChildIds = parentCategory?.children?.edges?.map((edge) => edge.node.id) || [];
 
-		// Reset pagination when filtering
-		newParams.delete("cursor");
+		// Optimistic update - immediately update UI
+		setOptimisticSelected((prev) => {
+			const newSet = new Set(prev.size > 0 ? prev : selectedCategories);
+			if (checked) {
+				newSet.add(categoryId);
+				// Add all child category IDs (if this is a main category)
+				childCategoryIds.forEach((childId) => newSet.add(childId));
+			} else {
+				newSet.delete(categoryId);
+				// Remove all child category IDs (if this is a main category)
+				childCategoryIds.forEach((childId) => newSet.delete(childId));
+				
+				// If this is a child category and all siblings are unchecked, uncheck parent
+				if (parentCategory && parentChildIds.length > 0) {
+					const allSiblingsUnchecked = parentChildIds.every((siblingId) => 
+						siblingId === categoryId || !newSet.has(siblingId)
+					);
+					if (allSiblingsUnchecked) {
+						newSet.delete(parentCategory.id);
+					}
+				}
+			}
+			return newSet;
+		});
 
-		router.push(`${pathname}?${newParams.toString()}`);
+		// Start transition for navigation
+		startTransition(() => {
+			const newParams = new URLSearchParams(searchParams.toString());
+			const currentSelected = newParams.getAll("categories");
+
+			if (checked) {
+				// Add main category
+				newParams.append("categories", categoryId);
+				// Add all child category IDs (if this is a main category)
+				childCategoryIds.forEach((childId) => {
+					newParams.append("categories", childId);
+				});
+			} else {
+				// Remove main category and all its children (if this is a main category)
+				newParams.delete("categories");
+				const remainingIds = currentSelected.filter(
+					(id) => id !== categoryId && !childCategoryIds.includes(id)
+				);
+				
+				// If this is a child category, check if all siblings are unchecked
+				if (parentCategory && parentChildIds.length > 0) {
+					const allSiblingsUnchecked = parentChildIds.every((siblingId) => 
+						siblingId === categoryId || !currentSelected.includes(siblingId)
+					);
+					
+					// If all siblings are unchecked, also remove parent
+					if (allSiblingsUnchecked) {
+						const finalIds = remainingIds.filter((id) => id !== parentCategory.id);
+						finalIds.forEach((id) => newParams.append("categories", id));
+					} else {
+						remainingIds.forEach((id) => newParams.append("categories", id));
+					}
+				} else {
+					remainingIds.forEach((id) => newParams.append("categories", id));
+				}
+			}
+
+			// Reset pagination when filtering
+			newParams.delete("cursor");
+
+			// Use replace instead of push for better performance (no history entry)
+			router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
+		});
 	};
 
 	return (
@@ -90,9 +173,10 @@ export const CategoryFilter = ({ categories }: { categories: CategoryNode[] }) =
 									<input
 										type="checkbox"
 										id={category.id}
-										checked={selectedCategories.includes(category.id)}
+										checked={effectiveSelected.includes(category.id)}
 										onChange={(e) => handleCategoryChange(category.id, e.target.checked)}
-										className="h-5 w-5 flex-shrink-0 cursor-pointer rounded border-gray-300 text-[#ed4264] transition-all focus:ring-2 focus:ring-[#ed4264] focus:ring-offset-2"
+										disabled={isPending}
+										className="h-5 w-5 flex-shrink-0 cursor-pointer rounded border-gray-300 text-[#ed4264] transition-all focus:ring-2 focus:ring-[#ed4264] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-wait"
 									/>
 									<label 
 										htmlFor={category.id} 
@@ -131,9 +215,10 @@ export const CategoryFilter = ({ categories }: { categories: CategoryNode[] }) =
 													<input
 														type="checkbox"
 														id={childEdge.node.id}
-														checked={selectedCategories.includes(childEdge.node.id)}
+														checked={effectiveSelected.includes(childEdge.node.id)}
 														onChange={(e) => handleCategoryChange(childEdge.node.id, e.target.checked)}
-														className="h-4 w-4 flex-shrink-0 cursor-pointer rounded border-gray-300 text-[#ed4264] transition-all focus:ring-2 focus:ring-[#ed4264] focus:ring-offset-1"
+														disabled={isPending}
+														className="h-4 w-4 flex-shrink-0 cursor-pointer rounded border-gray-300 text-[#ed4264] transition-all focus:ring-2 focus:ring-[#ed4264] focus:ring-offset-1 disabled:opacity-50 disabled:cursor-wait"
 													/>
 													<label 
 														htmlFor={childEdge.node.id} 

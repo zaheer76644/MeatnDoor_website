@@ -144,7 +144,6 @@ export const CheckoutForm = () => {
 	const { user } = useUser();
 	const { checkout } = useCheckout();
 	const [loadingOnline, setLoadingOnline] = useState(false);
-
 	const { passwordResetToken } = getQueryParams();
 
 	const [showOnlyContact, setShowOnlyContact] = useState(!!passwordResetToken);
@@ -535,7 +534,7 @@ export const CheckoutForm = () => {
 				updateMetadata(
 					id: "${checkout.id}",
 					input: [
-						{ key: "Delivery_Time", value: "${deliveryDate}" },
+						{ key: "Delivery_Date", value: "${deliveryDate}" },
 						{ key: "Delivery_Time", value: "${selectedSlot.slot}" },
 						{ key: "paymentMode", value: "Online_Payment" }
 						{ key: "ordered_platform", value: "Website" }

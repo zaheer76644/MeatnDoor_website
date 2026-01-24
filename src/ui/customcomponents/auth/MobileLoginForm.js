@@ -291,6 +291,67 @@ export function MobileLoginForm() {
 					process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_module_refresh_token",
 					data?.refresh_token,
 				);
+
+				// 🔹 Store login source data in user metadata
+				try {
+					const mutation = `
+						mutation UpdateUserMetadata($key: String!, $value: String!) {
+							accountUpdate(
+								input: {
+									metadata: [
+										{
+											key: $key
+											value: $value
+										}
+									]
+								}
+							) {
+								errors {
+									field
+									message
+									code
+								}
+								user {
+									id
+									email
+									metadata {
+										key
+										value
+									}
+								}
+							}
+						}
+					`;
+
+					const graphqlUrl = process.env.NEXT_PUBLIC_SALEOR_API_URL || apiConfig.GRAPHQL_ENDPOINT;
+					const response = await saleorAuthClient.fetchWithAuth(
+						graphqlUrl,
+						{
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+							},
+							body: JSON.stringify({
+								query: mutation,
+								variables: {
+									key: "last_login_source",
+									value: 'Website',
+								},
+							}),
+						},
+					);
+
+					const result = await response.json();
+					if (result.errors) {
+						console.error("Error updating user metadata:", result.errors);
+					} else {
+						console.log("✅ Login source data stored successfully");
+					}
+				} catch (error) {
+					console.error("Error storing login source data:", error);
+					// Don't block login if metadata update fails
+				}
+
 				// window.opener.location.reload();
 				// window.close();
 				alert("✅ Login successful!");

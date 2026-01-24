@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { ClipLoader } from "react-spinners";
+import { toast } from "react-toastify";
 import { addToCart, updateCartItem } from "@/app/actions";
 
 export function AddButton({
@@ -9,11 +10,15 @@ export function AddButton({
 	channel,
 	variantId,
 	cartItem,
+	quantityAvailable,
+	maxBuyLimit,
 }: {
 	disabled?: boolean;
 	channel: string;
 	variantId?: string;
 	cartItem?: { lineId: string; quantity: number };
+	quantityAvailable?: number;
+	maxBuyLimit?: number | undefined;
 }) {
 	const [isPending, startTransition] = useTransition();
 
@@ -28,8 +33,27 @@ export function AddButton({
 	const handleIncrease = async (e: React.MouseEvent) => {
 		e.preventDefault();
 		if (!cartItem || !variantId) return;
+		
+		const availableQty = quantityAvailable ?? 0;
+		
+		// Calculate maximum allowed quantity (minimum of quantityAvailable and maxBuyLimit)
+		const maxAllowedQuantity = maxBuyLimit !== null && maxBuyLimit !== undefined
+			? Math.min(availableQty, maxBuyLimit) 
+			: availableQty;
+		
+		const newQuantity = cartItem.quantity + 1;
+		
+		if (newQuantity > maxAllowedQuantity) {
+			if (maxBuyLimit !== undefined && maxBuyLimit < availableQty) {
+				toast.warning(`Maximum purchase limit is ${maxBuyLimit} items`);
+			} else {
+				toast.warning(`We only have ${availableQty} quantity at the moment`);
+			}
+			return;
+		}
+		
 		startTransition(async () => {
-			await updateCartItem(cartItem.lineId, variantId, cartItem.quantity + 1, channel);
+			await updateCartItem(cartItem.lineId, variantId, newQuantity, channel);
 		});
 	};
 

@@ -46,25 +46,19 @@ export default async function Page(props: {
 		notFound();
 	}
 
-	const newSearchParams = new URLSearchParams({
+
+	const nextSearchParams = new URLSearchParams({
 		...(products.pageInfo.endCursor && { cursor: products.pageInfo.endCursor }),
 	});
 	if (categoryIds) {
-		categoryIds.forEach((id) => newSearchParams.append("categories", id));
+		categoryIds.forEach((id) => nextSearchParams.append("categories", id));
 	}
 
-	// const nextSearchParams = new URLSearchParams({
-	// 	...(products.pageInfo.endCursor && { cursor: products.pageInfo.endCursor }),
-	// });
-	// if (categoryIds) {
-	// 	categoryIds.forEach((id) => nextSearchParams.append("categories", id));
-	// }
-
-	// // Previous page: remove cursor to go back (maintains category filters)
-	// const previousSearchParams = new URLSearchParams();
-	// if (categoryIds) {
-	// 	categoryIds.forEach((id) => previousSearchParams.append("categories", id));
-	// }
+	// Previous page: remove cursor to go back (maintains category filters)
+	const previousSearchParams = new URLSearchParams();
+	if (categoryIds) {
+		categoryIds.forEach((id) => previousSearchParams.append("categories", id));
+	}
 
 	const checkoutId = await Checkout.getIdFromCookies(params.channel);
 	const checkout = await Checkout.find(checkoutId);
@@ -95,21 +89,15 @@ export default async function Page(props: {
 						products={products.edges.map((e) => e.node)}
 						cartItems={cartItems}
 					/>
-					{/* <Pagination
+					<Pagination
 						pageInfo={{
 							...products.pageInfo,
 							basePathname: `/products`,
 							nextUrlSearchParams: nextSearchParams,
 							previousUrlSearchParams: previousSearchParams,
 						}}
-					/> */}
-					<Pagination
-						pageInfo={{
-							...products.pageInfo,
-							basePathname: `/products`,
-							urlSearchParams: newSearchParams,
-						}}
 					/>
+					
 				</div>
 			</div>
 		</section>

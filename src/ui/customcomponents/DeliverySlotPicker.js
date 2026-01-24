@@ -13,7 +13,7 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 	const MORNING_SLOT2 = { start: 10.5, end: 12.5, label: "10:30AM - 12:30PM" };
 	const EVENING_SLOT1 = { start: 16.5, end: 18.5, label: "4:30PM - 6:30PM" };
 	const EVENING_SLOT2 = { start: 18.5, end: 20.5, label: "6:30PM - 8:30PM" };
-	const CUTOFF_HOUR = 16.5;
+	const CUTOFF_HOUR = 18.5;
 
 	useEffect(() => {
 		const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -26,13 +26,12 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 			const now = new Date();
 			const currentHour = now.getHours() + now.getMinutes() / 60;
 			const isMorningOrder = currentHour < CUTOFF_HOUR;
-			
 			// Today
 			if (isMorningOrder) {
-				const isMorningGone = currentHour >= MORNING_SLOT1.start;
-				const isMorningGone2 = currentHour >= MORNING_SLOT2.start;
-				const isEveningGone = currentHour >= EVENING_SLOT1.start;
-				const isEveningGone2 = currentHour >= EVENING_SLOT2.start;
+				const isMorningGone = currentHour >= (MORNING_SLOT1.start - 0.5);
+				const isMorningGone2 = currentHour >= (MORNING_SLOT2.start - 0.5);
+				const isEveningGone = currentHour >= (EVENING_SLOT1.start - 0.5);
+				const isEveningGone2 = currentHour >= (EVENING_SLOT2.start - 0.5);
 				newSlots.push({
 					...createSlot(now, "Today", MORNING_SLOT1),
 					available: !isMorningGone,

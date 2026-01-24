@@ -84,3 +84,30 @@ mutation userAddressCreate($address: AddressInput!, $type: AddressTypeEnum) {
 		}
 	}
 }
+
+mutation updateUserPublicMetadata($key: String!, $value: String!) {
+	accountUpdate(
+		input: {
+			metadata: [
+				{
+					key: $key
+					value: $value
+				}
+			]
+		}
+	) {
+		errors {
+			field
+			message
+			code
+		}
+		user {
+			id
+			email
+			metadata {
+				key
+				value
+			}
+		}
+	}
+}

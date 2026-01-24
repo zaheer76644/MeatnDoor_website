@@ -384,20 +384,32 @@ export default async function Page(props: {
 
 						{/* Add to Cart Section */}
 						<div className="rounded-2xl bg-gradient-to-br from-white via-gray-50 to-white p-6 shadow-lg transition-shadow hover:shadow-xl">
-							<AddButton
-								disabled={!selectedVariantID || !selectedVariant?.quantityAvailable}
-								channel={params.channel}
-								variantId={selectedVariantID}
-								cartItem={
-									checkout?.lines.find((line) => line.variant?.id === selectedVariantID)
-										? {
-												lineId: checkout.lines.find((line) => line.variant?.id === selectedVariantID)!.id,
-												quantity: checkout.lines.find((line) => line.variant?.id === selectedVariantID)!
-													.quantity,
-											}
-										: undefined
-								}
-							/>
+						<AddButton
+							disabled={!selectedVariantID || !selectedVariant?.quantityAvailable}
+							channel={params.channel}
+							variantId={selectedVariantID}
+							cartItem={
+								checkout?.lines.find((line) => line.variant?.id === selectedVariantID)
+									? {
+											lineId: checkout.lines.find((line) => line.variant?.id === selectedVariantID)!.id,
+											quantity: checkout.lines.find((line) => line.variant?.id === selectedVariantID)!
+												.quantity,
+										}
+									: undefined
+							}
+							quantityAvailable={selectedVariant?.quantityAvailable ?? 0}
+							maxBuyLimit={
+								(() => {
+									const maxBuyLimitAttr = selectedVariant?.attributes?.find(
+										(attr) => attr?.attribute?.slug === "max-buy-limit" || attr?.attribute?.name === "Max Buy Limit"
+									);
+									const maxBuyLimitValue = maxBuyLimitAttr?.values?.[0]?.name;
+									if (!maxBuyLimitValue) return undefined;
+									const parsed = parseInt(maxBuyLimitValue, 10);
+									return isNaN(parsed) ? undefined : parsed;
+								})()
+							}
+						/>
 						</div>
 
 						{/* Description Section */}

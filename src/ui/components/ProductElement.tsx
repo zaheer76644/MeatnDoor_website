@@ -4,8 +4,7 @@ import { useTransition } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { ClipLoader } from "react-spinners";
-import { FaShoppingCart } from "react-icons/fa";
-
+import { toast } from "react-toastify";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { addToCart, updateCartItem } from "@/app/actions";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
@@ -26,7 +25,6 @@ export function ProductElement({
 }) {
 	const params = useParams<{ channel: string }>();
 	const [isPending, startTransition] = useTransition();
-
 	const handleAddToCart = async (e: React.MouseEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
@@ -40,13 +38,40 @@ export function ProductElement({
 			}
 		});
 	};
-
 	const handleIncrease = async (e: React.MouseEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
 		if (!cartItem || !product.variants?.[0]?.id) return;
+		
+		const variant = product.variants[0];
+		const quantityAvailable = variant?.quantityAvailable ?? 0;
+		
+		// Get max-buy-limit from variant attributes
+		const maxBuyLimitAttr = variant?.attributes?.find(
+			(attr) => attr?.attribute?.slug === "max-buy-limit" || attr?.attribute?.name === "Max Buy Limit"
+		);
+		const maxBuyLimit = maxBuyLimitAttr?.values?.[0]?.name 
+			? parseInt(maxBuyLimitAttr.values[0].name, 10) 
+			: null;
+		
+		// Calculate maximum allowed quantity (minimum of quantityAvailable and maxBuyLimit)
+		const maxAllowedQuantity = maxBuyLimit !== null 
+			? Math.min(quantityAvailable, maxBuyLimit) 
+			: quantityAvailable;
+		
+		const newQuantity = cartItem.quantity + 1;
+		
+		if (newQuantity > maxAllowedQuantity) {
+			if (maxBuyLimit !== null && maxBuyLimit < quantityAvailable) {
+				toast.warning(`Maximum purchase limit is ${maxBuyLimit} items`);
+			} else {
+				toast.warning(`We only have ${quantityAvailable} quantity at the moment`);
+			}
+			return;
+		}
+		
 		startTransition(async () => {
-			await updateCartItem(cartItem.lineId, product.variants![0].id, cartItem.quantity + 1, params.channel);
+			await updateCartItem(cartItem.lineId, product.variants![0].id, newQuantity, params.channel);
 		});
 	};
 
@@ -272,7 +297,9 @@ export function ProductElement({
 										<ClipLoader size={14} color="#ffffff" />
 									) : (
 										<>
-											<FaShoppingCart size={16} />
+											<svg className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+											</svg>
 											<span>Add</span>
 										</>
 									)}
