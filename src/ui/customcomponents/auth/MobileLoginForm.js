@@ -260,7 +260,6 @@ export function MobileLoginForm() {
 				body: JSON.stringify({ phone, code: otp }),
 			});
 			const data = await response.json();
-			console.log("Verify Response:", data);
 
 			// if (response.ok && data.access_token && data.refresh_token) {
 			// 	// Always store in localStorage first
@@ -291,65 +290,95 @@ export function MobileLoginForm() {
 					process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_module_refresh_token",
 					data?.refresh_token,
 				);
+				
+				let userInfo = null;
+				const userInfoQuery = `
+					query {
+						me {
+							id
+							email
+							firstName
+							lastName
+						}
+					}`;
+				try {
+					const userInfoResponse = await fetch(process.env.NEXT_PUBLIC_SALEOR_API_URL, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							Authorization: `Bearer ${data?.access_token}`,
+						},
+						body: JSON.stringify({ query: userInfoQuery }),
+					});
+
+					const userInfoData = await userInfoResponse.json();
+					userInfo = userInfoData?.data?.me;
+				} catch (err) {
+					console.error("Failed to fetch user info", err);
+				}
 
 				// 🔹 Store login source data in user metadata
-				try {
-					const mutation = `
-						mutation UpdateUserMetadata($key: String!, $value: String!) {
-							accountUpdate(
-								input: {
-									metadata: [
+				if (userInfo?.id) {
+					try {
+						const mutation = `
+							mutation UpdateUserMetadata($id: ID!, $key: String!, $value: String!) {
+								updateMetadata(
+									id: $id
+									input: [
 										{
 											key: $key
 											value: $value
 										}
 									]
-								}
-							) {
-								errors {
-									field
-									message
-									code
-								}
-								user {
-									id
-									email
-									metadata {
-										key
-										value
+								) {
+									item {
+										... on User {
+											id
+											email
+											firstName
+											lastName
+											metadata {
+												key
+												value
+											}
+										}
+									}
+									errors {
+										field
+										message
 									}
 								}
 							}
-						}
-					`;
+						`;
 
-					const graphqlUrl = process.env.NEXT_PUBLIC_SALEOR_API_URL || apiConfig.GRAPHQL_ENDPOINT;
-					const response = await saleorAuthClient.fetchWithAuth(
-						graphqlUrl,
-						{
-							method: "POST",
-							headers: {
-								"Content-Type": "application/json",
-							},
-							body: JSON.stringify({
-								query: mutation,
-								variables: {
-									key: "last_login_source",
-									value: 'Website',
+						const graphqlUrl = process.env.NEXT_PUBLIC_SALEOR_API_URL || apiConfig.GRAPHQL_ENDPOINT;
+						const response = await saleorAuthClient.fetchWithAuth(
+							graphqlUrl,
+							{
+								method: "POST",
+								headers: {
+									"Content-Type": "application/json",
 								},
-							}),
-						},
-					);
+								body: JSON.stringify({
+									query: mutation,
+									variables: {
+										id: userInfo.id,
+										key: "last_login_source",
+										value: "Website",
+									},
+								}),
+							},
+						);
 
-					const result = await response.json();
-					if (result.errors) {
-						console.error("Error updating user metadata:", result.errors);
-					} else {
-						console.log("✅ Login source data stored successfully");
+						const result = await response.json();
+						if (result.errors) {
+							console.error("Error updating user metadata:", result.errors);
+						} else {
+							console.log("✅ Login source data stored successfully");
+						}
+					} catch (error) {
+						console.error("Error storing login source data:", error);
 					}
-				} catch (error) {
-					console.error("Error storing login source data:", error);
-					// Don't block login if metadata update fails
 				}
 
 				// window.opener.location.reload();
