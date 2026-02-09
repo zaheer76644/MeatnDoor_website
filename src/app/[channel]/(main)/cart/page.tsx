@@ -123,6 +123,7 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 												const savingAmount = (item.variant as any)?.attributes?.find(
 													(attr: any) => attr?.attribute?.name === "Saving Amount",
 												)?.values?.[0]?.name;
+												console.log('savingAmount', savingAmount)
 												const originalPrice = parseFloat(String(savingAmount));
 												const regularPriceAmount = item.undiscountedUnitPrice.amount
 												const regularPrice = item.undiscountedUnitPrice

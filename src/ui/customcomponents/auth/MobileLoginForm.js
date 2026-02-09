@@ -161,6 +161,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createSaleorAuthClient } from "@saleor/auth-sdk";
 import { apiConfig } from "@/config/SaleorApi";
 import { ClipLoader } from "react-spinners";
+import { toast } from "react-toastify";
 
 export function MobileLoginForm() {
 	const router = useRouter();
@@ -383,10 +384,13 @@ export function MobileLoginForm() {
 
 				// window.opener.location.reload();
 				// window.close();
-				alert("✅ Login successful!");
+				toast.success('Login successful!');
 				router.push(pathname.includes("/cart") ? "/in/cart" : "/in");
+			} else {
+				toast.error(data.error || "❌ Invalid OTP. Please try again.");
 			}
 		} catch (error) {
+			toast.error("Error verifying OTP:", error);
 			console.error("Error verifying OTP:", error);
 		} finally {
 			setIsVerifyingOtp(false);
