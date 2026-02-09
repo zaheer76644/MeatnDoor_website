@@ -118,16 +118,42 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 											)}
 										</div>
 										<div className="text-right">
-											<p className="text-lg font-bold text-[#47141e]">
-												{item.undiscountedUnitPrice
+											{(() => {
+												/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
+												const savingAmount = (item.variant as any)?.attributes?.find(
+													(attr: any) => attr?.attribute?.name === "Saving Amount",
+												)?.values?.[0]?.name;
+												const originalPrice = parseFloat(String(savingAmount));
+												const regularPriceAmount = item.undiscountedUnitPrice.amount
+												const regularPrice = item.undiscountedUnitPrice
 													? formatMoney(
-															// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-															(item.undiscountedUnitPrice.amount ) * item.quantity,
-															// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-															item.undiscountedUnitPrice.currency ,
+															item.undiscountedUnitPrice.amount * item.quantity,
+															item.undiscountedUnitPrice.currency,
 														)
-													: formatMoney(item.totalPrice.gross.amount, item.totalPrice.gross.currency)}
-											</p>
+													: formatMoney(item.totalPrice.gross.amount, item.totalPrice.gross.currency);
+													let discountPercent = "";
+													if (savingAmount && originalPrice) {
+														discountPercent = (
+															((originalPrice - regularPriceAmount) / originalPrice) * 100
+														).toFixed(0);
+													}
+													if (savingAmount) {
+														/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment */
+														return (
+															<>
+															<p className="text-lg font-bold text-[#47141e]">{regularPrice}</p>
+															<p className="text-sm text-[#707070] line-through decoration-1">
+																{formatMoney(originalPrice * item.quantity, item.totalPrice.gross.currency)}
+															</p>
+															<p className="text-sm text-[#ed4264] font-bold mt-2">
+																({discountPercent}% off)
+															</p>
+														</>
+													);
+												}
+
+												return <p className="text-lg font-bold text-[#47141e]">{regularPrice}</p>;
+											})()}
 										</div>
 									</div>
 									

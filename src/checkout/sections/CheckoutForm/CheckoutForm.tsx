@@ -608,7 +608,7 @@ export const CheckoutForm = () => {
 	const onPlaceOrder = async () => {
 		await handlePlaceOrder(checkout, user, setLoading, GRAPHQL_ENDPOINT, selectedSlot);
 	};
-
+	// const totalPriceValue = Math.round((checkout?.subtotalPrice?.gross.amount || 0) - (checkout?.discount?.amount || 0))
 	// const handlePlaceOrder = async () => {
 	// 	try {
 	// 		if (!checkout?.id) {
@@ -732,6 +732,8 @@ export const CheckoutForm = () => {
 								<h1 className="mb-4 text-lg font-semibold text-[#47141e] mt-3">Payment Method</h1>
 								<div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
 									{/* ✅ Cash on Delivery Button */}
+									
+									{/* {totalPriceValue <= 1000 && */}
 									<button
 										type="button"
 										onClick={onPlaceOrder}
@@ -745,6 +747,7 @@ export const CheckoutForm = () => {
 											{loading ? "Placing Order..." : "Cash on Delivery"}
 										</span>
 									</button>
+									{/* } */}
 									{/* Pay Online Button */}
 									<button
 										type="button"
