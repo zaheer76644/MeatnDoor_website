@@ -29,9 +29,9 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 			// Today
 			if (isMorningOrder) {
 				const isMorningGone = currentHour >= (MORNING_SLOT1.start - 0.5);
-				const isMorningGone2 = currentHour >= (MORNING_SLOT2.start - 0.5);
+				const isMorningGone2 = currentHour >= (MORNING_SLOT2.start);
 				const isEveningGone = currentHour >= (EVENING_SLOT1.start - 0.5);
-				const isEveningGone2 = currentHour >= (EVENING_SLOT2.start - 0.5);
+				const isEveningGone2 = currentHour >= (EVENING_SLOT2.start);
 				newSlots.push({
 					...createSlot(now, "Today", MORNING_SLOT1),
 					available: !isMorningGone,
