@@ -261,6 +261,13 @@
                         <div class="product-name">${
 													order.billingAddress.streetAddress1 + " " + order.billingAddress.streetAddress2
 												}</div>
+                        <div class="product-name">${
+													order.billingAddress.city +
+													" " +
+													order.billingAddress.countryArea +
+													" " +
+													order.billingAddress.country?.country
+												}</div>
                         <div class="product-name">${order.billingAddress.postalCode}</div>
                 `;
 					container.appendChild(card);
