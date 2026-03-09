@@ -151,13 +151,9 @@ export const CheckoutForm = () => {
 	const [loading, setLoading] = useState(false);
 	const [selectedSlot, setSelectedSlot] = useState(null);
 	useEffect(() => {
-		const timeoutId = setTimeout(() => {
-			if (!checkoutFetching && checkout?.shippingMethods?.length === 0) {
-				toast.error("No delivery available in selected address.");
-			}
-		}, 1000);
-
-		return () => clearTimeout(timeoutId);
+		if (!checkoutFetching && checkout?.shippingMethods?.length === 0) {
+			toast.error("No delivery available in selected address.");
+		}
 	}, [checkout?.shippingMethods, checkoutFetching])
 
 	// ✅ Complete order using fetch()
