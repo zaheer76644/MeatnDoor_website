@@ -151,10 +151,14 @@ export const CheckoutForm = () => {
 	const [loading, setLoading] = useState(false);
 	const [selectedSlot, setSelectedSlot] = useState(null);
 	useEffect(() => {
-		if (checkout?.shippingMethods?.length === 0) {
-			toast.error("No delivery available in selected address.");
-		}
-	}, [checkout?.shippingMethods])
+		const timeoutId = setTimeout(() => {
+			if (!checkoutFetching && checkout?.shippingMethods?.length === 0) {
+				toast.error("No delivery available in selected address.");
+			}
+		}, 1000);
+
+		return () => clearTimeout(timeoutId);
+	}, [checkout?.shippingMethods, checkoutFetching])
 
 	// ✅ Complete order using fetch()
 	// const handlePlaceOrder = async () => {	
@@ -696,7 +700,6 @@ export const CheckoutForm = () => {
 	// 		setLoading(false);
 	// 	}
 	// };
-console.log('checkout', checkout?.shippingMethods)
 	return (
 		<div className="">
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-8 ">
@@ -751,7 +754,7 @@ console.log('checkout', checkout?.shippingMethods)
 										<div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>
 										{/* Button content */}
 										<span className="relative z-10 flex items-center justify-center gap-2">
-											{checkoutFetching ? 'Loading...' : loading ? "Placing Order..." : "Cash on Delivery"}
+											{loading ? "Placing Order..." : "Cash on Delivery"}
 										</span>
 									</button>
 									{/* } */}
@@ -767,7 +770,7 @@ console.log('checkout', checkout?.shippingMethods)
 										<div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>
 										{/* Button content */}
 										<span className="relative z-10 flex items-center justify-center gap-2">
-											{checkoutFetching ? 'Loading...' : loadingOnline ? "Placing Order..." : "Pay Online"}
+											{loadingOnline ? "Placing Order..." : "Pay Online"}
 										</span>
 									</button>
 								</div>
