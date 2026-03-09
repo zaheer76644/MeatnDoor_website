@@ -120,7 +120,8 @@
 // 	);
 // };
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import DeliverySlotPicker from "../../../ui/customcomponents/DeliverySlotPicker";
 import { Summary, SummarySkeleton } from "../Summary";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
@@ -142,16 +143,21 @@ import { GRAPHQL_ENDPOINT, apiConfig } from "@/config/SaleorApi"; // 👈 tumhar
 import { loadRazorpay } from "@/lib/loadRazorpay";
 export const CheckoutForm = () => {
 	const { user } = useUser();
-	const { checkout } = useCheckout();
+	const { checkout, fetching: checkoutFetching } = useCheckout();
 	const [loadingOnline, setLoadingOnline] = useState(false);
 	const { passwordResetToken } = getQueryParams();
 
 	const [showOnlyContact, setShowOnlyContact] = useState(!!passwordResetToken);
 	const [loading, setLoading] = useState(false);
 	const [selectedSlot, setSelectedSlot] = useState(null);
+	useEffect(() => {
+		if (checkout?.shippingMethods?.length === 0) {
+			toast.error("No delivery available in selected address.");
+		}
+	}, [checkout?.shippingMethods])
 
 	// ✅ Complete order using fetch()
-	// const handlePlaceOrder = async () => {
+	// const handlePlaceOrder = async () => {	
 	// 	try {
 	// 		if (!checkout?.id) {
 	// 			alert("Checkout ID missing — cannot complete order.");
@@ -690,7 +696,7 @@ export const CheckoutForm = () => {
 	// 		setLoading(false);
 	// 	}
 	// };
-
+console.log('checkout', checkout?.shippingMethods)
 	return (
 		<div className="">
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-8 ">
@@ -736,30 +742,32 @@ export const CheckoutForm = () => {
 									{/* {totalPriceValue <= 1000 && */}
 									<button
 										type="button"
+										title={checkout?.shippingMethods?.length === 0 ? 'No delivery available in selected address.' : ''}
 										onClick={onPlaceOrder}
-										disabled={loading}
+										disabled={loading || checkout?.shippingMethods?.length === 0 ||checkoutFetching}
 										className="group relative h-14 w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] px-8 py-4 text-center text-lg font-bold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#ed4264]/50 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
 									>
 										{/* Shimmer effect */}
 										<div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>
 										{/* Button content */}
 										<span className="relative z-10 flex items-center justify-center gap-2">
-											{loading ? "Placing Order..." : "Cash on Delivery"}
+											{checkoutFetching ? 'Loading...' : loading ? "Placing Order..." : "Cash on Delivery"}
 										</span>
 									</button>
 									{/* } */}
 									{/* Pay Online Button */}
 									<button
 										type="button"
+										title={checkout?.shippingMethods?.length === 0 ? 'No delivery available in selected address.' : ''}
 										onClick={() => handlePayOnline(checkout, user, GRAPHQL_ENDPOINT, selectedSlot)}
-										disabled={loadingOnline}
+										disabled={loadingOnline || checkout?.shippingMethods?.length === 0 ||checkoutFetching}
 										className="group relative h-14 w-full overflow-hidden rounded-xl border-2 border-[#ed4264] bg-transparent px-8 py-4 text-center text-lg font-bold text-[#ed4264] shadow-md transition-all duration-300 hover:scale-105 hover:border-transparent hover:bg-gradient-to-r hover:from-[#ed4264] hover:to-[#ff6b9d] hover:text-white hover:shadow-xl hover:shadow-[#ed4264]/50 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
 									>
 										{/* Shimmer effect */}
 										<div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>
 										{/* Button content */}
 										<span className="relative z-10 flex items-center justify-center gap-2">
-											{loadingOnline ? "Placing Order..." : "Pay Online"}
+											{checkoutFetching ? 'Loading...' : loadingOnline ? "Placing Order..." : "Pay Online"}
 										</span>
 									</button>
 								</div>
