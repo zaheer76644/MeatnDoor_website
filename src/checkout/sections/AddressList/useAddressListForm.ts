@@ -4,7 +4,6 @@ import { type OptionalAddress } from "@/checkout/components/AddressForm/types";
 import { getByMatchingAddress, isMatchingAddress } from "@/checkout/components/AddressForm/utils";
 import { type AddressFragment } from "@/checkout/graphql";
 import { useAddressAvailability } from "@/checkout/hooks/useAddressAvailability";
-import { useDebouncedSubmit } from "@/checkout/hooks/useDebouncedSubmit";
 import { useForm } from "@/checkout/hooks/useForm";
 import { type FormSubmitFn } from "@/checkout/hooks/useFormSubmit";
 import { useUser } from "@/checkout/hooks/useUser";
@@ -48,14 +47,14 @@ export const useAddressListForm = ({
 
 	const { values, setValues, setFieldValue, handleSubmit } = form;
 
-	const debouncedSubmit = useDebouncedSubmit(handleSubmit);
-
 	const { addressList, selectedAddressId } = values;
 	const selectedAddress = addressList.find(getById(selectedAddressId));
 
 	useEffect(() => {
-		debouncedSubmit();
-	}, [debouncedSubmit, selectedAddressId]);
+		if (selectedAddressId) {
+			void handleSubmit();
+		}
+	}, [handleSubmit, selectedAddressId]);
 
 	const addressListUpdate = async (selectedAddress: OptionalAddress, addressList: AddressFragment[]) => {
 		if (!selectedAddress) {

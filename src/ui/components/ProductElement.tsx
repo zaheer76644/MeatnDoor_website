@@ -111,33 +111,38 @@ export function ProductElement({
 						key={i}
 						className="absolute left-2 top-2 z-10 flex"
 					>
-						<Image
-							src="/special-offer.png"
-							alt="discount"
-							width={60}
-							height={60}
-							className="drop-shadow-[0_12px_25px_rgba(0,0,0,0.35)]"
-							style={{ position: "relative", zIndex: 1 }}
-						/>
-						<div
-							style={{
-								position: "absolute",
-								top: "50%",
-								left: "50%",
-								transform: "translate(-50%, -50%)",
-								color: "white",
-								fontWeight: "bold",
-								fontSize: 10,
-								textAlign: "center",
-								lineHeight: 1.2,
-								letterSpacing: "0.5px",
-								fontFamily: "sans-serif",
-								zIndex: 2,
-								pointerEvents: "none",
-							}}
-						>
-							{discountPercent}%<br />Off
-						</div>
+						{
+						discountPercent && parseInt(discountPercent) > 0 && 
+						<>
+							<Image
+								src="/special-offer.png"
+								alt="discount"
+								width={60}
+								height={60}
+								className="drop-shadow-[0_12px_25px_rgba(0,0,0,0.35)]"
+								style={{ position: "relative", zIndex: 1 }}
+							/>
+							<div
+								style={{
+									position: "absolute",
+									top: "50%",
+									left: "50%",
+									transform: "translate(-50%, -50%)",
+									color: "white",
+									fontWeight: "bold",
+									fontSize: 10,
+									textAlign: "center",
+									lineHeight: 1.2,
+									letterSpacing: "0.5px",
+									fontFamily: "sans-serif",
+									zIndex: 2,
+									pointerEvents: "none",
+								}}
+							>
+								{discountPercent}%<br />Off
+							</div>
+						</>
+						}
 					</div>
 				);
 			})}
@@ -235,12 +240,16 @@ export function ProductElement({
 							const discountedPrice = parseFloat(
 								String(variant?.pricing?.price?.gross?.amount || "0")
 							);
+							const originalPrice = parseFloat(String(saving));
+							const discountPercent = (
+								((originalPrice - discountedPrice) / originalPrice) * 100
+							).toFixed(0);
 
 							return saving ? (
 								<div key={i} className="space-y-1">
 									<div className="flex items-baseline gap-2">
 										<span className="text-2xl font-bold text-[#ed4264]">₹{discountedPrice}</span>
-										<span className="text-sm font-medium text-neutral-400 line-through">₹{saving}</span>
+										{discountPercent && parseInt(discountPercent) > 0 && <span className="text-sm font-medium text-neutral-400 line-through">₹{saving}</span>}
 									</div>
 									<p className="text-xs font-semibold text-green-600">Special Price for you</p>
 								</div>
