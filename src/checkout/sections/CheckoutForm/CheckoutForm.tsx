@@ -124,6 +124,7 @@ import { Suspense, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import DeliverySlotPicker from "../../../ui/customcomponents/DeliverySlotPicker";
 import { Summary, SummarySkeleton } from "../Summary";
+import { getSummaryLineProps } from "../Summary/utils";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { Contact } from "@/checkout/sections/Contact";
 import { DeliveryMethods } from "@/checkout/sections/DeliveryMethods";
@@ -150,6 +151,7 @@ export const CheckoutForm = () => {
 	const [showOnlyContact, setShowOnlyContact] = useState(!!passwordResetToken);
 	const [loading, setLoading] = useState(false);
 	const [selectedSlot, setSelectedSlot] = useState(null);
+	const [handlingFeeAmount, setHandlingFeeAmount] = useState<{ amount: number; currency: string } | null>(null);
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
 			if (!checkoutFetching && checkout?.shippingMethods?.length === 0) {
@@ -618,6 +620,19 @@ export const CheckoutForm = () => {
 	const onPlaceOrder = async () => {
 		await handlePlaceOrder(checkout, user, setLoading, GRAPHQL_ENDPOINT, selectedSlot);
 	};
+	useEffect(() => {
+		const handlingFeeLine = checkout?.lines.find((line) => {
+			const { productName } = getSummaryLineProps(line);
+			return productName?.toLowerCase() === "handling fee";
+		});
+		
+		if (handlingFeeLine && "totalPrice" in handlingFeeLine && handlingFeeLine.totalPrice) {
+			setHandlingFeeAmount(handlingFeeLine.totalPrice.gross);
+		} else {
+			setHandlingFeeAmount(null);
+		}
+	}, [checkout?.lines]);
+	const greaterThanThousand = Math.round((checkout?.subtotalPrice.gross.amount || 0) - (handlingFeeAmount?.amount || 0))
 	// const totalPriceValue = Math.round((checkout?.subtotalPrice?.gross.amount || 0) - (checkout?.discount?.amount || 0))
 	// const handlePlaceOrder = async () => {
 	// 	try {
@@ -743,7 +758,7 @@ export const CheckoutForm = () => {
 									{/* ✅ Cash on Delivery Button */}
 									
 									{/* {totalPriceValue <= 1000 && */}
-									<button
+									{greaterThanThousand <= 1000 && <button
 										type="button"
 										title={checkout?.shippingMethods?.length === 0 ? 'No delivery available in selected address.' : ''}
 										onClick={onPlaceOrder}
@@ -756,7 +771,7 @@ export const CheckoutForm = () => {
 										<span className="relative z-10 flex items-center justify-center gap-2">
 											{loading ? "Placing Order..." : "Cash on Delivery"}
 										</span>
-									</button>
+									</button>}
 									{/* } */}
 									{/* Pay Online Button */}
 									<button
