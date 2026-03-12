@@ -157,6 +157,12 @@
             `;
 
 				window.addEventListener("message", async (event) => {
+					const order = event.data;
+					if (!order || !order.number || !order.lines) {
+						console.log("Incomplete or invalid order data received:", order);
+						return;
+					}
+
 					async function fetchProductsByIds(ids) {
 						const response = await fetch(graphqlEndpoint, {
 							method: "POST",
@@ -187,8 +193,6 @@
 							return;
 						}
 
-						// const price = product.pricing?.priceRange?.start?.gross?.amount || 0;
-						const price = order.lines;
 						const variant = product.variants?.[0];
 						const netWeight =
 							product.attributes?.find((a) => a.attribute.slug === "net-weight")?.values?.[0]?.name ||
@@ -196,8 +200,6 @@
 							"";
 
 						const netWeightText = netWeight || "";
-						const numericWeight = parseFloat(netWeightText.replace(/[^\d.]/g, "")) || 0;
-						const pricePerGram = numericWeight > 0 && price > 0 ? price / numericWeight : 0;
 						const savingAmount = getSavingAmount(product);
 
 						const encoded = base32.encode(order?.number || "");
@@ -230,11 +232,8 @@
 						container.appendChild(card);
 					}
 
-					const order = event.data;
-					// console.log("Received order:", order);
-					const productIds = order?.lines?.map((item) => item?.variant?.product?.id);
+					const productIds = order.lines.map((item) => item?.variant?.product?.id);
 					const uniqueIds = [...new Set(productIds)];
-					console.log("Product IDs to fetch:", uniqueIds);
 					const products = await fetchProductsByIds(uniqueIds);
 					console.log("Product IDs to fetch:", products);
 					const container = document.getElementById("productContainer");
@@ -245,13 +244,15 @@
 						for (let i = 0; i < line.quantity; i++) {
 							let price =
 								line?.undiscountedUnitPrice?.gross?.amount ||
-								product?.pricing?.priceRange?.start?.gross?.amount;
+								product?.pricing?.priceRange?.start?.gross?.amount ||
+								0;
 							renderProduct(product, price);
 						}
 					});
 					const encoded = base32.encode(order?.number || "");
 					const order_id = encoded.replace(/=+$/, "");
 					const totalQuantity = order?.lines?.reduce((sum, line) => sum + (line.quantity || 0), 0);
+					const totalAmount = order?.total?.gross?.amount || 0;
 					console.log("uniqueIds===============", uniqueIds);
 					console.log("order===============", order);
 					console.log("totalQuantity==============", totalQuantity);
@@ -259,26 +260,25 @@
 
 					const card = document.createElement("div");
 					card.className = "product-card";
+					const addr = order?.billingAddress || {};
 					card.innerHTML = `
                         <div class="product-name">${
-													order_id + order?.number
-												} <span style="float: right;">Q:${totalQuantity} / ₹${
-													order?.total?.gross?.amount
-												} </span></div>
+													order_id + (order?.number || "")
+												} <span style="float: right;">Q:${totalQuantity} / ₹${totalAmount} </span></div>
                         <div class="product-name">${
-													order?.billingAddress?.firstName + " " + order?.billingAddress?.lastName
+													(addr.firstName || "") + " " + (addr.lastName || "")
 												}</div>
                         <div class="product-name">${
-													order?.billingAddress?.streetAddress1 + " " + order?.billingAddress?.streetAddress2
+													(addr.streetAddress1 || "") + " " + (addr.streetAddress2 || "")
 												}</div>
                         <div class="product-name">${
-													order?.billingAddress?.city +
+													(addr.city || "") +
 													" " +
-													order?.billingAddress?.countryArea +
+													(addr.countryArea || "") +
 													" " +
-													order?.billingAddress?.country?.country
+													(addr.country?.country || "")
 												}</div>
-                        <div class="product-name">${order?.billingAddress?.postalCode}</div>
+                        <div class="product-name">${addr.postalCode || ""}</div>
                 `;
 					container.appendChild(card);
 				});
