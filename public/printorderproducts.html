@@ -133,6 +133,7 @@
                         attribute { name slug }
                         values { name }
                     }
+					quantity
                     variants {
                         name
                         attributes {
@@ -231,44 +232,50 @@
 					}
 
 					const order = event.data;
-					console.log("Received order:", order);
-					const productIds = order.lines.map((item) => item.variant.product.id);
+					// console.log("Received order:", order);
+					const productIds = order?.lines?.map((item) => item?.variant?.product?.id);
 					const uniqueIds = [...new Set(productIds)];
-					console.log("Product IDs to fetch:", uniqueIds);
+					// console.log("Product IDs to fetch:", uniqueIds);
 					const products = await fetchProductsByIds(uniqueIds);
-					console.log("Product IDs to fetch:", products);
+					// console.log("Product IDs to fetch:", products);
 					const container = document.getElementById("productContainer");
 					container.innerHTML = "";
 					products.forEach((product) => {
-						const line = order.lines.find((item) => item.variant.product.id === product.id);
+						const line = order?.lines?.find((item) => item?.variant?.product?.id === product?.id);
 						if (!line) return;
 						for (let i = 0; i < line.quantity; i++) {
 							let price =
-								line.undiscountedUnitPrice.gross.amount || product.pricing.priceRange.start.gross.amount;
+								line?.undiscountedUnitPrice?.gross?.amount ||
+								product?.pricing?.priceRange?.start?.gross?.amount;
 							renderProduct(product, price);
 						}
 					});
-					const encoded = base32.encode(order.number);
+					console.log("order", order);
+					console.log("order?.lines", order?.lines);
+					console.log("lines", line);
+					const encoded = base32.encode(order?.number);
 					const order_id = encoded.replace(/=+$/, "");
 
 					const card = document.createElement("div");
 					card.className = "product-card";
 					card.innerHTML = `
-                        <div class="product-name">${order_id + order.number}</div>
+                        <div class="product-name">${order_id + order?.number} <span>${
+													line?.quantity
+												}</span></div>
                         <div class="product-name">${
-													order.billingAddress.firstName + " " + order.billingAddress.lastName
+													order?.billingAddress?.firstName + " " + order?.billingAddress?.lastName
 												}</div>
                         <div class="product-name">${
-													order.billingAddress.streetAddress1 + " " + order.billingAddress.streetAddress2
+													order?.billingAddress?.streetAddress1 + " " + order?.billingAddress?.streetAddress2
 												}</div>
                         <div class="product-name">${
-													order.billingAddress.city +
+													order?.billingAddress?.city +
 													" " +
-													order.billingAddress.countryArea +
+													order?.billingAddress?.countryArea +
 													" " +
-													order.billingAddress.country?.country
+													order?.billingAddress?.country?.country
 												}</div>
-                        <div class="product-name">${order.billingAddress.postalCode}</div>
+                        <div class="product-name">${order?.billingAddress?.postalCode}</div>
                 `;
 					container.appendChild(card);
 				});
