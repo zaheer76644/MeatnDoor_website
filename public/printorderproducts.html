@@ -166,12 +166,9 @@
 								variables: { ids },
 							}),
 						});
+
 						const json = await response.json();
-						if (json.errors) {
-							console.error("GraphQL errors:", json.errors);
-							return [];
-						}
-						return json.data?.products?.edges?.map((e) => e.node) || [];
+						return json.data.products.edges.map((e) => e.node);
 					}
 
 					function getSavingAmount(product) {
@@ -191,6 +188,7 @@
 						}
 
 						// const price = product.pricing?.priceRange?.start?.gross?.amount || 0;
+						const price = order.lines;
 						const variant = product.variants?.[0];
 						const netWeight =
 							product.attributes?.find((a) => a.attribute.slug === "net-weight")?.values?.[0]?.name ||
@@ -202,7 +200,7 @@
 						const pricePerGram = numericWeight > 0 && price > 0 ? price / numericWeight : 0;
 						const savingAmount = getSavingAmount(product);
 
-						const encoded = base32.encode(order?.number || "");
+						const encoded = base32.encode(order.number);
 						const order_id = encoded.replace(/=+$/, "");
 
 						const today = new Date();
@@ -233,13 +231,12 @@
 					}
 
 					const order = event.data;
-					// console.log("Received order:", order);
-					const totalQuantity = order?.lines?.reduce((sum, line) => sum + (line.quantity || 0), 0);
+					console.log("Received order:", order);
 					const productIds = order?.lines?.map((item) => item?.variant?.product?.id);
 					const uniqueIds = [...new Set(productIds)];
-					// console.log("Product IDs to fetch:", uniqueIds);
+					console.log("Product IDs to fetch:", uniqueIds);
 					const products = await fetchProductsByIds(uniqueIds);
-					// console.log("Product IDs to fetch:", products);
+					console.log("Product IDs to fetch:", products);
 					const container = document.getElementById("productContainer");
 					container.innerHTML = "";
 					products.forEach((product) => {
@@ -252,31 +249,27 @@
 							renderProduct(product, price);
 						}
 					});
-					console.log("order", order);
-					console.log("order?.lines", order?.lines);
-					const encoded = base32.encode(order?.number || "");
+					const encoded = base32.encode(order?.number);
 					const order_id = encoded.replace(/=+$/, "");
 
 					const card = document.createElement("div");
 					card.className = "product-card";
 					card.innerHTML = `
-                        <div class="product-name">${
-													order_id + order?.number
-												} <span style="float: right;">Total Qty: ${totalQuantity}</span></div>
+                        <div class="product-name">${order_id + order?.number}</div>
                         <div class="product-name">${
 													order?.billingAddress?.firstName + " " + order?.billingAddress?.lastName
 												}</div>
                         <div class="product-name">${
-													order?.billingAddress?.streetAddress1 + " " + order?.billingAddress?.streetAddress2
+													order.billingAddress.streetAddress1 + " " + order.billingAddress.streetAddress2
 												}</div>
                         <div class="product-name">${
-													order?.billingAddress?.city +
+													order.billingAddress.city +
 													" " +
-													order?.billingAddress?.countryArea +
+													order.billingAddress.countryArea +
 													" " +
-													order?.billingAddress?.country?.country
+													order.billingAddress.country?.country
 												}</div>
-                        <div class="product-name">${order?.billingAddress?.postalCode}</div>
+                        <div class="product-name">${order.billingAddress.postalCode}</div>
                 `;
 					container.appendChild(card);
 				});
