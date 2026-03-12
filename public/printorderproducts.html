@@ -251,12 +251,12 @@
 					});
 					const encoded = base32.encode(order?.number || "");
 					const order_id = encoded.replace(/=+$/, "");
-					const totalQuantity = order?.lines?.reduce((sum, line) => sum + (line.quantity || 0), 0);
+					const totalQuantity = order?.lines
+						?.filter((item) => item?.productName !== "Handling Fee")
+						?.reduce((sum, line) => sum + (line.quantity || 0), 0);
+					const paymentStatus = order?.metadata?.find((item) => item?.key === "paymentMode")?.value || "";
 					const totalAmount = order?.total?.gross?.amount || 0;
-					console.log("uniqueIds===============", uniqueIds);
-					console.log("order===============", order);
-					console.log("totalQuantity==============", totalQuantity);
-					console.log("encoded==============", encoded);
+					console.log("paymentStatus===============", paymentStatus);
 
 					const card = document.createElement("div");
 					card.className = "product-card";
@@ -264,7 +264,9 @@
 					card.innerHTML = `
                         <div class="product-name">${
 													order_id + (order?.number || "")
-												} <span style="float: right;">Q:${totalQuantity} / ₹${totalAmount} </span></div>
+												} <span style="float: right;">Q:${totalQuantity} / ₹${
+													paymentStatus === "cash_on_delivery" ? totalAmount : 0
+												} </span></div>
                         <div class="product-name">${
 													(addr.firstName || "") + " " + (addr.lastName || "")
 												}</div>
