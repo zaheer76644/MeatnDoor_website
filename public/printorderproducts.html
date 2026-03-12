@@ -166,7 +166,6 @@
 								variables: { ids },
 							}),
 						});
-
 						const json = await response.json();
 						if (json.errors) {
 							console.error("GraphQL errors:", json.errors);
@@ -192,7 +191,6 @@
 						}
 
 						// const price = product.pricing?.priceRange?.start?.gross?.amount || 0;
-						const price = order.lines;
 						const variant = product.variants?.[0];
 						const netWeight =
 							product.attributes?.find((a) => a.attribute.slug === "net-weight")?.values?.[0]?.name ||
@@ -204,7 +202,7 @@
 						const pricePerGram = numericWeight > 0 && price > 0 ? price / numericWeight : 0;
 						const savingAmount = getSavingAmount(product);
 
-						const encoded = base32.encode(order.number);
+						const encoded = base32.encode(order?.number || "");
 						const order_id = encoded.replace(/=+$/, "");
 
 						const today = new Date();
@@ -256,7 +254,7 @@
 					});
 					console.log("order", order);
 					console.log("order?.lines", order?.lines);
-					const encoded = base32.encode(order?.number);
+					const encoded = base32.encode(order?.number || "");
 					const order_id = encoded.replace(/=+$/, "");
 
 					const card = document.createElement("div");
