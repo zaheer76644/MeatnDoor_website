@@ -169,7 +169,11 @@
 						});
 
 						const json = await response.json();
-						return json.data.products.edges.map((e) => e.node);
+						if (json.errors) {
+							console.error("GraphQL errors:", json.errors);
+							return [];
+						}
+						return json.data?.products?.edges?.map((e) => e.node) || [];
 					}
 
 					function getSavingAmount(product) {
@@ -233,6 +237,7 @@
 
 					const order = event.data;
 					// console.log("Received order:", order);
+					const totalQuantity = order?.lines?.reduce((sum, line) => sum + (line.quantity || 0), 0);
 					const productIds = order?.lines?.map((item) => item?.variant?.product?.id);
 					const uniqueIds = [...new Set(productIds)];
 					// console.log("Product IDs to fetch:", uniqueIds);
@@ -252,16 +257,15 @@
 					});
 					console.log("order", order);
 					console.log("order?.lines", order?.lines);
-					console.log("lines", line);
 					const encoded = base32.encode(order?.number);
 					const order_id = encoded.replace(/=+$/, "");
 
 					const card = document.createElement("div");
 					card.className = "product-card";
 					card.innerHTML = `
-                        <div class="product-name">${order_id + order?.number} <span>${
-													line?.quantity
-												}</span></div>
+                        <div class="product-name">${
+													order_id + order?.number
+												} <span style="float: right;">Total Qty: ${totalQuantity}</span></div>
                         <div class="product-name">${
 													order?.billingAddress?.firstName + " " + order?.billingAddress?.lastName
 												}</div>
