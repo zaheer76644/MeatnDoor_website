@@ -256,7 +256,6 @@
 						?.reduce((sum, line) => sum + (line.quantity || 0), 0);
 					const paymentStatus = order?.metadata?.find((item) => item?.key === "paymentMode")?.value || "";
 					const totalAmount = order?.total?.gross?.amount || 0;
-					console.log("paymentStatus===============", paymentStatus);
 
 					const card = document.createElement("div");
 					card.className = "product-card";
@@ -280,7 +279,7 @@
 													" " +
 													(addr.country?.country || "")
 												}</div>
-                        <div class="product-name">${addr.postalCode || ""}</div>
+                        <div class="product-name">${addr.postalCode || ""}<span>${addr?.phone}</span></div>
                 `;
 					container.appendChild(card);
 				});
