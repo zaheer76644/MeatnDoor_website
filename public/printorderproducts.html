@@ -260,6 +260,8 @@
 					const card = document.createElement("div");
 					card.className = "product-card";
 					const addr = order?.billingAddress || {};
+					console.log("order", order);
+					console.log("addr?.phone", addr?.phone);
 					card.innerHTML = `
                         <div class="product-name">${
 													order_id + (order?.number || "")
