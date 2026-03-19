@@ -281,7 +281,9 @@
 													" " +
 													(addr.country?.country || "")
 												}</div>
-                        <div class="product-name">${addr.postalCode || ""}<span>${addr?.phone}</span></div>
+                        <div class="product-name">${addr.postalCode || ""}<span style="float: right;">${
+													addr?.phone
+												}</span></div>
                 `;
 					container.appendChild(card);
 				});
