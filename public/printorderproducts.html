@@ -163,6 +163,33 @@
 						return;
 					}
 
+					const deliveryDate = order?.metadata?.find((item) => item?.key === "Delivery_Date")?.value || "";
+					if (deliveryDate) {
+						let dDate = new Date(deliveryDate);
+						// Handle DD-MM-YYYY or DD/MM/YYYY
+						if (isNaN(dDate.getTime()) && deliveryDate.match(/^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/)) {
+							const parts = deliveryDate.split(/[\/\-]/);
+							dDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`); // YYYY-MM-DD
+						}
+
+						if (!isNaN(dDate.getTime())) {
+							const today = new Date();
+							today.setHours(0, 0, 0, 0);
+							dDate.setHours(0, 0, 0, 0);
+							if (dDate > today) {
+								const proceed = confirm(
+									`The delivery date for this order is in the future (${deliveryDate}). Do you want to proceed?`,
+								);
+								if (!proceed) {
+									const container = document.getElementById("productContainer");
+									if (container)
+										container.innerHTML = "<p>Order display cancelled (future delivery date).</p>";
+									return;
+								}
+							}
+						}
+					}
+
 					async function fetchProductsByIds(ids) {
 						const response = await fetch(graphqlEndpoint, {
 							method: "POST",
