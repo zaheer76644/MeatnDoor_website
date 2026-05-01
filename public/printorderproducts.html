@@ -190,6 +190,38 @@
 						}
 					}
 
+					const validationDeliveryTime =
+						order?.metadata?.find((item) => item?.key === "Delivery_Time")?.value || "";
+					const firstTimePart = validationDeliveryTime.split("-")[0].trim().toUpperCase();
+					const isDeliveryAM = firstTimePart.includes("AM");
+					const isDeliveryPM = firstTimePart.includes("PM");
+					const currentHour = new Date().getHours();
+					const isCurrentAM = currentHour < 12;
+					const isCurrentPM = currentHour >= 12;
+					if (validationDeliveryTime) {
+						if (isCurrentAM && isDeliveryPM) {
+							const proceed = confirm(
+								`The delivery time for this order is PM (${validationDeliveryTime}), but the current time is AM. Do you want to proceed?`,
+							);
+							if (!proceed) {
+								const container = document.getElementById("productContainer");
+								if (container)
+									container.innerHTML = "<p>Order display cancelled (delivery time mismatch).</p>";
+								return;
+							}
+						} else if (isCurrentPM && isDeliveryAM) {
+							const proceed = confirm(
+								`The delivery time for this order is AM (${validationDeliveryTime}), but the current time is PM. Do you want to proceed?`,
+							);
+							if (!proceed) {
+								const container = document.getElementById("productContainer");
+								if (container)
+									container.innerHTML = "<p>Order display cancelled (delivery time mismatch).</p>";
+								return;
+							}
+						}
+					}
+
 					async function fetchProductsByIds(ids) {
 						const response = await fetch(graphqlEndpoint, {
 							method: "POST",
@@ -290,7 +322,7 @@
 					card.innerHTML = `
                         <div class="product-name">${
 													order_id + (order?.number || "")
-												} <span style="float: right;">Q:${totalQuantity} / ₹${
+												} <span style="float: right;">${firstTimePart} Q:${totalQuantity} / ₹${
 													paymentStatus === "cash_on_delivery" ? totalAmount : 0
 												} </span></div>
                         <div class="product-name">${
