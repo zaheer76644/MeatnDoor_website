@@ -3,11 +3,15 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import AdyenCheckout from "@adyen/adyen-web";
-import { type CardElementData } from "@adyen/adyen-web/dist/types/components/Card/types";
-import type DropinElement from "@adyen/adyen-web/dist/types/components/Dropin";
 import { PaymentResponse as AdyenApiPaymentResponse } from "@adyen/api-library/lib/src/typings/checkout/paymentResponse";
 import { type CreateCheckoutSessionResponse } from "@adyen/api-library/lib/src/typings/checkout/createCheckoutSessionResponse";
-import { type AdyenPaymentResponse } from "./types";
+import {
+	type AdyenCheckoutInstanceOnAdditionalDetails,
+	type AdyenCheckoutInstanceOnSubmit,
+	type AdyenDropinElement,
+	type AdyenPaymentResponse,
+	type ApplePayCallback,
+} from "./types";
 import { replaceUrl } from "@/checkout/lib/utils/url";
 
 export type AdyenDropInCreateSessionResponse = {
@@ -22,22 +26,6 @@ export type PostAdyenDropInPaymentsResponse = {
 	payment: AdyenPaymentResponse;
 	orderId: string;
 };
-
-export type AdyenCheckoutInstanceState = {
-	isValid?: boolean;
-	data: CardElementData & Record<string, any>;
-};
-export type AdyenCheckoutInstanceOnSubmit = (
-	state: AdyenCheckoutInstanceState,
-	component: DropinElement,
-) => Promise<void> | void;
-
-export type AdyenCheckoutInstanceOnAdditionalDetails = (
-	state: AdyenCheckoutInstanceState,
-	component: DropinElement,
-) => Promise<void> | void;
-
-type ApplePayCallback = <T>(value: T) => void;
 
 export function createAdyenCheckoutInstance(
 	adyenSessionResponse: AdyenDropInCreateSessionResponse,
@@ -76,13 +64,25 @@ export function createAdyenCheckoutInstance(
 			applepay: {
 				buttonType: "plain",
 				buttonColor: "black",
-				onPaymentMethodSelected: (resolve: ApplePayCallback, reject: ApplePayCallback, event) => {
+				onPaymentMethodSelected: (
+					resolve: ApplePayCallback,
+					_reject: ApplePayCallback,
+					event: ApplePayJS.ApplePayPaymentMethodSelectedEvent,
+				) => {
 					resolve(event.paymentMethod);
 				},
-				onShippingContactSelected: (resolve: ApplePayCallback, reject: ApplePayCallback, event) => {
+				onShippingContactSelected: (
+					resolve: ApplePayCallback,
+					_reject: ApplePayCallback,
+					event: ApplePayJS.ApplePayShippingContactSelectedEvent,
+				) => {
 					resolve(event.shippingContact);
 				},
-				onShippingMethodSelected: (resolve: ApplePayCallback, reject: ApplePayCallback, event) => {
+				onShippingMethodSelected: (
+					resolve: ApplePayCallback,
+					_reject: ApplePayCallback,
+					event: ApplePayJS.ApplePayShippingMethodSelectedEvent,
+				) => {
 					resolve(event.shippingMethod);
 				},
 			},
@@ -96,7 +96,7 @@ export function createAdyenCheckoutInstance(
 export function handlePaymentResult(
 	saleorApiUrl: string,
 	result: PostAdyenDropInPaymentsResponse | PostAdyenDropInPaymentsDetailsResponse,
-	component: DropinElement,
+	component: AdyenDropinElement,
 ) {
 	switch (result.payment.resultCode) {
 		// @todo https://docs.adyen.com/online-payments/payment-result-codes

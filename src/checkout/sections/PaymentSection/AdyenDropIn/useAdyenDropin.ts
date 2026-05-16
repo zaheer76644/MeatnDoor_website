@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import type DropinElement from "@adyen/adyen-web/dist/types/components/Dropin";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { camelCase } from "lodash-es";
 import { apiErrorMessages } from "../errorMessages";
@@ -18,6 +17,7 @@ import {
 	type AdyenCheckoutInstanceOnAdditionalDetails,
 	type AdyenCheckoutInstanceOnSubmit,
 	type AdyenCheckoutInstanceState,
+	type AdyenDropinElement,
 	type AdyenPaymentResponse,
 } from "@/checkout/sections/PaymentSection/AdyenDropIn/types";
 import {
@@ -73,7 +73,7 @@ export const useAdyenDropin = (props: AdyenDropinProps) => {
 
 	const [adyenCheckoutSubmitParams, setAdyenCheckoutSubmitParams] = useState<{
 		state: AdyenCheckoutInstanceState;
-		component: DropinElement;
+		component: AdyenDropinElement;
 	} | null>(null);
 
 	const anyRequestsInProgress = areAnyRequestsInProgress({ updateState, loadingCheckout, ...rest });

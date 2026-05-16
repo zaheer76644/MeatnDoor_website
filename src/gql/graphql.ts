@@ -30295,7 +30295,6 @@ export const CheckoutDeleteLinesDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CheckoutDeleteLinesMutation, CheckoutDeleteLinesMutationVariables>;
-    
 export const CheckoutFindDocument = new TypedDocumentString(`
     query CheckoutFind($id: ID!) {
   checkout(id: $id) {
@@ -30337,16 +30336,6 @@ export const CheckoutFindDocument = new TypedDocumentString(`
         }
         name
         id
-        attributes {
-          attribute {
-            name
-            slug
-          } 
-          values {
-            name
-            slug
-          }
-        }
       }
     }
     totalPrice {

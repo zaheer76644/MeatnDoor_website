@@ -1,5 +1,5 @@
-import { type CoreOptions } from "@adyen/adyen-web/dist/types/core/types";
 import {
+	type AdyenCheckoutConfigOptions,
 	type AdyenCheckoutInstanceOnAdditionalDetails,
 	type AdyenCheckoutInstanceOnSubmit,
 	type AdyenGatewayInitializePayload,
@@ -17,7 +17,7 @@ export const createAdyenCheckoutConfig = ({
 	environment,
 	onSubmit,
 	onAdditionalDetails,
-}: CreateAdyenCheckoutConfigProps): CoreOptions => ({
+}: CreateAdyenCheckoutConfigProps): AdyenCheckoutConfigOptions => ({
 	paymentMethodsResponse,
 	environment,
 	clientKey,
