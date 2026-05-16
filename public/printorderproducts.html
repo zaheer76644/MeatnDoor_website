@@ -198,6 +198,7 @@
 					const currentHour = new Date().getHours();
 					const isCurrentAM = currentHour < 12;
 					const isCurrentPM = currentHour >= 12;
+					console.log("validationDeliveryTime----------", validationDeliveryTime);
 					if (validationDeliveryTime) {
 						if (isCurrentAM && isDeliveryPM) {
 							const proceed = confirm(
