@@ -323,7 +323,7 @@
 					card.innerHTML = `
                         <div class="product-name">${
 													order_id + (order?.number || "")
-												} <span style="float: right;"><span class="use-by">${firstTimePart}</span> Q:${totalQuantity} / ₹${
+												} <span class="use-by" style="float: right;">${firstTimePart}/${totalQuantity}/₹${
 													paymentStatus === "cash_on_delivery" ? totalAmount : 0
 												} </span></div>
                         <div class="product-name">${
