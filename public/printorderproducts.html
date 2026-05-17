@@ -193,12 +193,13 @@
 					const validationDeliveryTime =
 						order?.metadata?.find((item) => item?.key === "Delivery_Time")?.value || "";
 					const firstTimePart = validationDeliveryTime.split("-")[0].trim().toUpperCase();
+					let time = firstTimePart;
+					let firstPartOnly = time.replace(/AM|PM/g, "").trim();
 					const isDeliveryAM = firstTimePart.includes("AM");
 					const isDeliveryPM = firstTimePart.includes("PM");
 					const currentHour = new Date().getHours();
 					const isCurrentAM = currentHour < 12;
 					const isCurrentPM = currentHour >= 12;
-					console.log("validationDeliveryTime----------", validationDeliveryTime);
 					if (validationDeliveryTime) {
 						if (isCurrentAM && isDeliveryPM) {
 							const proceed = confirm(
@@ -323,7 +324,7 @@
 					card.innerHTML = `
                         <div class="product-name">${
 													order_id + (order?.number || "")
-												} <span class="use-by" style="float: right;">${firstTimePart}/${totalQuantity}/₹${
+												} <span class="use-by" style="float: right;">${firstPartOnly}/${totalQuantity}/₹${
 													paymentStatus === "cash_on_delivery" ? totalAmount : 0
 												} </span></div>
                         <div class="product-name">${
