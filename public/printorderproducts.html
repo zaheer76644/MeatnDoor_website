@@ -132,8 +132,8 @@
 			if (productSlug) {
 				document.getElementById("productContainer").innerHTML = "<p>No product selected.</p>";
 			} else {
-				const GET_PRODUCTS_BY_IDS = `
-            query GetProductsByIds($ids: [ID!]) {
+				const GET_PRINT_DATA = `
+            query GetPrintData($ids: [ID!]!, $orderId: ID, $fetchOrder: Boolean!) {
                 products(channel: "in", filter: { ids: $ids }, first: 100) {
                 edges {
                     node {
@@ -165,8 +165,56 @@
                     }
                 }
                 }
+                order(id: $orderId) @include(if: $fetchOrder) {
+                    user {
+                        orders(first: 1) {
+                            totalCount
+                        }
+                    }
+                }
             }
             `;
+
+				function getCustomerOrderCountFromOrder(order) {
+					if (order?.user?.orders?.totalCount != null) {
+						return order.user.orders.totalCount;
+					}
+					if (order?.customerOrderCount != null) {
+						return order.customerOrderCount;
+					}
+					const metaCount =
+						order?.metadata?.find(
+							(item) => item?.key === "customer_order_count" || item?.key === "order_count",
+						)?.value || "";
+					if (metaCount) {
+						const parsed = parseInt(metaCount, 10);
+						return Number.isNaN(parsed) ? metaCount : parsed;
+					}
+					return null;
+				}
+
+				async function fetchPrintData(ids, order) {
+					const orderId = order?.id || null;
+					const response = await fetch(graphqlEndpoint, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							query: GET_PRINT_DATA,
+							variables: {
+								ids,
+								orderId,
+								fetchOrder: Boolean(orderId),
+							},
+						}),
+					});
+
+					const json = await response.json();
+					const products = json?.data?.products?.edges?.map((e) => e.node) || [];
+					const apiCount = json?.data?.order?.user?.orders?.totalCount;
+					const customerOrderCount = apiCount != null ? apiCount : getCustomerOrderCountFromOrder(order);
+
+					return { products, customerOrderCount };
+				}
 
 				async function handleOrder(order) {
 					const deliveryDate = order?.metadata?.find((item) => item?.key === "Delivery_Date")?.value || "";
@@ -230,21 +278,6 @@
 						}
 					}
 
-					async function fetchProductsByIds(ids) {
-						const response = await fetch(graphqlEndpoint, {
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({
-								query: GET_PRODUCTS_BY_IDS,
-								variables: { ids },
-							}),
-						});
-
-						const json = await response.json();
-						console.log("json----------", json);
-						return json.data.products.edges.map((e) => e.node);
-					}
-
 					function getSavingAmount(product) {
 						const variant = product.variants?.[0];
 						if (!variant) return null;
@@ -302,7 +335,7 @@
 
 					const productIds = order.lines.map((item) => item?.variant?.product?.id);
 					const uniqueIds = [...new Set(productIds)];
-					const products = await fetchProductsByIds(uniqueIds);
+					const { products, customerOrderCount } = await fetchPrintData(uniqueIds, order);
 					const container = document.getElementById("productContainer");
 					container.innerHTML = "";
 					products.forEach((product) => {
@@ -323,6 +356,7 @@
 						?.reduce((sum, line) => sum + (line.quantity || 0), 0);
 					const paymentStatus = order?.metadata?.find((item) => item?.key === "paymentMode")?.value || "";
 					const totalAmount = order?.total?.gross?.amount || 0;
+					const orderCountText = customerOrderCount === 1 ? `F/` : "";
 
 					const card = document.createElement("div");
 					card.className = "product-card";
@@ -330,7 +364,7 @@
 					card.innerHTML = `
                         <div class="product-name">${
 													order_id + (order?.number || "")
-												} <span class="use-by" style="float: right;">${firstPartOnly}/${totalQuantity}/₹${
+												} <span class="use-by" style="float: right;">${firstPartOnly}/${orderCountText}${totalQuantity}/₹${
 													paymentStatus === "cash_on_delivery" ? totalAmount : 0
 												} </span></div>
                         <div class="product-name">${
