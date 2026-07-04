@@ -357,6 +357,8 @@
 					const paymentStatus = order?.metadata?.find((item) => item?.key === "paymentMode")?.value || "";
 					const totalAmount = order?.total?.gross?.amount || 0;
 					const orderCountText = customerOrderCount === 1 ? `F/` : "";
+					console.log("orderCountText-------------", orderCountText);
+					console.log("customerOrderCount-------------", customerOrderCount);
 
 					const card = document.createElement("div");
 					card.className = "product-card";

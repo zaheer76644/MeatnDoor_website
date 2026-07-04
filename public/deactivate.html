@@ -3,62 +3,538 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Terms and Conditions | MEATnDOOR</title>
-		<!-- ========================= CSS here ========================= -->
-		<link rel="stylesheet" href="assets/css/bootstrap.min.css" />
-		<link rel="stylesheet" href="assets/css/LineIcons.2.0.css" />
-		<link rel="stylesheet" href="assets/css/animate.css" />
-		<link rel="stylesheet" href="assets/css/tiny-slider.css" />
-		<link rel="stylesheet" href="assets/css/glightbox.min.css" />
-		<link rel="stylesheet" href="assets/css/main.css" />
-		<!-- <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      margin: 20px;
-      padding: 0;
-      color: #333;
-      background-color: #f9f9f9;
-    }
-    h1, h2 {
-      color: #bb2c1c;
-    }
-    a {
-      color: #bb2c1c;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      background: white;
-      padding: 30px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-  </style> -->
+		<title>Account Deactivation | MEATnDOOR</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+			rel="stylesheet"
+		/>
 		<style>
-			.contact-hero {
-				background-color: #47141e;
-				padding-top: 130px;
-				padding-bottom: 20px;
-				border-bottom: 1px solid rgba(140, 34, 60, 0.1);
-			}
-			.contact-title {
-				color: white;
-				font-weight: 700;
-				margin-bottom: 20px;
+			:root {
+				--primary: #47141e;
+				--primary-light: #5a1a28;
+				--accent: #ed4264;
+				--accent-light: #ff6b9d;
+				--text: #1f2937;
+				--text-muted: #6b7280;
+				--bg: #f9fafb;
+				--white: #ffffff;
+				--border: #e5e7eb;
+				--shadow: 0 10px 40px rgba(71, 20, 30, 0.08);
+				--radius: 16px;
 			}
 
-			.contact-subtitle {
-				color: white;
-				font-size: 1.2rem;
-				max-width: 700px;
-				margin: 0 auto 40px;
+			*,
+			*::before,
+			*::after {
+				box-sizing: border-box;
+			}
+
+			html {
+				scroll-behavior: smooth;
+			}
+
+			body {
+				margin: 0;
+				font-family:
+					"Inter",
+					system-ui,
+					-apple-system,
+					sans-serif;
+				color: var(--text);
+				background: var(--bg);
+				line-height: 1.6;
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+			}
+
+			a {
+				color: inherit;
+				text-decoration: none;
+			}
+
+			img {
+				max-width: 100%;
+				height: auto;
+				display: block;
+			}
+
+			.container {
+				width: 100%;
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 0 1.25rem;
+			}
+
+			/* Header */
+			.site-header {
+				position: sticky;
+				top: 0;
+				z-index: 100;
+				background: var(--primary);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+				backdrop-filter: blur(8px);
+			}
+
+			.header-inner {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 1rem;
+				min-height: 72px;
+			}
+
+			.logo img {
+				height: 50px;
+				width: auto;
+				max-width: 200px;
+				object-fit: contain;
+			}
+
+			.nav-desktop {
+				display: none;
+				align-items: center;
+				gap: 2rem;
+				list-style: none;
+				margin: 0;
+				padding: 0;
+			}
+
+			.nav-desktop a {
+				color: var(--white);
+				font-size: 0.9rem;
+				font-weight: 500;
+				transition: color 0.2s;
+			}
+
+			.nav-desktop a:hover {
+				color: var(--accent);
+			}
+
+			.header-actions {
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+			}
+
+			.btn-app {
+				display: none;
+				padding: 0.55rem 1.1rem;
+				border-radius: 999px;
+				background: var(--accent);
+				color: var(--white);
+				font-size: 0.85rem;
+				font-weight: 600;
+				transition:
+					background 0.2s,
+					transform 0.2s;
+			}
+
+			.btn-app:hover {
+				background: var(--accent-light);
+				transform: translateY(-1px);
+			}
+
+			.menu-toggle {
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				gap: 5px;
+				width: 40px;
+				height: 40px;
+				padding: 8px;
+				border: none;
+				border-radius: 8px;
+				background: rgba(255, 255, 255, 0.1);
+				cursor: pointer;
+			}
+
+			.menu-toggle span {
+				display: block;
+				height: 2px;
+				background: var(--white);
+				border-radius: 2px;
+				transition:
+					transform 0.2s,
+					opacity 0.2s;
+			}
+
+			.menu-toggle.is-open span:nth-child(1) {
+				transform: translateY(7px) rotate(45deg);
+			}
+
+			.menu-toggle.is-open span:nth-child(2) {
+				opacity: 0;
+			}
+
+			.menu-toggle.is-open span:nth-child(3) {
+				transform: translateY(-7px) rotate(-45deg);
+			}
+
+			.nav-mobile {
+				display: none;
+				flex-direction: column;
+				gap: 0.25rem;
+				padding: 0.75rem 0 1.25rem;
+				border-top: 1px solid rgba(255, 255, 255, 0.1);
+			}
+
+			.nav-mobile.is-open {
+				display: flex;
+			}
+
+			.nav-mobile a {
+				color: var(--white);
+				padding: 0.65rem 0;
+				font-weight: 500;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+			}
+
+			.nav-mobile a:hover {
+				color: var(--accent);
+			}
+
+			/* Hero */
+			.hero {
+				position: relative;
+				overflow: hidden;
+				background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--primary) 100%);
+				padding: 4.5rem 0 5rem;
+				text-align: center;
+			}
+
+			.hero::before,
+			.hero::after {
+				content: "";
+				position: absolute;
+				border-radius: 50%;
+				filter: blur(60px);
+				opacity: 0.35;
+				pointer-events: none;
+			}
+
+			.hero::before {
+				width: 320px;
+				height: 320px;
+				top: -80px;
+				right: -60px;
+				background: radial-gradient(circle, rgba(237, 66, 100, 0.5), transparent 70%);
+			}
+
+			.hero::after {
+				width: 280px;
+				height: 280px;
+				bottom: -60px;
+				left: -40px;
+				background: radial-gradient(circle, rgba(255, 107, 157, 0.35), transparent 70%);
+			}
+
+			.hero-content {
+				position: relative;
+				z-index: 1;
+				max-width: 640px;
+				margin: 0 auto;
+			}
+
+			.hero h1 {
+				margin: 0 0 1rem;
+				font-size: clamp(2rem, 5vw, 3rem);
+				font-weight: 800;
+				color: var(--white);
+				letter-spacing: -0.02em;
+			}
+
+			.hero-divider {
+				width: 96px;
+				height: 4px;
+				margin: 0 auto 1.25rem;
+				border-radius: 999px;
+				background: linear-gradient(90deg, var(--accent), var(--accent-light), var(--accent));
+			}
+
+			.hero p {
+				margin: 0;
+				color: rgba(255, 255, 255, 0.9);
+				font-size: 1.05rem;
+			}
+
+			/* Main form */
+			.main-content {
+				flex: 1;
+				padding: 0 0 4rem;
+				margin-top: -2.5rem;
+				position: relative;
+				z-index: 2;
+			}
+
+			.form-card {
+				max-width: 520px;
+				margin: 0 auto;
+				background: var(--white);
+				border-radius: var(--radius);
+				box-shadow: var(--shadow);
+				padding: 2rem 1.75rem;
+				border: 1px solid var(--border);
+			}
+
+			.form-card h2 {
+				margin: 0 0 0.5rem;
+				font-size: 1.5rem;
+				font-weight: 700;
+				color: var(--primary);
+			}
+
+			.form-card .subtitle {
+				margin: 0 0 1.75rem;
+				color: var(--text-muted);
+				font-size: 0.95rem;
+			}
+
+			.form-group {
+				margin-bottom: 1.25rem;
+			}
+
+			.form-label {
+				display: block;
+				margin-bottom: 0.5rem;
+				font-size: 0.9rem;
+				font-weight: 600;
+				color: var(--text);
+			}
+
+			.form-input {
+				width: 100%;
+				padding: 0.85rem 1rem;
+				border: 1.5px solid var(--border);
+				border-radius: 10px;
+				font-size: 1rem;
+				font-family: inherit;
+				color: var(--text);
+				background: var(--white);
+				transition:
+					border-color 0.2s,
+					box-shadow 0.2s;
+			}
+
+			.form-input:focus {
+				outline: none;
+				border-color: var(--accent);
+				box-shadow: 0 0 0 3px rgba(237, 66, 100, 0.15);
+			}
+
+			.form-input::placeholder {
+				color: #9ca3af;
+			}
+
+			.btn-submit {
+				width: 100%;
+				padding: 0.9rem 1.25rem;
+				border: none;
+				border-radius: 10px;
+				background: linear-gradient(135deg, var(--accent), #d93658);
+				color: var(--white);
+				font-size: 1rem;
+				font-weight: 600;
+				font-family: inherit;
+				cursor: pointer;
+				transition:
+					opacity 0.2s,
+					transform 0.2s,
+					box-shadow 0.2s;
+				box-shadow: 0 4px 14px rgba(237, 66, 100, 0.35);
+			}
+
+			.btn-submit:hover:not(:disabled) {
+				transform: translateY(-1px);
+				box-shadow: 0 6px 20px rgba(237, 66, 100, 0.4);
+			}
+
+			.btn-submit:disabled {
+				opacity: 0.65;
+				cursor: not-allowed;
+			}
+
+			.result-message {
+				margin-top: 1.25rem;
+				padding: 0.85rem 1rem;
+				border-radius: 10px;
+				font-size: 0.9rem;
+				display: none;
+			}
+
+			.result-message.is-visible {
+				display: block;
+			}
+
+			.result-message.success {
+				background: #ecfdf5;
+				color: #065f46;
+				border: 1px solid #a7f3d0;
+			}
+
+			.result-message.error {
+				background: #fef2f2;
+				color: #991b1b;
+				border: 1px solid #fecaca;
+			}
+
+			.note {
+				margin-top: 1.5rem;
+				padding-top: 1.25rem;
+				border-top: 1px solid var(--border);
+				font-size: 0.85rem;
+				color: var(--text-muted);
+			}
+
+			.note a {
+				color: var(--accent);
+				font-weight: 500;
+			}
+
+			.note a:hover {
+				text-decoration: underline;
+			}
+
+			/* Footer */
+			.site-footer {
+				background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--primary) 100%);
+				color: rgba(255, 255, 255, 0.85);
+				padding: 3rem 0 2rem;
+				margin-top: auto;
+			}
+
+			.footer-grid {
+				display: grid;
+				grid-template-columns: 1fr;
+				gap: 2.5rem;
+			}
+
+			.footer-brand p {
+				margin: 1rem 0 1.25rem;
+				max-width: 360px;
+				line-height: 1.7;
+				font-size: 0.95rem;
+			}
+
+			.footer-brand .highlight {
+				color: var(--white);
+				font-weight: 600;
+			}
+
+			.footer-logo img {
+				height: 60px;
+				width: auto;
+				max-width: 200px;
+				object-fit: contain;
+			}
+
+			.social-heading {
+				margin: 0 0 0.75rem;
+				font-size: 0.875rem;
+				font-weight: 600;
+				color: var(--white);
+			}
+
+			.social-links svg {
+				width: 20px;
+				height: 20px;
+				fill: currentColor;
+			}
+
+			.social-links {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.6rem;
+				list-style: none;
+				margin: 0 0 1.5rem;
+				padding: 0;
+			}
+
+			.social-links a {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 40px;
+				height: 40px;
+				border-radius: 10px;
+				background: rgba(255, 255, 255, 0.1);
+				color: var(--white);
+				font-size: 0.75rem;
+				font-weight: 700;
+				transition:
+					background 0.2s,
+					transform 0.2s;
+			}
+
+			.social-links a:hover {
+				background: linear-gradient(135deg, var(--accent), var(--accent-light));
+				transform: scale(1.08);
+			}
+
+			.copyright {
+				font-size: 0.85rem;
+				color: rgba(255, 255, 255, 0.65);
+			}
+
+			.copyright strong {
+				color: var(--white);
+			}
+
+			.footer-links h3 {
+				margin: 0 0 1rem;
+				font-size: 1rem;
+				font-weight: 700;
+				color: var(--white);
+			}
+
+			.footer-links ul {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+			}
+
+			.footer-links li + li {
+				margin-top: 0.55rem;
+			}
+
+			.footer-links a {
+				font-size: 0.9rem;
+				color: rgba(255, 255, 255, 0.75);
+				transition: color 0.2s;
+			}
+
+			.footer-links a:hover {
+				color: var(--accent);
+			}
+
+			@media (min-width: 768px) {
+				.nav-desktop {
+					display: flex;
+				}
+
+				.btn-app {
+					display: inline-flex;
+				}
+
+				.menu-toggle {
+					display: none;
+				}
+
+				.nav-mobile {
+					display: none !important;
+				}
+
+				.form-card {
+					padding: 2.5rem;
+				}
+
+				.footer-grid {
+					grid-template-columns: 1.2fr 1fr 1fr;
+				}
 			}
 		</style>
-		<!-- Google tag (gtag.js) -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-CBFX8LWTNC"></script>
 		<script>
 			window.dataLayer = window.dataLayer || [];
@@ -66,242 +542,236 @@
 				dataLayer.push(arguments);
 			}
 			gtag("js", new Date());
-
 			gtag("config", "G-CBFX8LWTNC");
 		</script>
 	</head>
 	<body>
-		<header class="header navbar-area">
+		<header class="site-header">
 			<div class="container">
-				<div class="row align-items-center">
-					<div class="col-lg-12">
-						<div class="nav-inner">
-							<!-- Start Navbar -->
-							<nav class="navbar navbar-expand-lg">
-								<a class="navbar-brand" style="margin-top: 10px" href="index.html">
-									<img
-										src="assets/images/logo/log.png"
-										height="80"
-										style="width: 100% !important"
-										alt="Logo"
-									/>
-								</a>
-								<button
-									class="navbar-toggler mobile-menu-btn"
-									type="button"
-									data-bs-toggle="collapse"
-									data-bs-target="#navbarSupportedContent"
-									aria-controls="navbarSupportedContent"
-									aria-expanded="false"
-									aria-label="Toggle navigation"
-								>
-									<span class="toggler-icon"></span>
-									<span class="toggler-icon"></span>
-									<span class="toggler-icon"></span>
-								</button>
-								<div class="navbar-collapse sub-menu-bar collapse" id="navbarSupportedContent">
-									<ul id="nav" class="navbar-nav ms-auto">
-										<li class="nav-item">
-											<a href="index.html" class="" aria-label="Toggle navigation">Home</a>
-										</li>
-										<li class="nav-item">
-											<a href="About-Us.html" class="" aria-label="Toggle navigation">About Us</a>
-										</li>
-										<li class="nav-item">
-											<a href="shipping-and-delivery.html" aria-label="Toggle navigation"
-												>Shipping & Delivery</a
-											>
-										</li>
-										<li class="nav-item">
-											<a href="products.html" class="" aria-label="Toggle navigation">Products</a>
-										</li>
-										<li class="nav-item">
-											<a href="contact-us.html" aria-label="Toggle navigation">Contact Us</a>
-										</li>
-										<!-- <li class="nav-item">
-                                  <a class="dd-menu collapsed" href="download-app.html" data-bs-toggle="collapse"
-                                      data-bs-target="#submenu-1-4" aria-controls="navbarSupportedContent"
-                                      aria-expanded="false" aria-label="Toggle navigation">Blog</a>
-                                  <ul class="sub-menu collapse" id="submenu-1-4">
-                                      <li class="nav-item"><a href="download-app.html">Blog Grid Sidebar</a>
-                                      </li>
-                                      <li class="nav-item"><a href="download-app.html">Blog Single</a></li>
-                                      <li class="nav-item"><a href="download-app.html">Blog Single
-                                              Sibebar</a></li>
-                                  </ul>
-                              </li> -->
-									</ul>
-								</div>
-								<!-- navbar collapse -->
-								<div class="button add-list-button">
-									<a href="download-app.html" class="btn">Get it now</a>
-								</div>
-							</nav>
-							<!-- End Navbar -->
-						</div>
+				<div class="header-inner">
+					<a href="/in" class="logo" aria-label="MEATnDOOR Home">
+						<img class="brand-logo" src="/img/log.png" alt="MEATnDOOR" width="200" height="50" />
+					</a>
+
+					<ul class="nav-desktop">
+						<li><a href="/in">Home</a></li>
+						<li><a href="/in/about">About</a></li>
+						<li><a href="/in/products">Products</a></li>
+						<li><a href="/in/contact">Contact Us</a></li>
+					</ul>
+
+					<div class="header-actions">
+						<a
+							class="btn-app"
+							href="https://play.google.com/store/apps/details?id=com.themanagemate.meatndoor&hl=en_IN"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Get the App
+						</a>
+						<button
+							class="menu-toggle"
+							type="button"
+							aria-label="Toggle menu"
+							aria-expanded="false"
+							id="menuToggle"
+						>
+							<span></span>
+							<span></span>
+							<span></span>
+						</button>
 					</div>
 				</div>
-				<!-- row -->
+
+				<nav class="nav-mobile" id="mobileNav" aria-label="Mobile navigation">
+					<a href="/in">Home</a>
+					<a href="/in/about">About</a>
+					<a href="/in/products">Products</a>
+					<a href="/in/contact">Contact Us</a>
+					<a
+						href="https://play.google.com/store/apps/details?id=com.themanagemate.meatndoor&hl=en_IN"
+						target="_blank"
+						rel="noopener noreferrer"
+						>Get the App</a
+					>
+				</nav>
 			</div>
-			<!-- container -->
 		</header>
 
-		<section
-			class="contact-hero text-center"
-			style="
-				text-align: center;
-				padding-top: 130px;
-				margin-bottom: 30px;
-				border-bottom: 2px solid #760000;
-				padding-bottom: 20px;
-			"
-		>
-			<h1 class="contact-title">Account Deactivation</h1>
-		</section>
-		<div
-			style="
-				padding: 30px 15px;
-				background-color: #fff;
-				color: #333;
-				font-family: Arial, sans-serif;
-				max-width: 800px;
-				margin: 0 auto;
-				line-height: 1.6;
-			"
-		>
-			<h2 class="mb-4">Request Account Deletion</h2>
-
-			<div class="mb-3">
-				<label for="redirectUrl" class="form-label">Please put email to dectivate your account.</label>
-				<input type="text" class="form-control" id="email" placeholder="Email" />
+		<section class="hero">
+			<div class="container">
+				<div class="hero-content">
+					<h1>Account Deactivation</h1>
+					<div class="hero-divider"></div>
+					<p>Request permanent deletion of your MEATnDOOR account and associated personal data.</p>
+				</div>
 			</div>
-			<!-- sayyedqatar5@gmail.com -->
-			<button id="deleteBtn" class="btn btn-danger">Request Deletion</button>
+		</section>
 
-			<div id="result" class="mt-4"></div>
+		<main class="main-content">
+			<div class="container">
+				<div class="form-card">
+					<h2>Request Account Deletion</h2>
+					<p class="subtitle">
+						Enter the email address linked to your account. We will verify and process your request.
+					</p>
 
-			<script>
-				const submitButton = document.getElementById("deleteBtn");
-				document.getElementById("deleteBtn").addEventListener("click", function (e) {
-					e.preventDefault(); // Prevent default form submission
-
-					const email = document.getElementById("email").value;
-
-					console.log(email);
-					submitButton.disabled = true;
-					submitButton.textContent = "Please wait...";
-
-					fetch("https://api.meatify.in/request/delete-account/", {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({ email: email }),
-					})
-						.then((response) => {
-							if (!response.ok) {
-								throw new Error("Request failed: " + response.status);
-							}
-							if (response.ok) {
-								alert("We received your request, thanks");
-								location.reload();
-							}
-							return response.json(); // Adjust if your Django view returns plain text
-						})
-						.then((data) => {
-							document.getElementById("response").textContent = "Success: " + JSON.stringify(data);
-						})
-						.catch((error) => {
-							document.getElementById("response").textContent = "Error: " + error.message;
-						});
-				});
-			</script>
-		</div>
-
-		<footer class="footer">
-			<!-- Start Footer Top -->
-			<div class="footer-top">
-				<div class="container">
-					<div class="row">
-						<div class="col-lg-4 col-md-4 col-12">
-							<!-- Single Widget -->
-							<div class="single-footer f-about">
-								<div class="logo">
-									<a href="index.html">
-										<img src="assets/images/logo/log.png" style="width: fit-content" alt="#" />
-									</a>
-								</div>
-								<p>Making the world a better place through constructing elegant hierarchies.</p>
-								<ul class="social">
-									<li>
-										<a href="download-app.html"><i class="lni lni-facebook-filled"></i></a>
-									</li>
-									<li>
-										<a href="download-app.html"><i class="lni lni-twitter-original"></i></a>
-									</li>
-									<li>
-										<a href="download-app.html"><i class="lni lni-instagram"></i></a>
-									</li>
-									<li>
-										<a href="download-app.html"><i class="lni lni-linkedin-original"></i></a>
-									</li>
-									<li>
-										<a href="download-app.html"><i class="lni lni-youtube"></i></a>
-									</li>
-									<li>
-										<a href="download-app.html"><i class="lni lni-pinterest"></i></a>
-									</li>
-								</ul>
-								<p class="copyright-text">© 2025 MEATnDOOR Fresh Foods. All rights reserved.</p>
-							</div>
-							<!-- End Single Widget -->
+					<form id="deactivateForm" novalidate>
+						<div class="form-group">
+							<label for="email" class="form-label">Email address</label>
+							<input
+								type="email"
+								class="form-input"
+								id="email"
+								name="email"
+								placeholder="you@example.com"
+								required
+								autocomplete="email"
+							/>
 						</div>
-						<div class="col-lg-8 col-md-8 col-12" style="margin-top: 80px">
-							<div class="row">
-								<div class="col-lg-6 col-md-6 col-12">
-									<!-- Single Widget -->
-									<div class="single-footer f-link">
-										<h3>Company</h3>
-										<ul>
-											<li><a href="About-Us.html">About Us</a></li>
-											<li><a href="download-app.html">Our Blog</a></li>
-											<li><a href="download-app.html">Jobs</a></li>
-											<li><a href="download-app.html">Press</a></li>
-											<li><a href="https://meatndoor.com/contact-us.html">Contact Us</a></li>
-										</ul>
-									</div>
-									<!-- End Single Widget -->
-								</div>
-								<div class="col-lg-6 col-md-6 col-12">
-									<!-- Single Widget -->
-									<div class="single-footer f-link">
-										<h3>Legal</h3>
-										<ul>
-											<li>
-												<a href="https://meatndoor.com/terms-and-conditions.html">Terms & Conditions</a>
-											</li>
-											<li><a href="https://meatndoor.com/privacy-policy.html">Privacy Policy</a></li>
-											<li><a href="download-app.html">Catering Services</a></li>
-											<li><a href="download-app.html">Customer Relations</a></li>
-											<li><a href="download-app.html">Innovation</a></li>
-										</ul>
-									</div>
-									<!-- End Single Widget -->
-								</div>
-							</div>
-						</div>
+						<button type="submit" class="btn-submit" id="deleteBtn">Request Deletion</button>
+					</form>
+
+					<div id="result" class="result-message" role="alert"></div>
+
+					<p class="note">
+						Need help? Contact us at
+						<a href="mailto:support@meatndoor.com">support@meatndoor.com</a>
+						or read our <a href="/in/privacy-policy">Privacy Policy</a>.
+					</p>
+				</div>
+			</div>
+		</main>
+
+		<footer class="site-footer">
+			<div class="container">
+				<div class="footer-grid">
+					<div class="footer-brand">
+						<a href="/in" class="footer-logo">
+							<img class="brand-logo" src="/img/log.png" alt="MEATnDOOR" width="200" height="60" />
+						</a>
+						<p>
+							Quality fresh meat delivered right to your doorstep. Experience convenience, freshness, and
+							excellence with
+							<span class="highlight">MEATnDOOR</span>.
+						</p>
+						<p class="social-heading">Follow Us</p>
+						<ul class="social-links">
+							<li>
+								<a
+									href="https://www.facebook.com/people/MeatnDoor/61581651580735/"
+									target="_blank"
+									rel="noopener noreferrer"
+									aria-label="Facebook"
+								>
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<path
+											d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+										/>
+									</svg>
+								</a>
+							</li>
+							<li>
+								<a
+									href="https://www.instagram.com/meatndoor/"
+									target="_blank"
+									rel="noopener noreferrer"
+									aria-label="Instagram"
+								>
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<path
+											d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"
+										/>
+									</svg>
+								</a>
+							</li>
+						</ul>
+						<p class="copyright">© 2025 <strong>MEATnDOOR</strong> Fresh Foods. All rights reserved.</p>
+					</div>
+
+					<div class="footer-links">
+						<h3>Company</h3>
+						<ul>
+							<li><a href="/in/about">About Us</a></li>
+							<li><a href="/in/contact">Contact Us</a></li>
+							<li><a href="/in/products">Products</a></li>
+						</ul>
+					</div>
+
+					<div class="footer-links">
+						<h3>Legal</h3>
+						<ul>
+							<li><a href="/in/privacy-policy">Privacy Policy</a></li>
+							<li><a href="/deactivate.html">Account Deactivation</a></li>
+						</ul>
 					</div>
 				</div>
 			</div>
-			<!--/ End Footer Top -->
 		</footer>
 
-		<!-- ========================= JS here ========================= -->
-		<script src="assets/js/bootstrap.min.js"></script>
-		<script src="assets/js/wow.min.js"></script>
-		<script src="assets/js/tiny-slider.js"></script>
-		<script src="assets/js/glightbox.min.js"></script>
-		<script src="assets/js/count-up.min.js"></script>
-		<!-- <script src="assets/js/main.js"></script> -->
+		<script>
+			(function () {
+				const logoSources = ["img/log.png", "/img/log.png", "https://meatndoor.com/img/log.png"];
+				document.querySelectorAll(".brand-logo").forEach((img) => {
+					let index = 0;
+					img.addEventListener("error", function tryNextSource() {
+						if (index >= logoSources.length) return;
+						img.src = logoSources[index++];
+					});
+				});
+			})();
+
+			const menuToggle = document.getElementById("menuToggle");
+			const mobileNav = document.getElementById("mobileNav");
+
+			menuToggle.addEventListener("click", () => {
+				const isOpen = mobileNav.classList.toggle("is-open");
+				menuToggle.classList.toggle("is-open", isOpen);
+				menuToggle.setAttribute("aria-expanded", String(isOpen));
+			});
+
+			const form = document.getElementById("deactivateForm");
+			const submitButton = document.getElementById("deleteBtn");
+			const resultEl = document.getElementById("result");
+
+			function showResult(message, type) {
+				resultEl.textContent = message;
+				resultEl.className = "result-message is-visible " + type;
+			}
+
+			form.addEventListener("submit", async function (e) {
+				e.preventDefault();
+
+				const email = document.getElementById("email").value.trim();
+				if (!email) {
+					showResult("Please enter your email address.", "error");
+					return;
+				}
+
+				submitButton.disabled = true;
+				submitButton.textContent = "Please wait...";
+				resultEl.className = "result-message";
+
+				try {
+					const response = await fetch("https://api.meatify.in/request/delete-account/", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ email }),
+					});
+
+					if (!response.ok) {
+						throw new Error("Request failed. Please try again later.");
+					}
+
+					showResult("We received your request. Thank you — we will process it shortly.", "success");
+					form.reset();
+				} catch (error) {
+					showResult(error.message || "Something went wrong. Please try again.", "error");
+				} finally {
+					submitButton.disabled = false;
+					submitButton.textContent = "Request Deletion";
+				}
+			});
+		</script>
 	</body>
 </html>
