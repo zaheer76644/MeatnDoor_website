@@ -113,6 +113,7 @@
 		<script>
 			const graphqlEndpoint = "https://api.meatify.in/graphql/";
 			const ORDER_STORAGE_KEY = "printorderproducts_order";
+			const SALEOR_TOKEN_KEY = "printorderproducts_saleor_token";
 
 			function isValidOrderData(data) {
 				return (
@@ -168,6 +169,83 @@
             }
             `;
 
+				const GET_CUSTOMER_ORDER_COUNT_BY_USER = `
+            query CustomerOrderCountByUser($id: ID!) {
+                user(id: $id) {
+                    orders(first: 1) {
+                        totalCount
+                    }
+                }
+            }
+            `;
+
+				const GET_CUSTOMER_ORDER_COUNT_BY_CUSTOMERS = `
+            query CustomerOrderCountByCustomer($ids: [ID!]) {
+                customers(first: 1, filter: { ids: $ids }) {
+                    edges {
+                        node {
+                            orders(first: 1) {
+                                totalCount
+                            }
+                        }
+                    }
+                }
+            }
+            `;
+
+				const GET_CUSTOMER_ORDER_COUNT_BY_SEARCH = `
+            query CustomerOrderCountBySearch($search: String!) {
+                customers(first: 1, filter: { search: $search }) {
+                    edges {
+                        node {
+                            orders(first: 1) {
+                                totalCount
+                            }
+                        }
+                    }
+                }
+            }
+            `;
+
+				function saveSaleorToken(token) {
+					if (!token) return;
+					try {
+						sessionStorage.setItem(SALEOR_TOKEN_KEY, token);
+					} catch (e) {
+						/* ignore */
+					}
+				}
+
+				function getSaleorAuthToken() {
+					const urlToken = urlParams.get("token");
+					if (urlToken) {
+						saveSaleorToken(urlToken);
+						return urlToken;
+					}
+					try {
+						return sessionStorage.getItem(SALEOR_TOKEN_KEY);
+					} catch (e) {
+						return null;
+					}
+				}
+
+				async function saleorGraphql(query, variables, token) {
+					const response = await fetch(graphqlEndpoint, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							Authorization: `Bearer ${token}`,
+						},
+						body: JSON.stringify({ query, variables }),
+					});
+					const json = await response.json();
+					if (json.errors?.length) {
+						console.warn("Saleor GraphQL:", json.errors.map((e) => e.message).join("; "));
+						return null;
+					}
+					return json.data;
+				}
+
 				function getCustomerOrderCountFromOrder(order) {
 					if (order?.user?.orders?.totalCount != null) {
 						return order.user.orders.totalCount;
@@ -203,32 +281,52 @@
 					return json?.data?.products?.edges?.map((e) => e.node) || [];
 				}
 
+				async function fetchCustomerOrderCountFromSaleor(order) {
+					const token = getSaleorAuthToken();
+					if (!token) {
+						return null;
+					}
+
+					const userId = order?.user?.id || "";
+					const email = order?.userEmail || order?.user?.email || "";
+
+					if (userId) {
+						const byUser = await saleorGraphql(GET_CUSTOMER_ORDER_COUNT_BY_USER, { id: userId }, token);
+						const userCount = byUser?.user?.orders?.totalCount;
+						if (userCount != null) {
+							return userCount;
+						}
+
+						const byCustomer = await saleorGraphql(
+							GET_CUSTOMER_ORDER_COUNT_BY_CUSTOMERS,
+							{ ids: [userId] },
+							token,
+						);
+						const customerCount = byCustomer?.customers?.edges?.[0]?.node?.orders?.totalCount;
+						if (customerCount != null) {
+							return customerCount;
+						}
+					}
+
+					if (email) {
+						const bySearch = await saleorGraphql(
+							GET_CUSTOMER_ORDER_COUNT_BY_SEARCH,
+							{ search: email },
+							token,
+						);
+						return bySearch?.customers?.edges?.[0]?.node?.orders?.totalCount ?? null;
+					}
+
+					return null;
+				}
+
 				async function fetchCustomerOrderCount(order) {
 					const fromPayload = getCustomerOrderCountFromOrder(order);
 					if (fromPayload != null) {
 						return fromPayload;
 					}
 
-					const email = order?.userEmail || order?.user?.email || "";
-					const userId = order?.user?.id || "";
-					if (!email && !userId) {
-						return null;
-					}
-
-					try {
-						const response = await fetch(`${window.location.origin}/api/customer-order-count`, {
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({ email, user_id: userId }),
-						});
-						if (!response.ok) {
-							return null;
-						}
-						const data = await response.json();
-						return data?.total_count ?? data?.totalCount ?? data?.count ?? data?.order_count ?? null;
-					} catch (e) {
-						return null;
-					}
+					return fetchCustomerOrderCountFromSaleor(order);
 				}
 
 				async function handleOrder(order) {
@@ -409,6 +507,22 @@
 
 				window.addEventListener("message", async (event) => {
 					const data = event.data;
+
+					if (data?.type === "SALEOR_AUTH_TOKEN" && data.token) {
+						saveSaleorToken(data.token);
+						try {
+							const saved = sessionStorage.getItem(ORDER_STORAGE_KEY);
+							if (saved) {
+								const order = JSON.parse(saved);
+								if (isValidOrderData(order)) {
+									await handleOrder(order);
+								}
+							}
+						} catch (e) {
+							/* ignore */
+						}
+						return;
+					}
 
 					if (data?.type === "CUSTOMER_ORDER_COUNT" && data?.orderNumber) {
 						try {
