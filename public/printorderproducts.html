@@ -132,8 +132,8 @@
 			if (productSlug) {
 				document.getElementById("productContainer").innerHTML = "<p>No product selected.</p>";
 			} else {
-				const GET_PRINT_DATA = `
-            query GetPrintData($ids: [ID!]!, $orderId: ID, $fetchOrder: Boolean!) {
+				const GET_PRODUCTS_BY_IDS = `
+            query GetProductsByIds($ids: [ID!]!) {
                 products(channel: "in", filter: { ids: $ids }, first: 100) {
                 edges {
                     node {
@@ -165,13 +165,6 @@
                     }
                 }
                 }
-                order(id: $orderId) @include(if: $fetchOrder) {
-                    user {
-                        orders(first: 1) {
-                            totalCount
-                        }
-                    }
-                }
             }
             `;
 
@@ -179,41 +172,63 @@
 					if (order?.user?.orders?.totalCount != null) {
 						return order.user.orders.totalCount;
 					}
+					if (order?.user?.orderCount != null) {
+						return order.user.orderCount;
+					}
 					if (order?.customerOrderCount != null) {
 						return order.customerOrderCount;
 					}
-					const metaCount =
-						order?.metadata?.find(
-							(item) => item?.key === "customer_order_count" || item?.key === "order_count",
-						)?.value || "";
-					if (metaCount) {
-						const parsed = parseInt(metaCount, 10);
-						return Number.isNaN(parsed) ? metaCount : parsed;
+					const metaKeys = ["customer_order_count", "order_count", "total_orders", "customer_orders"];
+					for (const key of metaKeys) {
+						const value = order?.metadata?.find((item) => item?.key === key)?.value;
+						if (value != null && value !== "") {
+							const parsed = parseInt(value, 10);
+							return Number.isNaN(parsed) ? value : parsed;
+						}
 					}
 					return null;
 				}
 
-				async function fetchPrintData(ids, order) {
-					const orderId = order?.id || null;
+				async function fetchProductsByIds(ids) {
 					const response = await fetch(graphqlEndpoint, {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({
-							query: GET_PRINT_DATA,
-							variables: {
-								ids,
-								orderId,
-								fetchOrder: Boolean(orderId),
-							},
+							query: GET_PRODUCTS_BY_IDS,
+							variables: { ids },
 						}),
 					});
 
 					const json = await response.json();
-					const products = json?.data?.products?.edges?.map((e) => e.node) || [];
-					const apiCount = json?.data?.order?.user?.orders?.totalCount;
-					const customerOrderCount = apiCount != null ? apiCount : getCustomerOrderCountFromOrder(order);
+					return json?.data?.products?.edges?.map((e) => e.node) || [];
+				}
 
-					return { products, customerOrderCount };
+				async function fetchCustomerOrderCount(order) {
+					const fromPayload = getCustomerOrderCountFromOrder(order);
+					if (fromPayload != null) {
+						return fromPayload;
+					}
+
+					const email = order?.userEmail || order?.user?.email || "";
+					const userId = order?.user?.id || "";
+					if (!email && !userId) {
+						return null;
+					}
+
+					try {
+						const response = await fetch("https://api.meatify.in/request/customer-order-count/", {
+							method: "POST",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({ email, user_id: userId }),
+						});
+						if (!response.ok) {
+							return null;
+						}
+						const data = await response.json();
+						return data?.total_count ?? data?.totalCount ?? data?.count ?? data?.order_count ?? null;
+					} catch (e) {
+						return null;
+					}
 				}
 
 				async function handleOrder(order) {
@@ -335,7 +350,10 @@
 
 					const productIds = order.lines.map((item) => item?.variant?.product?.id);
 					const uniqueIds = [...new Set(productIds)];
-					const { products, customerOrderCount } = await fetchPrintData(uniqueIds, order);
+					const [products, customerOrderCount] = await Promise.all([
+						fetchProductsByIds(uniqueIds),
+						fetchCustomerOrderCount(order),
+					]);
 					const container = document.getElementById("productContainer");
 					container.innerHTML = "";
 					products.forEach((product) => {
@@ -390,17 +408,36 @@
 				}
 
 				window.addEventListener("message", async (event) => {
-					if (!isValidOrderData(event.data)) {
+					const data = event.data;
+
+					if (data?.type === "CUSTOMER_ORDER_COUNT" && data?.orderNumber) {
+						try {
+							const saved = sessionStorage.getItem(ORDER_STORAGE_KEY);
+							if (saved) {
+								const order = JSON.parse(saved);
+								if (order?.number === data.orderNumber && data.count != null) {
+									order.customerOrderCount = data.count;
+									sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(order));
+									await handleOrder(order);
+								}
+							}
+						} catch (e) {
+							/* ignore */
+						}
+						return;
+					}
+
+					if (!isValidOrderData(data)) {
 						return;
 					}
 
 					try {
-						sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(event.data));
+						sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(data));
 					} catch (e) {
 						/* ignore storage errors */
 					}
 
-					await handleOrder(event.data);
+					await handleOrder(data);
 				});
 
 				try {
@@ -416,7 +453,10 @@
 				}
 
 				if (window.opener && !window.opener.closed) {
-					window.opener.postMessage({ type: "PRINT_ORDER_PRODUCTS_READY" }, "*");
+					window.opener.postMessage(
+						{ type: "PRINT_ORDER_PRODUCTS_READY", needsCustomerOrderCount: true },
+						"*",
+					);
 				}
 
 				// async function fetchProduct(slug) {
