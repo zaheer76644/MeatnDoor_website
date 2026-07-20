@@ -113,8 +113,6 @@
 		<script>
 			const graphqlEndpoint = "https://api.meatify.in/graphql/";
 			const ORDER_STORAGE_KEY = "printorderproducts_order";
-			const SALEOR_TOKEN_KEY = "printorderproducts_saleor_token";
-
 			function isValidOrderData(data) {
 				return (
 					data &&
@@ -134,7 +132,7 @@
 				document.getElementById("productContainer").innerHTML = "<p>No product selected.</p>";
 			} else {
 				const GET_PRINT_DATA = `
-            query GetPrintData($ids: [ID!]!, $email: String!, $fetchCustomer: Boolean!) {
+            query GetPrintData($ids: [ID!]!) {
                 products(channel: "in", filter: { ids: $ids }, first: 100) {
                 edges {
                     node {
@@ -166,140 +164,20 @@
                     }
                 }
                 }
-                customers(first: 1, filter: { search: $email }) @include(if: $fetchCustomer) {
-                    edges {
-                        node {
-                            email
-                            orders(first: 1) {
-                                totalCount
-                            }
-                        }
-                    }
-                }
             }
             `;
 
-				function saveSaleorToken(token) {
-					if (!token) return;
-					try {
-						sessionStorage.setItem(SALEOR_TOKEN_KEY, token);
-					} catch (e) {
-						/* ignore */
-					}
-				}
-
-				function getSaleorAuthToken() {
-					const urlToken = urlParams.get("token");
-					if (urlToken) {
-						saveSaleorToken(urlToken);
-						return urlToken;
-					}
-					try {
-						return sessionStorage.getItem(SALEOR_TOKEN_KEY);
-					} catch (e) {
-						return null;
-					}
-				}
-
-				async function saleorGraphql(query, variables, token) {
-					if (!token) return null;
-
-					const authHeaders = [`Bearer ${token}`, `JWT ${token}`];
-					for (const authorization of authHeaders) {
-						const response = await fetch(graphqlEndpoint, {
-							method: "POST",
-							headers: {
-								"Content-Type": "application/json",
-								Authorization: authorization,
-							},
-							body: JSON.stringify({ query, variables }),
-						});
-						const json = await response.json();
-						if (!json.errors?.length) {
-							return json.data;
-						}
-
-						const messages = json.errors.map((e) => e.message).join("; ");
-						const isAuthError =
-							messages.includes("permission") ||
-							messages.includes("Authentication") ||
-							messages.includes("credentials");
-						console.warn("Saleor GraphQL:", messages);
-						if (!isAuthError) {
-							return null;
-						}
-					}
-
-					return null;
-				}
-
-				function getOrderEmail(order) {
-					return (order?.userEmail || order?.user?.email || order?.billingAddress?.email || "").trim();
-				}
-
-				function extractCustomerOrderCountFromGraphql(data, email) {
-					const customer = data?.customers?.edges?.[0]?.node;
-					if (!customer) return null;
-
-					const normalizedEmail = email.toLowerCase();
-					const customerEmail = (customer.email || "").toLowerCase();
-					if (customerEmail && customerEmail !== normalizedEmail) {
-						return null;
-					}
-
-					return customer.orders?.totalCount ?? null;
-				}
-
-				function getCustomerOrderCountFromOrder(order) {
-					if (order?.user?.orders?.totalCount != null) {
-						return order.user.orders.totalCount;
-					}
-					if (order?.user?.orderCount != null) {
-						return order.user.orderCount;
-					}
-					if (order?.customerOrderCount != null) {
-						return order.customerOrderCount;
-					}
-					const metaKeys = ["customer_order_count", "order_count", "total_orders", "customer_orders"];
-					for (const key of metaKeys) {
-						const value = order?.metadata?.find((item) => item?.key === key)?.value;
-						if (value != null && value !== "") {
-							const parsed = parseInt(value, 10);
-							return Number.isNaN(parsed) ? value : parsed;
-						}
-					}
-					return null;
-				}
-
-				async function fetchPrintData(ids, order) {
-					const email = getOrderEmail(order);
-					const fromPayload = getCustomerOrderCountFromOrder(order);
-					const token = getSaleorAuthToken();
-					const fetchCustomer = Boolean(token && email);
-
-					if (fetchCustomer) {
-						const data = await saleorGraphql(GET_PRINT_DATA, { ids, email, fetchCustomer: true }, token);
-						if (data?.products) {
-							return {
-								products: data.products.edges?.map((e) => e.node) || [],
-								customerOrderCount: fromPayload ?? extractCustomerOrderCountFromGraphql(data, email),
-							};
-						}
-					}
-
+				async function fetchPrintData(ids) {
 					const response = await fetch(graphqlEndpoint, {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({
 							query: GET_PRINT_DATA,
-							variables: { ids, email: email || "", fetchCustomer: false },
+							variables: { ids },
 						}),
 					});
 					const json = await response.json();
-					return {
-						products: json?.data?.products?.edges?.map((e) => e.node) || [],
-						customerOrderCount: fromPayload,
-					};
+					return json?.data?.products?.edges?.map((e) => e.node) || [];
 				}
 
 				async function handleOrder(order) {
@@ -335,6 +213,7 @@
 					const firstTimePart = validationDeliveryTime.split("-")[0].trim().toUpperCase();
 					let time = firstTimePart;
 					let firstPartOnly = time.replace(/AM|PM/g, "").trim();
+					let isFirstOrder = order.isFirstOrder ? "F/" : "";
 					const isDeliveryAM = firstTimePart.includes("AM");
 					const isDeliveryPM = firstTimePart.includes("PM");
 					const currentHour = new Date().getHours();
@@ -421,7 +300,7 @@
 
 					const productIds = order.lines.map((item) => item?.variant?.product?.id);
 					const uniqueIds = [...new Set(productIds)];
-					const { products, customerOrderCount } = await fetchPrintData(uniqueIds, order);
+					const products = await fetchPrintData(uniqueIds);
 					const container = document.getElementById("productContainer");
 					container.innerHTML = "";
 					products.forEach((product) => {
@@ -442,17 +321,13 @@
 						?.reduce((sum, line) => sum + (line.quantity || 0), 0);
 					const paymentStatus = order?.metadata?.find((item) => item?.key === "paymentMode")?.value || "";
 					const totalAmount = order?.total?.gross?.amount || 0;
-					const orderCountText = customerOrderCount === 1 ? `F/` : "";
-					console.log("orderCountText-------------", orderCountText);
-					console.log("customerOrderCount-------------", customerOrderCount);
-
 					const card = document.createElement("div");
 					card.className = "product-card";
 					const addr = order?.billingAddress || {};
 					card.innerHTML = `
                         <div class="product-name">${
 													order_id + (order?.number || "")
-												} <span class="use-by" style="float: right;">${firstPartOnly}/${orderCountText}${totalQuantity}/₹${
+												} <span class="use-by" style="float: right;">${isFirstOrder}${firstPartOnly}/${totalQuantity}/₹${
 													paymentStatus === "cash_on_delivery" ? totalAmount : 0
 												} </span></div>
                         <div class="product-name">${
@@ -477,39 +352,6 @@
 
 				window.addEventListener("message", async (event) => {
 					const data = event.data;
-
-					if (data?.type === "SALEOR_AUTH_TOKEN" && data.token) {
-						saveSaleorToken(data.token);
-						try {
-							const saved = sessionStorage.getItem(ORDER_STORAGE_KEY);
-							if (saved) {
-								const order = JSON.parse(saved);
-								if (isValidOrderData(order)) {
-									await handleOrder(order);
-								}
-							}
-						} catch (e) {
-							/* ignore */
-						}
-						return;
-					}
-
-					if (data?.type === "CUSTOMER_ORDER_COUNT" && data?.orderNumber) {
-						try {
-							const saved = sessionStorage.getItem(ORDER_STORAGE_KEY);
-							if (saved) {
-								const order = JSON.parse(saved);
-								if (order?.number === data.orderNumber && data.count != null) {
-									order.customerOrderCount = data.count;
-									sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(order));
-									await handleOrder(order);
-								}
-							}
-						} catch (e) {
-							/* ignore */
-						}
-						return;
-					}
 
 					if (!isValidOrderData(data)) {
 						return;
@@ -537,10 +379,7 @@
 				}
 
 				if (window.opener && !window.opener.closed) {
-					window.opener.postMessage(
-						{ type: "PRINT_ORDER_PRODUCTS_READY", needsCustomerOrderCount: true },
-						"*",
-					);
+					window.opener.postMessage({ type: "PRINT_ORDER_PRODUCTS_READY" }, "*");
 				}
 
 				// async function fetchProduct(slug) {
