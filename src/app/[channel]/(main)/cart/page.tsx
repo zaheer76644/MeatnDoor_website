@@ -187,7 +187,7 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
 									</svg>
 								</div>
-								<span className="text-sm font-bold text-white">Free Delivery on order above ₹499</span>
+								<span className="text-sm font-bold text-white">Free Delivery on order above ₹500</span>
 							</div>
 						</div>
 						<div className="text-2xl font-bold text-[#ed4264]">

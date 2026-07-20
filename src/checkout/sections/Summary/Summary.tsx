@@ -18,6 +18,14 @@ import {
  type ShippingMethod } from "@/checkout/graphql";
 import { SummaryItemMoneySection } from "@/checkout/sections/Summary/SummaryItemMoneySection";
 import { type GrossMoney, type GrossMoneyWithTax } from "@/checkout/lib/globalTypes";
+import { CouponCard } from "@/checkout/sections/Summary/CouponCard";
+import { CheapProductsRail } from "@/checkout/sections/Summary/CheapProductsRail";
+import {
+	fetchDiscountsAndCheapProducts,
+	fetchProductThumbnail,
+	type CheapProduct,
+	type Coupon,
+} from "@/checkout/sections/Summary/couponUtils";
 
 interface SummaryProps {
 	editable?: boolean;
@@ -43,6 +51,10 @@ export const Summary: FC<SummaryProps> = ({
 	shippingMethods,
 }) => {
 	const [selectedCoupon, setSelectedCoupon] = useState("");
+	const [coupons, setCoupons] = useState<Coupon[]>([]);
+	const [cheapProducts, setCheapProducts] = useState<CheapProduct[]>([]);
+	const [cheapProductThumbnails, setCheapProductThumbnails] = useState<Record<string, string>>({});
+	const [couponsLoading, setCouponsLoading] = useState(false);
 	const [handlingFeeAmount, setHandlingFeeAmount] = useState<{ amount: number; currency: string } | null>(null);
 	const [totalSavings, setTotalSavings] = useState<{ amount: number; currency: string } | null>(null);
 	const [shippingPriceAmount, setShippingPriceAmount] = useState<{ amount: number; currency: string } | null>(null);
@@ -154,6 +166,56 @@ export const Summary: FC<SummaryProps> = ({
 			setTotalSavings(null);
 		}
 	}, [filteredLines, shippingPriceAmount, shippingPrice, maxShippingPriceAmount]);
+
+	useEffect(() => {
+		if (voucherCode) {
+			setSelectedCoupon(voucherCode);
+		}
+	}, [voucherCode]);
+
+	useEffect(() => {
+		if (!editable) {
+			return;
+		}
+
+		let cancelled = false;
+
+		const loadCoupons = async () => {
+			setCouponsLoading(true);
+			try {
+				const { coupons: fetchedCoupons, cheapProducts: fetchedCheapProducts } =
+					await fetchDiscountsAndCheapProducts();
+				if (!cancelled) {
+					setCoupons(fetchedCoupons);
+					setCheapProducts(fetchedCheapProducts);
+
+					fetchedCheapProducts.forEach((product) => {
+						void fetchProductThumbnail(product.slug).then((url) => {
+							if (!cancelled && url) {
+								setCheapProductThumbnails((prev) => ({ ...prev, [product.id]: url }));
+							}
+						});
+					});
+				}
+			} catch {
+				if (!cancelled) {
+					setCoupons([]);
+					setCheapProducts([]);
+				}
+			} finally {
+				if (!cancelled) {
+					setCouponsLoading(false);
+				}
+			}
+		};
+
+		void loadCoupons();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [editable]);
+
 	return (
 		<div
 			className={clsx(
@@ -183,113 +245,28 @@ export const Summary: FC<SummaryProps> = ({
 					<Divider />
 				</>
 			)}
-			<div className="space-y-4 my-4">
-				{/* WC10 Coupon */}
-				<label className="flex w-full cursor-pointer gap-3 rounded-xl border border-gray-300 bg-white p-3 shadow-sm transition hover:shadow-md">
-					{/* Radio Button */}
-					<input
-						type="radio"
-						name="coupon"
-						checked={selectedCoupon === "WC10"}
-						onChange={() => setSelectedCoupon("WC10")}
-						className="mt-1"
-					/>
-
-					{/* Coupon Code Box */}
-					<div className="min-w-[60px] self-start rounded-md border-2 border-dashed border-orange-400 px-3 py-1 text-center text-sm font-bold text-orange-500">
-						WC10
-					</div>
-
-					{/* Details */}
-					<div className="w-full text-xs text-gray-700">
-						<p className="font-semibold">Flat 10% off on first order</p>
-
-						<details className="mt-1">
-							<summary className="cursor-pointer select-none text-[11px] text-blue-500">
-								Terms & Conditions
-							</summary>
-							<ol className="mt-1 list-inside list-decimal space-y-0.5 pl-1 text-[11px]">
-								<li>Flat 10% off on first order</li>
-								<li>Applicable only on first order</li>
-								<li>Subject to change without notice</li>
-								<li>Void on cancelled or undelivered orders</li>
-							</ol>
-						</details>
-					</div>
-				</label>
-
-				{/* MEET20 Coupon */}
-				<label className="flex w-full cursor-pointer gap-3 rounded-xl border border-gray-300 bg-white p-3 shadow-sm transition hover:shadow-md">
-					{/* Radio Button */}
-					<input
-						type="radio"
-						name="coupon"
-						checked={selectedCoupon === "MEET20"}
-						onChange={() => setSelectedCoupon("MEET20")}
-						className="mt-1"
-					/>
-
-					{/* Coupon Code Box */}
-					<div className="min-w-[60px] self-start rounded-md border-2 border-dashed border-green-500 py-1 pl-2 pr-4 text-center text-sm font-bold text-green-600">
-						MEET20
-					</div>
-
-					{/* Details */}
-					<div className="w-full text-xs text-gray-700">
-						<p className="font-semibold">₹100 off on orders above ₹499</p>
-
-						<details className="mt-1">
-							<summary className="cursor-pointer select-none text-[11px] text-blue-500">
-								Terms & Conditions
-							</summary>
-							<ul className="mt-1 list-inside list-disc space-y-0.5 pl-1 text-[11px]">
-								<li>Maximum discount ₹100</li>
-								<li>Applicable on orders above ₹499</li>
-								<li>Valid for first 5 orders</li>
-								<li>Subject to change without notice</li>
-								<li>Void on cancelled or undelivered orders</li>
-							</ul>
-						</details>
-					</div>
-				</label>
-			</div>
-
-			{/* <div className="space-y-4 p-4">
-				{/* WC10 Coupon 
-				<button
-					onClick={() => setSelectedCoupon("WC10")}
-					className="w-full rounded-md border p-3 text-left text-sm transition hover:bg-gray-50"
-				>
-					<h1 className="text-lg font-semibold">WC10</h1>
-
-					<p className="mt-1 font-medium">Terms & Conditions</p>
-
-					<ol className="mt-1 list-inside list-decimal space-y-0.5">
-						<li>Flat 10% off on first order</li>
-						<li>Applicable only on first order</li>
-						<li>Offer may change without prior notice</li>
-						<li>Offer void on cancelled or undelivered orders</li>
-					</ol>
-				</button>
-
-				{/* MEET20 Coupon  
-				<button
-					onClick={() => setSelectedCoupon("MEET20")}
-					className="w-full rounded-md border p-3 text-left text-sm transition hover:bg-gray-50"
-				>
-					<h1 className="text-lg font-semibold">MEET20</h1>
-
-					<p className="mt-1 font-medium">Terms & Conditions</p>
-
-					<ul className="mt-1 list-inside list-disc space-y-0.5">
-						<li>Maximum discount of ₹100</li>
-						<li>Applicable on orders above ₹499</li>
-						<li>Applicable for the first 5 orders</li>
-						<li>Offer may change without prior notice</li>
-						<li>Offer void on cancelled or undelivered orders</li>
-					</ul>
-				</button>
-			</div> */}
+			{editable && (
+				<div className="space-y-4 my-4">
+					{couponsLoading ? (
+						<p className="text-center text-xs text-gray-500">Loading available offers...</p>
+					) : coupons.length === 0 ? (
+						<p className="text-center text-xs text-gray-500">No coupons available right now.</p>
+					) : (
+						coupons.map((coupon, index) => (
+							<CouponCard
+								key={coupon.id}
+								coupon={coupon}
+								selected={selectedCoupon === coupon.code}
+								colorIndex={index}
+								onSelect={setSelectedCoupon}
+							/>
+						))
+					)}
+				</div>
+			)}
+			{editable && !couponsLoading && cheapProducts.length > 0 && (
+				<CheapProductsRail products={cheapProducts} thumbnails={cheapProductThumbnails} />
+			)}
 
 			<Divider />
 			<div className="mt-4 flex max-w-full flex-col">

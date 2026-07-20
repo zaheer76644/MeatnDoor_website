@@ -20,6 +20,7 @@ export const VERIFY_OTP_ENDPOINT = `${SALEOR_BACKEND_URI}/auth/verify-otp/`;
 export const RAZORPAY_GATEWAY_ENDPOINT = `${SALEOR_BACKEND_URI}/payments/gateways/razorpay/`;
 export const DELIVERY_SLOTS_ENDPOINT = `${SALEOR_BACKEND_URI}/delivery-slots/`;
 export const DELIVERY_CONFIG_ENDPOINT = `${SALEOR_BACKEND_URI}/delivery-config/`;
+export const DISCOUNTS_AND_CHEAP_PRODUCTS_ENDPOINT = `${SALEOR_BACKEND_URI}/discounts-and-cheap-products/`;
 
 export const apiConfig = {
 	SALEOR_BACKEND_URI,
@@ -29,6 +30,7 @@ export const apiConfig = {
 	RAZORPAY_GATEWAY_ENDPOINT,
 	DELIVERY_SLOTS_ENDPOINT,
 	DELIVERY_CONFIG_ENDPOINT,
+	DISCOUNTS_AND_CHEAP_PRODUCTS_ENDPOINT,
 };
 
 // if we use export defaulut for api config
