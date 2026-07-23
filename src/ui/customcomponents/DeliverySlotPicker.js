@@ -5,10 +5,10 @@ import { formatLocalDate, parseLocalDate, startOfLocalDay } from "@/lib/localDat
 
 const DEFAULT_CUTOFF_HOUR = 19;
 const DEFAULT_TIME_SLOTS = [
-	{ id: 1, name: "Morning 1", label: "8:30AM - 10:30AM", startTime: 8.5, endTime: 10.5, disabledAt: 0, sortOrder: 5, isActive: true },
-	{ id: 2, name: "Morning 2", label: "10:30AM - 12:30PM", startTime: 10.5, endTime: 12.5, disabledAt: 0, sortOrder: 8, isActive: true },
-	{ id: 3, name: "Evening 1", label: "5:00PM - 7:00PM", startTime: 17, endTime: 19, disabledAt: 0, sortOrder: 10, isActive: true },
-	{ id: 4, name: "Evening 2", label: "7:00PM - 9:00PM", startTime: 19, endTime: 21, disabledAt: 0, sortOrder: 15, isActive: true },
+	{ id: 1, name: "Morning 1", label: "8:30AM - 10:30AM", startTime: 8.5, endTime: 10.5, disabledAt: 8.5, sortOrder: 5, isActive: true },
+	{ id: 2, name: "Morning 2", label: "10:30AM - 12:30PM", startTime: 10.5, endTime: 12.5, disabledAt: 10.5, sortOrder: 8, isActive: true },
+	{ id: 3, name: "Evening 1", label: "5:00PM - 7:00PM", startTime: 17, endTime: 19, disabledAt: 17, sortOrder: 10, isActive: true },
+	{ id: 4, name: "Evening 2", label: "7:00PM - 9:00PM", startTime: 19, endTime: 21, disabledAt: 19, sortOrder: 15, isActive: true },
 ];
 
 const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
@@ -18,6 +18,7 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 	const [timeSlotTemplates, setTimeSlotTemplates] = useState(DEFAULT_TIME_SLOTS);
 	const [cutoffHour, setCutoffHour] = useState(DEFAULT_CUTOFF_HOUR);
 	const [isLoadingSlots, setIsLoadingSlots] = useState(true);
+
 	useEffect(() => {
 		const timer = setInterval(() => setCurrentTime(new Date()), 60000);
 		return () => clearInterval(timer);
@@ -76,53 +77,63 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 			];
 
 			const addSlotsForDay = (date, dayLabel, onlyCheckAvailability = false) => {
+				const daySlots = [];
+
 				timeSlotTemplates.forEach((template) => {
 					const slot = createSlot(date, dayLabel, template);
-					if (!onlyCheckAvailability) {
-						newSlots.push(slot);
-						return;
+					if (onlyCheckAvailability) {
+						const isMorningSlot = template.startTime < cutoffHour;
+						const slotCutoff =
+							template.disabledAt > 0 ? template.disabledAt : template.startTime - 0.5;
+						const isSlotGone = currentHour >= slotCutoff;
+						if (isBeforeCutoff) {
+							slot.available = !isSlotGone;
+						} else if (isMorningSlot) {
+							slot.available = false;
+						} else {
+							slot.available = !isSlotGone;
+						}
 					}
-					
-					const isMorningSlot = template.startTime < cutoffHour;
-					const slotCutoff =
-						template.disabledAt > 0 ? template.disabledAt : template.startTime - 0.5;
-					const isSlotGone = currentHour >= slotCutoff;
-					if (isBeforeCutoff) {
-						slot.available = !isSlotGone;
-					} else if (isMorningSlot) {
-						slot.available = false;
-					} else {
-						slot.available = !isSlotGone;
-					}
-
-					newSlots.push(slot);
+					daySlots.push(slot);
 				});
+
+				return daySlots;
 			};
 
 			const today = startOfLocalDay(now);
 			const todayStr = formatLocalDate(today);
 			const eidToday = eidDates.find((d) => d.date === todayStr);
 			const todayLabel = eidToday ? eidToday.label : "Today";
-			addSlotsForDay(today, todayLabel, true);
+			const todaySlots = addSlotsForDay(today, todayLabel, true);
+			const todayHasAvailable = todaySlots.some((slot) => slot.available);
 
-			for (let i = 1; i <= 2; i++) {
+			// If all slots today are disabled, skip today and show the next 3 days.
+			const dayOffsets = todayHasAvailable ? [0, 1, 2] : [1, 2, 3];
+			const lastOffset = dayOffsets[dayOffsets.length - 1];
+
+			dayOffsets.forEach((offset) => {
+				if (offset === 0) {
+					newSlots.push(...todaySlots);
+					return;
+				}
+
 				const nextDay = new Date(today);
-				nextDay.setDate(today.getDate() + i);
+				nextDay.setDate(today.getDate() + offset);
 				const nextDayStr = formatLocalDate(nextDay);
 				const eidNextDay = eidDates.find((d) => d.date === nextDayStr);
 				const dayName = eidNextDay
 					? eidNextDay.label
 					: nextDay.toLocaleDateString([], { weekday: "long" });
-				addSlotsForDay(nextDay, dayName);
-			}
+				newSlots.push(...addSlotsForDay(nextDay, dayName));
+			});
 
 			eidDates.forEach((eid) => {
 				const eidDateObj = parseLocalDate(eid.date);
 				const horizon = new Date(today);
-				horizon.setDate(today.getDate() + 2);
+				horizon.setDate(today.getDate() + lastOffset);
 
 				if (eidDateObj > horizon) {
-					addSlotsForDay(eidDateObj, eid.label);
+					newSlots.push(...addSlotsForDay(eidDateObj, eid.label));
 				}
 			});
 
@@ -142,6 +153,7 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 			slotId: template.id,
 			startTime: template.startTime,
 			endTime: template.endTime,
+			disabledAt: template.disabledAt,
 			available: true,
 		};
 	};
@@ -155,7 +167,8 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 	return (
 		<div className="relative w-full max-w-sm">
 			<button
-				className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 transition-all hover:border-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+				type="button"
+				className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-800 transition-all hover:border-[#ed4264] disabled:cursor-not-allowed disabled:opacity-60"
 				onClick={() => setIsOpen(!isOpen)}
 				disabled={isLoadingSlots}
 			>
@@ -173,7 +186,9 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 				) : (
 					<span className="text-gray-500">Choose Delivery Slot</span>
 				)}
-				<span className={`ml-2 transform transition-transform ${isOpen ? "rotate-180" : "rotate-0"}`}>▼</span>
+				<span className={`ml-2 transform transition-transform ${isOpen ? "rotate-180" : "rotate-0"}`}>
+					▼
+				</span>
 			</button>
 
 			{isOpen &&
@@ -193,15 +208,23 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 					}, {});
 
 					return (
-						<div className="animate-fade-in absolute z-20 mt-2 max-h-80 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+						<div className="absolute z-20 mt-2 max-h-80 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
 							<div className="space-y-4">
 								{Object.values(slotsByDay).map((dayGroup) => (
 									<div key={formatLocalDate(dayGroup?.date)} className="space-y-2">
 										<div
-											className={`border-b pb-2 dark:border-gray-700 ${dayGroup.day === "Eid Special Slots" ? "border-[#ed4264]/50 bg-[#ed4264]/5 -mx-3 rounded-t-lg px-3 pt-1" : "border-gray-200"}`}
+											className={`border-b pb-2 ${
+												dayGroup.day === "Eid Special Slots"
+													? "-mx-3 rounded-t-lg border-[#ed4264]/50 bg-[#ed4264]/5 px-3 pt-1"
+													: "border-gray-200"
+											}`}
 										>
 											<h3
-												className={`text-sm font-semibold ${dayGroup.day === "Eid Special Slots" ? "text-[#ed4264]" : "text-gray-900 dark:text-gray-100"}`}
+												className={`text-sm font-semibold ${
+													dayGroup.day === "Eid Special Slots"
+														? "text-[#ed4264]"
+														: "text-gray-900"
+												}`}
 											>
 												{dayGroup.day},{" "}
 												{dayGroup?.date?.toLocaleDateString([], {
@@ -213,45 +236,45 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 										<div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
 											{dayGroup?.slots?.map((slot) => {
 												const isEidDay = dayGroup.day === "Eid Special Slots";
+												const isSelected = selectedSlot?.id === slot.id;
 												return (
 													<button
 														key={slot.id}
+														type="button"
 														onClick={() => handleSelectSlot(slot)}
 														disabled={!slot.available}
 														className={`rounded-md border px-3 py-2 text-xs shadow-sm transition-all duration-200 sm:text-sm ${
-															slot.available
-																? isEidDay
-																	? "border-green-500 bg-green-50 text-[#47141e] hover:scale-105 hover:border-green-500 hover:shadow-md shadow-green-50"
-																	: "border-gray-200 bg-gray-50 text-gray-800 hover:scale-105 hover:border-blue-300 hover:bg-blue-100 hover:shadow-md dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-blue-900"
-																: "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500"
-														} ${
-															selectedSlot?.id === slot.id
-																? isEidDay
-																	? "border-green-500 bg-green-80 ring-1 ring-green-80"
-																	: "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/40"
-																: ""
+															!slot.available
+																? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
+																: isSelected
+																	? "border-[#ed4264] bg-[#ed4264]/10 text-[#47141e] ring-1 ring-[#ed4264]/30"
+																	: isEidDay
+																		? "border-green-500 bg-green-50 text-[#47141e] hover:border-green-600 hover:shadow-md"
+																		: "border-gray-200 bg-gray-50 text-gray-800 hover:border-[#ed4264]/40 hover:bg-[#faf3f4] hover:shadow-md"
 														}`}
 													>
 														<div className="flex flex-col items-center text-center">
 															<span
-																className={`font-medium leading-tight ${isEidDay && slot.available ? "text-[#ed4264]" : ""}`}
+																className={`font-medium leading-tight ${
+																	isEidDay && slot.available ? "text-[#ed4264]" : ""
+																}`}
 															>
 																{slot.slot}
 															</span>
 															<span
 																className={`mt-1 text-[10px] ${
-																	slot.available
-																		? isEidDay
+																	!slot.available
+																		? "text-red-500"
+																		: isEidDay
 																			? "font-bold text-[#ed4264]"
-																			: "text-green-600 dark:text-green-400"
-																		: "text-red-500"
+																			: "text-green-600"
 																}`}
 															>
-																{slot.available
-																	? isEidDay
+																{!slot.available
+																	? "Not Available"
+																	: isEidDay
 																		? "Special Slot"
-																		: "Available"
-																	: "Not Available"}
+																		: "Available"}
 															</span>
 														</div>
 													</button>
