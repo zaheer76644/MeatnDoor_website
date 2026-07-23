@@ -104,6 +104,39 @@ export const getCheapProductWeight = (product: CheapProduct): string | null => {
 	return null;
 };
 
+export const getCheapProductMinimumOrderTotal = (product: CheapProduct): number | null => {
+	const variant = product?.variants?.[0];
+	const rawValue = [...(product?.attributes || []), ...(variant?.attributes || [])].find(
+		(attr) =>
+			attr.attribute?.slug === "minimum-order-total" ||
+			attr.attribute?.name === "Minimum Order Total",
+	)?.values?.[0]?.name;
+
+	if (!rawValue) {
+		return null;
+	}
+
+	const parsed = Number(rawValue);
+	return Number.isFinite(parsed) ? parsed : null;
+};
+
+/** "Saving Amount" stores the original/MRP price used for strikethrough display. */
+export const getCheapProductSavingAmount = (product: CheapProduct): number | null => {
+	const variant = product?.variants?.[0];
+	const rawValue = [...(product?.attributes || []), ...(variant?.attributes || [])].find(
+		(attr) =>
+			attr.attribute?.slug === "saving-amount" ||
+			attr.attribute?.name === "Saving Amount",
+	)?.values?.[0]?.name;
+
+	if (!rawValue) {
+		return null;
+	}
+
+	const parsed = Number(rawValue);
+	return Number.isFinite(parsed) ? parsed : null;
+};
+
 export const fetchProductThumbnail = async (slug: string): Promise<string | null> => {
 	try {
 		const response = await fetch(SALEOR_API_URL, {

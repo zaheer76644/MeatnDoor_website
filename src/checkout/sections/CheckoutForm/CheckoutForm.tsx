@@ -146,6 +146,8 @@ import { loadRazorpay } from "@/lib/loadRazorpay";
 
 interface DeliverySlot {
 	date: Date;
+	disabledAt: number;
+	startTime: number;
 	day: string;
 	slot: string;
 }
@@ -383,6 +385,44 @@ export const CheckoutForm = () => {
 	// 		setLoading(false);
 	// 	}
 	// };
+
+	const slotAvailable = async (deliverySlot: DeliverySlot) => {
+		const currentHour = new Date().getHours() + new Date().getMinutes() / 60;
+		const currentDate = new Date().toLocaleDateString("en-CA", {
+		  timeZone: "Asia/Kolkata",
+		});
+		const deliveryDate = deliverySlot?.date
+		  ? new Date(deliverySlot.date).toLocaleDateString("en-CA", {
+			  timeZone: "Asia/Kolkata",
+			})
+		  : null;
+	
+		if (!deliverySlot?.slot || deliveryDate !== currentDate) {
+		  return false;
+		}
+	
+		// Same cutoff as DeliverySlotComponent: disabledAt, else startTime - 0.5
+		if (deliverySlot?.disabledAt != null) {
+		  return currentHour >= Number(deliverySlot.disabledAt);
+		}
+	
+		if (deliverySlot?.startTime != null) {
+		  return currentHour >= Number(deliverySlot.startTime);
+		}
+	
+		const startTime = deliverySlot.slot.split("-")[0].trim();
+		const [time, modifier] = startTime.split(/(AM|PM)/i);
+		let [hours, minutes] = time.split(":").map(Number);
+		if (!minutes) minutes = 0;
+		if (modifier?.toUpperCase() === "PM" && hours < 12) {
+		  hours += 12;
+		}
+		if (modifier?.toUpperCase() === "AM" && hours === 12) {
+		  hours = 0;
+		}
+		return currentHour >= hours + minutes / 60 - 0.5;
+	  };
+
 	const handlePlaceOrder = async (
 		checkout: Checkout | null,
 		user: User | null | undefined,
@@ -401,6 +441,11 @@ export const CheckoutForm = () => {
 			}
 			if (!user) {
 				alert("❌ Please login first");
+				return;
+			}
+			const slotExpired = await slotAvailable(selectedSlot);
+			if (slotExpired) {
+				alert("❌ Selected slot is not available. Please select a different slot.");
 				return;
 			}
 
