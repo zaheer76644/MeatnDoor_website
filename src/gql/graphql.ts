@@ -29741,14 +29741,6 @@ export type CheckoutAddLineMutationVariables = Exact<{
 
 export type CheckoutAddLineMutation = { __typename?: 'Mutation', checkoutLinesAdd?: { __typename?: 'CheckoutLinesAdd', checkout?: { __typename?: 'Checkout', id: string, lines: Array<{ __typename?: 'CheckoutLine', id: string, quantity: number, variant: { __typename?: 'ProductVariant', name: string, product: { __typename?: 'Product', name: string } } }> } | null, errors: Array<{ __typename?: 'CheckoutError', message?: string | null }> } | null };
 
-export type CheckoutAddPromoCodeMutationVariables = Exact<{
-  checkoutId: Scalars['ID']['input'];
-  promoCode: Scalars['String']['input'];
-}>;
-
-
-export type CheckoutAddPromoCodeMutation = { __typename?: 'Mutation', checkoutAddPromoCode?: { __typename?: 'CheckoutAddPromoCode', checkout?: { __typename?: 'Checkout', id: string, voucherCode?: string | null } | null, errors: Array<{ __typename?: 'CheckoutError', message?: string | null }> } | null };
-
 export type CheckoutCreateMutationVariables = Exact<{
   channel: Scalars['String']['input'];
 }>;
@@ -29769,7 +29761,7 @@ export type CheckoutFindQueryVariables = Exact<{
 }>;
 
 
-export type CheckoutFindQuery = { __typename?: 'Query', checkout?: { __typename?: 'Checkout', id: string, email?: string | null, voucherCode?: string | null, discount?: { __typename?: 'Money', amount: number, currency: string } | null, lines: Array<{ __typename?: 'CheckoutLine', id: string, quantity: number, totalPrice: { __typename?: 'TaxedMoney', gross: { __typename?: 'Money', amount: number, currency: string } }, undiscountedUnitPrice: { __typename?: 'Money', amount: number, currency: string }, variant: { __typename?: 'ProductVariant', name: string, id: string, product: { __typename?: 'Product', id: string, name: string, slug: string, thumbnail?: { __typename?: 'Image', url: string, alt?: string | null } | null, category?: { __typename?: 'Category', name: string } | null }, pricing?: { __typename?: 'VariantPricingInfo', price?: { __typename?: 'TaxedMoney', gross: { __typename?: 'Money', amount: number, currency: string } } | null } | null } }>, totalPrice: { __typename?: 'TaxedMoney', gross: { __typename?: 'Money', amount: number, currency: string } }, channel: { __typename?: 'Channel', slug: string } } | null };
+export type CheckoutFindQuery = { __typename?: 'Query', checkout?: { __typename?: 'Checkout', id: string, email?: string | null, lines: Array<{ __typename?: 'CheckoutLine', id: string, quantity: number, totalPrice: { __typename?: 'TaxedMoney', gross: { __typename?: 'Money', amount: number, currency: string } }, undiscountedUnitPrice: { __typename?: 'Money', amount: number, currency: string }, variant: { __typename?: 'ProductVariant', name: string, id: string, product: { __typename?: 'Product', id: string, name: string, slug: string, thumbnail?: { __typename?: 'Image', url: string, alt?: string | null } | null, category?: { __typename?: 'Category', name: string } | null }, pricing?: { __typename?: 'VariantPricingInfo', price?: { __typename?: 'TaxedMoney', gross: { __typename?: 'Money', amount: number, currency: string } } | null } | null } }>, totalPrice: { __typename?: 'TaxedMoney', gross: { __typename?: 'Money', amount: number, currency: string } }, channel: { __typename?: 'Channel', slug: string } } | null };
 
 export type CheckoutLineUpdateMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -29778,14 +29770,6 @@ export type CheckoutLineUpdateMutationVariables = Exact<{
 
 
 export type CheckoutLineUpdateMutation = { __typename?: 'Mutation', checkoutLinesUpdate?: { __typename?: 'CheckoutLinesUpdate', checkout?: { __typename?: 'Checkout', id: string, lines: Array<{ __typename?: 'CheckoutLine', id: string, quantity: number, variant: { __typename?: 'ProductVariant', id: string } }> } | null, errors: Array<{ __typename?: 'CheckoutError', field?: string | null, message?: string | null, code: CheckoutErrorCode }> } | null };
-
-export type CheckoutRemovePromoCodeMutationVariables = Exact<{
-  checkoutId: Scalars['ID']['input'];
-  promoCode: Scalars['String']['input'];
-}>;
-
-
-export type CheckoutRemovePromoCodeMutation = { __typename?: 'Mutation', checkoutRemovePromoCode?: { __typename?: 'CheckoutRemovePromoCode', checkout?: { __typename?: 'Checkout', id: string, voucherCode?: string | null } | null, errors: Array<{ __typename?: 'CheckoutError', message?: string | null }> } | null };
 
 export type CurrentUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -30248,19 +30232,6 @@ export const CheckoutAddLineDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CheckoutAddLineMutation, CheckoutAddLineMutationVariables>;
-export const CheckoutAddPromoCodeDocument = new TypedDocumentString(`
-    mutation CheckoutAddPromoCode($checkoutId: ID!, $promoCode: String!) {
-  checkoutAddPromoCode(checkoutId: $checkoutId, promoCode: $promoCode) {
-    checkout {
-      id
-      voucherCode
-    }
-    errors {
-      message
-    }
-  }
-}
-    `) as unknown as TypedDocumentString<CheckoutAddPromoCodeMutation, CheckoutAddPromoCodeMutationVariables>;
 export const CheckoutCreateDocument = new TypedDocumentString(`
     mutation CheckoutCreate($channel: String!) {
   checkoutCreate(input: {channel: $channel, lines: []}) {
@@ -30333,11 +30304,6 @@ export const CheckoutFindDocument = new TypedDocumentString(`
   checkout(id: $id) {
     id
     email
-    voucherCode
-    discount {
-      amount
-      currency
-    }
     lines {
       id
       quantity
@@ -30409,19 +30375,6 @@ export const CheckoutLineUpdateDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CheckoutLineUpdateMutation, CheckoutLineUpdateMutationVariables>;
-export const CheckoutRemovePromoCodeDocument = new TypedDocumentString(`
-    mutation CheckoutRemovePromoCode($checkoutId: ID!, $promoCode: String!) {
-  checkoutRemovePromoCode(checkoutId: $checkoutId, promoCode: $promoCode) {
-    checkout {
-      id
-      voucherCode
-    }
-    errors {
-      message
-    }
-  }
-}
-    `) as unknown as TypedDocumentString<CheckoutRemovePromoCodeMutation, CheckoutRemovePromoCodeMutationVariables>;
 export const CurrentUserDocument = new TypedDocumentString(`
     query CurrentUser {
   me {

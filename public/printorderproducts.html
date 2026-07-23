@@ -236,31 +236,22 @@
 						container.appendChild(card);
 					}
 
-					const fulfillments = order?.fulfillments || [];
 					const container = document.getElementById("productContainer");
 					container.innerHTML = "";
-					fulfillments.forEach((fulfillment) => {
-						(fulfillment?.lines || []).forEach((fulfillmentLine) => {
-							const orderLine = fulfillmentLine?.orderLine;
-							if (!orderLine) return;
-							if (orderLine.productName === "Handling Fee") return;
+					(order?.lines || []).forEach((line) => {
+						if (line.productName === "Handling Fee") return;
 
-							const matchingLine = order?.lines?.find((l) => l?.id === orderLine.id);
-							const price = matchingLine?.undiscountedUnitPrice?.gross?.amount || 0;
+						const price = line?.undiscountedUnitPrice?.gross?.amount || 0;
 
-							const product = {
-								name: orderLine.productName,
-								attributes: orderLine.variant?.name
-									? [{ attribute: { slug: "net-weight" }, values: [{ name: orderLine.variant.name }] }]
-									: [],
-								variants: [{ attributes: [] }],
-							};
+						const product = {
+							name: line.productName,
+							attributes: line.variant?.name
+								? [{ attribute: { slug: "net-weight" }, values: [{ name: line.variant.name }] }]
+								: [],
+							variants: [{ attributes: [] }],
+						};
 
-							const qty = fulfillmentLine.quantity ?? orderLine.quantity ?? 1;
-							for (let i = 0; i < qty; i++) {
-								renderProduct(product, price);
-							}
-						});
+						renderProduct(product, price);
 					});
 					const encoded = base32.encode(order?.number || "");
 					const order_id = encoded.replace(/=+$/, "");
