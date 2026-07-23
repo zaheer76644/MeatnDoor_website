@@ -1,5 +1,5 @@
 // export const SALEOR_API_URL = 'http://localhost:8000/graphql/';
-// export const SALEOR_BAKEND_URI = 'http://localhost:8000';
+// export const SALEOR_BACKEND_URI = 'http://localhost:8000';
 
 // export const SALEOR_API_URL = "http://192.168.1.192:8000/graphql/";
 // export const SALEOR_BAKEND_URI = "http://192.168.1.192:8000";

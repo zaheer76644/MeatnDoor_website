@@ -111,7 +111,6 @@
 		<div id="productContainer">Loading...</div>
 
 		<script>
-			const graphqlEndpoint = "https://api.meatify.in/graphql/";
 			const ORDER_STORAGE_KEY = "printorderproducts_order";
 			function isValidOrderData(data) {
 				return (
@@ -131,55 +130,6 @@
 			if (productSlug) {
 				document.getElementById("productContainer").innerHTML = "<p>No product selected.</p>";
 			} else {
-				const GET_PRINT_DATA = `
-            query GetPrintData($ids: [ID!]!) {
-                products(channel: "in", filter: { ids: $ids }, first: 100) {
-                edges {
-                    node {
-                    id
-                    name
-                    description
-                    category { name }
-                    attributes {
-                        attribute { name slug }
-                        values { name }
-                    }
-                    variants {
-                        name
-                        attributes {
-                        attribute { name slug }
-                        values { name }
-                        }
-                    }
-                    pricing {
-                        priceRange {
-                        start {
-                            gross {
-                            amount
-                            currency
-                            }
-                        }
-                        }
-                    }
-                    }
-                }
-                }
-            }
-            `;
-
-				async function fetchPrintData(ids) {
-					const response = await fetch(graphqlEndpoint, {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({
-							query: GET_PRINT_DATA,
-							variables: { ids },
-						}),
-					});
-					const json = await response.json();
-					return json?.data?.products?.edges?.map((e) => e.node) || [];
-				}
-
 				async function handleOrder(order) {
 					const deliveryDate = order?.metadata?.find((item) => item?.key === "Delivery_Date")?.value || "";
 					if (deliveryDate) {
@@ -243,15 +193,6 @@
 						}
 					}
 
-					function getSavingAmount(product) {
-						const variant = product.variants?.[0];
-						if (!variant) return null;
-						const savingAttr = variant.attributes.find((attr) => attr.attribute?.slug === "saving-amount");
-						if (!savingAttr) return null;
-						const value = savingAttr.values?.[0]?.name;
-						return value && value.trim() !== "" ? value : null;
-					}
-
 					function renderProduct(product, linePrice) {
 						const container = document.getElementById("productContainer");
 						if (!product) {
@@ -266,7 +207,6 @@
 							"";
 
 						const netWeightText = netWeight || "";
-						const savingAmount = getSavingAmount(product);
 
 						const encoded = base32.encode(order?.number || "");
 						const order_id = encoded.replace(/=+$/, "");
@@ -285,9 +225,7 @@
 						card.innerHTML = `
                         <div class="product-name">${order_id + order.number}</div>
                         <div class="product-name">${product.name}</div>
-                        <div class="product-price">MRP ₹<span style="text-decoration: line-through;">${savingAmount} </span>&nbsp; <span style="font-weight:bold;">${linePrice.toFixed(
-													2,
-												)} </span> </div>
+                        <div class="product-price">₹${linePrice.toFixed(2)}</div>
                         <div class="use-by">Use by: <small>${futureDateText}</small></div>
                         ${
 													netWeightText
@@ -298,21 +236,31 @@
 						container.appendChild(card);
 					}
 
-					const productIds = order.lines.map((item) => item?.variant?.product?.id);
-					const uniqueIds = [...new Set(productIds)];
-					const products = await fetchPrintData(uniqueIds);
+					const fulfillments = order?.fulfillments || [];
 					const container = document.getElementById("productContainer");
 					container.innerHTML = "";
-					products.forEach((product) => {
-						const line = order?.lines?.find((item) => item?.variant?.product?.id === product?.id);
-						if (!line) return;
-						for (let i = 0; i < line.quantity; i++) {
-							let price =
-								line?.undiscountedUnitPrice?.gross?.amount ||
-								product?.pricing?.priceRange?.start?.gross?.amount ||
-								0;
-							renderProduct(product, price);
-						}
+					fulfillments.forEach((fulfillment) => {
+						(fulfillment?.lines || []).forEach((fulfillmentLine) => {
+							const orderLine = fulfillmentLine?.orderLine;
+							if (!orderLine) return;
+							if (orderLine.productName === "Handling Fee") return;
+
+							const matchingLine = order?.lines?.find((l) => l?.id === orderLine.id);
+							const price = matchingLine?.undiscountedUnitPrice?.gross?.amount || 0;
+
+							const product = {
+								name: orderLine.productName,
+								attributes: orderLine.variant?.name
+									? [{ attribute: { slug: "net-weight" }, values: [{ name: orderLine.variant.name }] }]
+									: [],
+								variants: [{ attributes: [] }],
+							};
+
+							const qty = fulfillmentLine.quantity ?? orderLine.quantity ?? 1;
+							for (let i = 0; i < qty; i++) {
+								renderProduct(product, price);
+							}
+						});
 					});
 					const encoded = base32.encode(order?.number || "");
 					const order_id = encoded.replace(/=+$/, "");
@@ -381,23 +329,6 @@
 				if (window.opener && !window.opener.closed) {
 					window.opener.postMessage({ type: "PRINT_ORDER_PRODUCTS_READY" }, "*");
 				}
-
-				// async function fetchProduct(slug) {
-				//     const res = await fetch(graphqlEndpoint, {
-				//         method: "POST",
-				//         headers: { "Content-Type": "application/json" },
-				//         body: JSON.stringify({ query, variables: { slug } }),
-				//     });
-				//     const json = await res.json();
-				//     return json.data.product;
-				// }
-
-				// async function init() {
-				//     const product = await fetchProduct(productSlug);
-				//     renderProduct(product);
-				// }
-
-				// init();
 			}
 		</script>
 	</body>
