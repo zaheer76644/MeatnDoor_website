@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { DELIVERY_CONFIG_ENDPOINT, DELIVERY_SLOTS_ENDPOINT } from "@/config/SaleorApi";
+import { formatLocalDate, parseLocalDate, startOfLocalDay } from "@/lib/localDate";
 
 const DEFAULT_CUTOFF_HOUR = 19;
 const DEFAULT_TIME_SLOTS = [
@@ -98,15 +99,16 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 				});
 			};
 
-			const todayStr = now.toISOString().split("T")[0];
+			const today = startOfLocalDay(now);
+			const todayStr = formatLocalDate(today);
 			const eidToday = eidDates.find((d) => d.date === todayStr);
 			const todayLabel = eidToday ? eidToday.label : "Today";
-			addSlotsForDay(now, todayLabel, true);
+			addSlotsForDay(today, todayLabel, true);
 
 			for (let i = 1; i <= 2; i++) {
-				const nextDay = new Date(now);
-				nextDay.setDate(now.getDate() + i);
-				const nextDayStr = nextDay.toISOString().split("T")[0];
+				const nextDay = new Date(today);
+				nextDay.setDate(today.getDate() + i);
+				const nextDayStr = formatLocalDate(nextDay);
 				const eidNextDay = eidDates.find((d) => d.date === nextDayStr);
 				const dayName = eidNextDay
 					? eidNextDay.label
@@ -115,10 +117,9 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 			}
 
 			eidDates.forEach((eid) => {
-				const eidDateObj = new Date(eid.date);
-				const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-				const horizon = new Date(todayStart);
-				horizon.setDate(todayStart.getDate() + 2);
+				const eidDateObj = parseLocalDate(eid.date);
+				const horizon = new Date(today);
+				horizon.setDate(today.getDate() + 2);
 
 				if (eidDateObj > horizon) {
 					addSlotsForDay(eidDateObj, eid.label);
@@ -131,16 +132,19 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 		generateSlots();
 	}, [currentTime, cutoffHour, timeSlotTemplates, isLoadingSlots]);
 
-	const createSlot = (date, dayLabel, template) => ({
-		id: `${date.toISOString().split("T")[0]}_${template.startTime}_${template.endTime}`,
-		date,
-		day: dayLabel,
-		slot: template.label,
-		slotId: template.id,
-		startTime: template.startTime,
-		endTime: template.endTime,
-		available: true,
-	});
+	const createSlot = (date, dayLabel, template) => {
+		const localDate = startOfLocalDay(date);
+		return {
+			id: `${formatLocalDate(localDate)}_${template.startTime}_${template.endTime}`,
+			date: localDate,
+			day: dayLabel,
+			slot: template.label,
+			slotId: template.id,
+			startTime: template.startTime,
+			endTime: template.endTime,
+			available: true,
+		};
+	};
 
 	const handleSelectSlot = (slot) => {
 		if (!slot.available) return;
@@ -176,7 +180,7 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 				!isLoadingSlots &&
 				(() => {
 					const slotsByDay = slots?.reduce((acc, slot) => {
-						const dayKey = slot?.date?.toISOString().split("T")[0];
+						const dayKey = formatLocalDate(slot?.date);
 						if (!acc[dayKey]) {
 							acc[dayKey] = {
 								day: slot?.day,
@@ -192,7 +196,7 @@ const DeliverySlotPicker = ({ selectedSlot, setSelectedSlot }) => {
 						<div className="animate-fade-in absolute z-20 mt-2 max-h-80 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
 							<div className="space-y-4">
 								{Object.values(slotsByDay).map((dayGroup) => (
-									<div key={dayGroup?.date?.toISOString()} className="space-y-2">
+									<div key={formatLocalDate(dayGroup?.date)} className="space-y-2">
 										<div
 											className={`border-b pb-2 dark:border-gray-700 ${dayGroup.day === "Eid Special Slots" ? "border-[#ed4264]/50 bg-[#ed4264]/5 -mx-3 rounded-t-lg px-3 pt-1" : "border-gray-200"}`}
 										>

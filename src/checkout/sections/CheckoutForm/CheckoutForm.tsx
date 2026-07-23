@@ -141,7 +141,15 @@ import { UserBillingAddressSection } from "@/checkout/sections/UserBillingAddres
 import { GuestBillingAddressSection } from "@/checkout/sections/GuestBillingAddressSection";
 import { useUser } from "@/checkout/hooks/useUser";
 import { GRAPHQL_ENDPOINT, apiConfig } from "@/config/SaleorApi"; // 👈 tumhare config se endpoint le rahe hain
+import { formatLocalDate } from "@/lib/localDate";
 import { loadRazorpay } from "@/lib/loadRazorpay";
+
+interface DeliverySlot {
+	date: Date;
+	day: string;
+	slot: string;
+}
+
 export const CheckoutForm = () => {
 	const { user } = useUser();
 	const { checkout, fetching: checkoutFetching } = useCheckout();
@@ -150,7 +158,7 @@ export const CheckoutForm = () => {
 
 	const [showOnlyContact, setShowOnlyContact] = useState(!!passwordResetToken);
 	const [loading, setLoading] = useState(false);
-	const [selectedSlot, setSelectedSlot] = useState(null);
+	const [selectedSlot, setSelectedSlot] = useState<DeliverySlot | null>(null);
 	const [handlingFeeAmount, setHandlingFeeAmount] = useState<{ amount: number; currency: string } | null>(null);
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
@@ -380,11 +388,7 @@ export const CheckoutForm = () => {
 		user: User | null | undefined,
 		setLoading: (loading: boolean) => void,
 		GRAPHQL_ENDPOINT: string,
-		selectedSlot: {
-			date: any;
-			day: string;
-			slot: string;
-		} | null,
+		selectedSlot: DeliverySlot | null,
 	) => {
 		try {
 			if (!checkout?.id) {
@@ -401,10 +405,7 @@ export const CheckoutForm = () => {
 			}
 
 			setLoading(true);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			const isoString: string = selectedSlot.date.toISOString();
-			const parts: string[] = isoString.split("T");
-			const deliveryDate: string = parts[0];
+			const deliveryDate: string = formatLocalDate(selectedSlot.date);
 
 			// { key: "delivery_slot_day", value: "${selectedSlot.day}" },
 			const metaQuery = `
@@ -515,11 +516,7 @@ export const CheckoutForm = () => {
 		checkout: Checkout | null,
 		user: User | null | undefined,
 		GRAPHQL_ENDPOINT: string,
-		selectedSlot: {
-			date: any;
-			day: string;
-			slot: string;
-		} | null,
+		selectedSlot: DeliverySlot | null,
 	) => {
 		if (!checkout?.id) return alert("Checkout missing");
 		if (!selectedSlot) {
@@ -536,10 +533,7 @@ export const CheckoutForm = () => {
 			// ------------------------------------
 			// 1️⃣ SAVE DELIVERY METADATA HERE
 			// ------------------------------------
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			const isoString: string = selectedSlot.date.toISOString();
-			const parts: string[] = isoString.split("T");
-			const deliveryDate: string = parts[0];
+			const deliveryDate: string = formatLocalDate(selectedSlot.date);
 
 			const metaQuery = `
 			mutation {
