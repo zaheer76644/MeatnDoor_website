@@ -260,6 +260,7 @@
 					const totalQuantity = order?.lines
 						?.filter((item) => item?.productName !== "Handling Fee")
 						?.reduce((sum, line) => sum + (line.quantity || 0), 0);
+					const paymentStatus = order?.metadata?.find((item) => item?.key === "paymentMode")?.value || "";
 					const totalAmount = order?.total?.gross?.amount || 0;
 					const card = document.createElement("div");
 					card.className = "product-card";
@@ -267,10 +268,10 @@
 					card.innerHTML = `
                         <div class="product-name">${
 													order_id + (order?.number || "")
-												} <span class="use-by" style="float: right;">${isFirstOrder}${firstPartOnly}/${totalQuantity}/₹${totalAmount} </span></div>
-                        <div class="product-name">${
-													(addr.firstName || "") + " " + (addr.lastName || "")
-												}</div>
+												} <span class="use-by" style="float: right;">${isFirstOrder}${firstPartOnly}/${totalQuantity}/₹${
+													paymentStatus === "cash_on_delivery" ? totalAmount : 0
+												} </span></div>
+													<div class="product-name">${(addr.firstName || "") + " " + (addr.lastName || "")}</div>
                         <div class="product-name">${
 													(addr.streetAddress1 || "") + " " + (addr.streetAddress2 || "")
 												}</div>
