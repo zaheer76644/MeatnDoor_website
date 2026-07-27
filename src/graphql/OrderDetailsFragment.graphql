@@ -41,6 +41,8 @@ fragment OrderDetails on Order {
 
 	# Shipping info
 	shippingAddress {
+		firstName
+		lastName
 		streetAddress1
 		streetAddress2
 		city

@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, type FC } from "react";
 import clsx from "clsx";
 import { SummaryItem, type SummaryLine } from "./SummaryItem";
-import { PromoCodeAdd } from "./PromoCodeAdd";
 import { SummaryMoneyRow } from "./SummaryMoneyRow";
 import { SummaryPromoCodeRow } from "./SummaryPromoCodeRow";
 import { SummaryItemMoneyEditableSection } from "./SummaryItemMoneyEditableSection";
@@ -15,17 +14,16 @@ import {
 	type GiftCardFragment,
 	type Money as MoneyType,
 	type OrderLineFragment,
- type ShippingMethod } from "@/checkout/graphql";
+	type ShippingMethod,
+} from "@/checkout/graphql";
 import { SummaryItemMoneySection } from "@/checkout/sections/Summary/SummaryItemMoneySection";
 import { type GrossMoney, type GrossMoneyWithTax } from "@/checkout/lib/globalTypes";
-import { CouponCard } from "@/checkout/sections/Summary/CouponCard";
-import { CheapProductsRail } from "@/checkout/sections/Summary/CheapProductsRail";
+import { CouponsDrawer } from "@/checkout/sections/Summary/CouponsDrawer";
 import {
 	fetchDiscountsAndCheapProducts,
 	fetchProductThumbnail,
-	type CheapProduct,
-	type Coupon,
-} from "@/checkout/sections/Summary/couponUtils";
+} from "@/checkout/sections/Summary/couponApi";
+import { type CheapProduct, type Coupon } from "@/checkout/sections/Summary/couponUtils";
 
 interface SummaryProps {
 	editable?: boolean;
@@ -50,7 +48,7 @@ export const Summary: FC<SummaryProps> = ({
 	discount,
 	shippingMethods,
 }) => {
-	const [selectedCoupon, setSelectedCoupon] = useState("");
+	const [couponsOpen, setCouponsOpen] = useState(false);
 	const [coupons, setCoupons] = useState<Coupon[]>([]);
 	const [cheapProducts, setCheapProducts] = useState<CheapProduct[]>([]);
 	const [cheapProductThumbnails, setCheapProductThumbnails] = useState<Record<string, string>>({});
@@ -58,21 +56,24 @@ export const Summary: FC<SummaryProps> = ({
 	const [handlingFeeAmount, setHandlingFeeAmount] = useState<{ amount: number; currency: string } | null>(null);
 	const [totalSavings, setTotalSavings] = useState<{ amount: number; currency: string } | null>(null);
 	const [shippingPriceAmount, setShippingPriceAmount] = useState<{ amount: number; currency: string } | null>(null);
-	const [maxShippingPriceAmount, setMaxShippingPriceAmount] = useState<{ amount: number; currency: string } | null>(null);
+	const [maxShippingPriceAmount, setMaxShippingPriceAmount] = useState<{ amount: number; currency: string } | null>(
+		null,
+	);
 	const [includesShippingSavings, setIncludesShippingSavings] = useState(false);
+
 	useEffect(() => {
 		if (shippingMethods?.length > 0) {
 			const minShippingPrice = shippingMethods?.reduce((min, method) =>
-				method.price.amount < min.price.amount ? method : min
+				method.price.amount < min.price.amount ? method : min,
 			);
 			setShippingPriceAmount(minShippingPrice?.price);
 			const maxShippingPrice = shippingMethods?.reduce((min, method) =>
-				method.price.amount > min.price.amount ? method : min
+				method.price.amount > min.price.amount ? method : min,
 			);
 			setMaxShippingPriceAmount(maxShippingPrice?.price);
 		}
 	}, [shippingMethods]);
-	// Filter out "Handling Fee" product from the lines (memoized to prevent infinite loops)
+
 	const filteredLines = useMemo(() => {
 		return lines.filter((line) => {
 			const { productName } = getSummaryLineProps(line);
@@ -80,13 +81,28 @@ export const Summary: FC<SummaryProps> = ({
 		});
 	}, [lines]);
 
-	// Extract and store handling fee amount from lines
+	const cheapVariantIds = useMemo(
+		() => new Set(cheapProducts.flatMap((product) => product.variants?.map((variant) => variant.id) || [])),
+		[cheapProducts],
+	);
+
+	const hasCheapDealApplied = useMemo(
+		() =>
+			filteredLines.some((line) => {
+				if (!("variant" in line) || !line.variant || !("id" in line.variant)) {
+					return false;
+				}
+				return cheapVariantIds.has(line.variant.id);
+			}),
+		[filteredLines, cheapVariantIds],
+	);
+
 	useEffect(() => {
 		const handlingFeeLine = lines.find((line) => {
 			const { productName } = getSummaryLineProps(line);
 			return productName?.toLowerCase() === "handling fee";
 		});
-		
+
 		if (handlingFeeLine && "totalPrice" in handlingFeeLine && handlingFeeLine.totalPrice) {
 			setHandlingFeeAmount(handlingFeeLine.totalPrice.gross);
 		} else {
@@ -94,7 +110,6 @@ export const Summary: FC<SummaryProps> = ({
 		}
 	}, [lines]);
 
-	// Calculate total savings from all lines
 	useEffect(() => {
 		let savings = 0;
 		let currency = "";
@@ -104,10 +119,8 @@ export const Summary: FC<SummaryProps> = ({
 				let lineSavings = 0;
 				let foundSaving = false;
 
-				// Method 1: Try to find "Saving Amount" attribute
 				if (line.variant.attributes) {
 					for (const attr of line.variant.attributes) {
-						// Check if attribute name is "Saving Amount"
 						const attributeName = "attribute" in attr ? attr.attribute?.name : undefined;
 						if (attributeName === "Saving Amount" || attributeName === "saving-amount") {
 							const savingValue = attr.values?.[0];
@@ -125,21 +138,18 @@ export const Summary: FC<SummaryProps> = ({
 					}
 				}
 
-				// Method 2: Fallback to undiscountedUnitPrice vs unitPrice
 				if (!foundSaving && line.undiscountedUnitPrice) {
-					// For CheckoutLineFragment, undiscountedUnitPrice is Money (has amount directly)
-					// For OrderLineFragment, undiscountedUnitPrice is TaxedMoney (has gross.amount)
-					const originalPrice = "gross" in line.undiscountedUnitPrice
-						? parseFloat(String(line.undiscountedUnitPrice.gross?.amount || 0))
-						: parseFloat(String(line.undiscountedUnitPrice.amount || 0));
+					const originalPrice =
+						"gross" in line.undiscountedUnitPrice
+							? parseFloat(String(line.undiscountedUnitPrice.gross?.amount || 0))
+							: parseFloat(String(line.undiscountedUnitPrice.amount || 0));
 					const discountedPrice = parseFloat(String(line.unitPrice.gross.amount || 0));
-					
-					// Only calculate savings if there's a difference
+
 					if (originalPrice > discountedPrice) {
 						lineSavings = (originalPrice - discountedPrice) * line.quantity;
 					}
 				}
-				
+
 				if (lineSavings > 0) {
 					savings += lineSavings;
 					if (!currency && line.unitPrice.gross.currency) {
@@ -149,9 +159,8 @@ export const Summary: FC<SummaryProps> = ({
 			}
 		});
 
-		// Add shipping savings if minimum shipping price is 0 but user is being charged
 		let shippingSavingsAdded = false;
-		if (shippingPriceAmount?.amount === 0 &&  maxShippingPriceAmount?.amount && maxShippingPriceAmount.amount > 0) {
+		if (shippingPriceAmount?.amount === 0 && maxShippingPriceAmount?.amount && maxShippingPriceAmount.amount > 0) {
 			savings += maxShippingPriceAmount?.amount ?? 0;
 			shippingSavingsAdded = true;
 			if (!currency && shippingPrice.gross.currency) {
@@ -166,12 +175,6 @@ export const Summary: FC<SummaryProps> = ({
 			setTotalSavings(null);
 		}
 	}, [filteredLines, shippingPriceAmount, shippingPrice, maxShippingPriceAmount]);
-
-	useEffect(() => {
-		if (voucherCode) {
-			setSelectedCoupon(voucherCode);
-		}
-	}, [voucherCode]);
 
 	useEffect(() => {
 		if (!editable) {
@@ -216,10 +219,12 @@ export const Summary: FC<SummaryProps> = ({
 		};
 	}, [editable]);
 
+	const appliedOfferLabel = voucherCode ? voucherCode : hasCheapDealApplied ? "₹1 deal" : null;
+
 	return (
 		<div
 			className={clsx(
-				"z-0 flex h-fit w-full flex-col",
+				"flex h-fit w-full flex-col",
 			)}
 		>
 			<details open className="group">
@@ -239,45 +244,98 @@ export const Summary: FC<SummaryProps> = ({
 					))}
 				</ul>
 			</details>
+
 			{editable && (
 				<>
-					<PromoCodeAdd inputCouponLabel={selectedCoupon} />
+					<button
+						type="button"
+						onClick={() => setCouponsOpen(true)}
+						className={`my-4 flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border p-4 text-left shadow-sm transition ${
+							appliedOfferLabel
+								? "border-green-300 bg-gradient-to-r from-green-50 to-emerald-50 hover:border-green-400"
+								: "border-[rgba(71,20,30,0.08)] bg-gradient-to-br from-[#fff8f9] to-white hover:border-[#ed4264]/30 hover:shadow-md"
+						}`}
+					>
+						<div className="flex min-w-0 items-center gap-3">
+							<div
+								className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white shadow-md ${
+									appliedOfferLabel
+										? "bg-gradient-to-br from-[#1b7a3d] to-[#2d9a55]"
+										: "bg-gradient-to-br from-[#ed4264] to-[#47141e]"
+								}`}
+							>
+								{appliedOfferLabel ? (
+									<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+									</svg>
+								) : (
+									<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+										/>
+									</svg>
+								)}
+							</div>
+							<div className="min-w-0">
+								<p className="text-sm font-semibold text-[#47141e]">Coupons & deals</p>
+								{appliedOfferLabel ? (
+									<p className="mt-0.5 flex items-center gap-1.5 truncate text-xs font-medium text-green-700">
+										<span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700">
+											Applied
+										</span>
+										<span className="truncate">{appliedOfferLabel}</span>
+									</p>
+								) : (
+									<p className="truncate text-xs text-gray-500">
+										{couponsLoading ? "Loading offers..." : "Apply a coupon or ₹1 deal"}
+									</p>
+								)}
+							</div>
+						</div>
+						<span
+							className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold ${
+								appliedOfferLabel
+									? "border border-green-300 bg-white text-green-700"
+									: "bg-gradient-to-r from-[#ed4264] to-[#47141e] text-white"
+							}`}
+						>
+							{appliedOfferLabel ? "Change" : "Apply"}
+						</span>
+					</button>
 					<Divider />
 				</>
 			)}
+
 			{editable && (
-				<div className="space-y-4 my-4">
-					{couponsLoading ? (
-						<p className="text-center text-xs text-gray-500">Loading available offers...</p>
-					) : coupons.length === 0 ? (
-						<p className="text-center text-xs text-gray-500">No coupons available right now.</p>
-					) : (
-						coupons.map((coupon, index) => (
-							<CouponCard
-								key={coupon.id}
-								coupon={coupon}
-								selected={selectedCoupon === coupon.code}
-								colorIndex={index}
-								onSelect={setSelectedCoupon}
-							/>
-						))
-					)}
-				</div>
-			)}
-			{editable && !couponsLoading && cheapProducts.length > 0 && (
-				<CheapProductsRail products={cheapProducts} thumbnails={cheapProductThumbnails} />
+				<CouponsDrawer
+					open={couponsOpen}
+					onClose={() => setCouponsOpen(false)}
+					coupons={coupons}
+					cheapProducts={cheapProducts}
+					thumbnails={cheapProductThumbnails}
+					loading={couponsLoading}
+				/>
 			)}
 
 			<Divider />
 			<div className="mt-4 flex max-w-full flex-col">
-				<SummaryMoneyRow label="Subtotal" money={
-					subtotalPrice?.gross
-						? {
-								amount: Math.round((subtotalPrice.gross.amount || 0) + (discount?.amount || 0) - (handlingFeeAmount?.amount ?? 0)),
-								currency: subtotalPrice.gross.currency,
-							}
-						: undefined
-				} ariaLabel="subtotal price" />
+				<SummaryMoneyRow
+					label="Subtotal"
+					money={
+						subtotalPrice?.gross
+							? {
+									amount: Math.round(
+										(subtotalPrice.gross.amount || 0) + (discount?.amount || 0) - (handlingFeeAmount?.amount ?? 0),
+									),
+									currency: subtotalPrice.gross.currency,
+								}
+							: undefined
+					}
+					ariaLabel="subtotal price"
+				/>
 				{voucherCode && (
 					<SummaryPromoCodeRow
 						editable={editable}
@@ -300,7 +358,6 @@ export const Summary: FC<SummaryProps> = ({
 						negative
 					/>
 				))}
-				{/* delivery fee  */}
 				<SummaryMoneyRow label="Delivery Fee" ariaLabel="shipping cost" money={shippingPriceAmount} />
 				{handlingFeeAmount && (
 					<SummaryMoneyRow label="Handling Fee" ariaLabel="handling cost" money={handlingFeeAmount} />
@@ -313,33 +370,31 @@ export const Summary: FC<SummaryProps> = ({
 							includes {getFormattedMoney(totalPrice?.tax)} tax
 						</p>
 					</div>
-					<Money ariaLabel="total price" money={subtotalPrice?.gross
-						? {
-								amount: Math.round((subtotalPrice.gross.amount || 0) + (shippingPriceAmount?.amount ?? 0)),
-								currency: subtotalPrice.gross.currency,
-							}
-						: undefined} data-testid="totalOrderPrice" className="text-[#ed2464] font-bold"/>
+					<Money
+						ariaLabel="total price"
+						money={
+							subtotalPrice?.gross
+								? {
+										amount: Math.round((subtotalPrice.gross.amount || 0) + (shippingPriceAmount?.amount ?? 0)),
+										currency: subtotalPrice.gross.currency,
+									}
+								: undefined
+						}
+						data-testid="totalOrderPrice"
+						className="font-bold text-[#ed2464]"
+					/>
 				</div>
 				{totalSavings && totalSavings.amount > 0 && (
-					<div className="mt-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-3">
+					<div className="mt-3 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-3">
 						<div className="flex flex-row items-center gap-1">
 							<div className="flex items-center gap-2">
-								{/* <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-								</svg> */}
 								<p className="font-semibold text-green-700">You are saving</p>
 							</div>
-							<Money 
-								ariaLabel="total savings" 
-								money={totalSavings} 
-								className="text-green-600 font-bold text-lg"
-							/>
-								<p className="font-semibold text-green-700 mb-1">on this order</p>
+							<Money ariaLabel="total savings" money={totalSavings} className="text-lg font-bold text-green-600" />
+							<p className="mb-1 font-semibold text-green-700">on this order</p>
 						</div>
 						{includesShippingSavings && (
-							<p className="mt-2 text-xs text-green-600 italic">
-								* Shipping amount also included
-							</p>
+							<p className="mt-2 text-xs italic text-green-600">* Shipping amount also included</p>
 						)}
 					</div>
 				)}

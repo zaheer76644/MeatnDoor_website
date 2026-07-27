@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import base32 from "hi-base32";
+import logoPdf from "@/img/log_pdf.png";
 import { type OrderDetailsFragment } from "@/gql/graphql";
 import { getSummaryLineProps } from "@/checkout/sections/Summary/utils";
 
@@ -12,6 +13,70 @@ interface GeneratePDFInvoiceProps {
 	deliveryTime?: string;
 	handlingFee: number;
 }
+
+const BRAND = "#48181F";
+const ACCENT = "#F9F1F2";
+const LABEL = "#D86C84";
+const STATUS_GREEN = "#00A67E";
+
+const formatINR = (amount: number) => `₹${Math.round(amount)}`;
+
+const toAbsoluteUrl = (src: string) => {
+	if (src.startsWith("http") || src.startsWith("data:")) return src;
+	if (typeof window === "undefined") return src;
+	return new URL(src, window.location.origin).href;
+};
+
+const loadLogoBase64 = async (): Promise<string> => {
+	const candidates: string[] = [];
+
+	if (typeof logoPdf === "string") {
+		candidates.push(logoPdf);
+	} else if (logoPdf && typeof logoPdf === "object" && "src" in logoPdf) {
+		candidates.push((logoPdf as { src: string }).src);
+	}
+
+	candidates.push("/img/log_pdf.png");
+
+	for (const candidate of candidates) {
+		try {
+			const response = await fetch(toAbsoluteUrl(candidate));
+			if (!response.ok) continue;
+			const blob = await response.blob();
+			const dataUrl = await new Promise<string>((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onloadend = () => {
+					if (typeof reader.result === "string") resolve(reader.result);
+					else reject(new Error("Failed to read logo"));
+				};
+				reader.onerror = reject;
+				reader.readAsDataURL(blob);
+			});
+			if (dataUrl) return dataUrl;
+		} catch {
+			// try next candidate
+		}
+	}
+
+	throw new Error("Could not load invoice logo (log_pdf.png)");
+};
+
+const getNetWeight = (
+	item: OrderDetailsFragment["lines"][number],
+): string | null => {
+	const attrs = item.variant?.attributes as
+		| Array<{ attribute?: { name?: string; slug?: string }; values?: Array<{ name?: string }> }>
+		| undefined;
+	const fromAttr = attrs?.find(
+		(attr) =>
+			attr.attribute?.name === "Net Weight" ||
+			attr.attribute?.slug === "net-weight" ||
+			attr.attribute?.slug === "weight",
+	)?.values?.[0]?.name;
+	if (fromAttr) return fromAttr;
+	if (item.variant?.name && item.variant.name !== "Default Title") return item.variant.name;
+	return null;
+};
 
 export const GeneratePDFInvoice: React.FC<GeneratePDFInvoiceProps> = ({
 	order,
@@ -27,410 +92,450 @@ export const GeneratePDFInvoice: React.FC<GeneratePDFInvoiceProps> = ({
 		try {
 			setIsGenerating(true);
 
-			// Load logo as base64 to avoid CORS issues
-			let logoBase64 = "";
-			try {
-				// Try loading from public folder first
-				const logoResponse = await fetch(window.location.origin + "/img/logo.png");
-				if (logoResponse.ok) {
-					const logoBlob = await logoResponse.blob();
-					logoBase64 = await new Promise<string>((resolve, reject) => {
-						const reader = new FileReader();
-						reader.onloadend = () => {
-							if (reader.result) {
-								resolve(reader.result as string);
-							} else {
-								reject(new Error("Failed to read logo"));
-							}
-						};
-						reader.onerror = reject;
-						reader.readAsDataURL(logoBlob);
-					});
-				} else {
-					throw new Error("Logo not found");
-				}
-			} catch (error) {
-				console.warn("Could not load logo from local, trying external:", error);
-				// Fallback: Try to load external logo and convert to base64
-				try {
-					const externalResponse = await fetch("https://meatndoor.com/assets/images/logo/log.png", {
-						mode: "cors",
-					});
-					if (externalResponse.ok) {
-						const logoBlob = await externalResponse.blob();
-						logoBase64 = await new Promise<string>((resolve, reject) => {
-							const reader = new FileReader();
-							reader.onloadend = () => {
-								if (reader.result) {
-									resolve(reader.result as string);
-								} else {
-									reject(new Error("Failed to read external logo"));
-								}
-							};
-							reader.onerror = reject;
-							reader.readAsDataURL(logoBlob);
-						});
-					} else {
-						// Final fallback - use external URL directly (may not work due to CORS)
-						logoBase64 = "https://meatndoor.com/assets/images/logo/log.png";
-					}
-				} catch (externalError) {
-					console.warn("Could not load external logo:", externalError);
-					// Final fallback
-					logoBase64 = "https://meatndoor.com/assets/images/logo/log.png";
-				}
-			}
+			const logoBase64 = await loadLogoBase64();
 
-			// Create HTML content
-			const orderDate = new Date(order.created).toLocaleDateString("en-US", {
-				month: "long",
-				day: "numeric",
+			const orderDate = new Date(order.created).toLocaleString("en-IN", {
+				day: "2-digit",
+				month: "short",
 				year: "numeric",
 				hour: "2-digit",
 				minute: "2-digit",
+				hour12: true,
 			});
 
 			const today = new Date();
-			const day = String(today.getDate()).padStart(2, "0");
-			const month = String(today.getMonth() + 1).padStart(2, "0");
-			const year = today.getFullYear();
-			const formattedDate = `${day}/${month}/${year}`;
+			const formattedDate = `${String(today.getDate()).padStart(2, "0")}/${String(
+				today.getMonth() + 1,
+			).padStart(2, "0")}/${today.getFullYear()}`;
 
-			// Encode order number (using simple base32-like encoding)
+			const shippingAddress = order.shippingAddress as
+				| (NonNullable<OrderDetailsFragment["shippingAddress"]> & {
+						firstName?: string | null;
+						lastName?: string | null;
+				  })
+				| null
+				| undefined;
 
-			// Generate items HTML
-			const itemsHTML = order.lines
-				.filter((item) => {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-					const { productName } = getSummaryLineProps(item as any);
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-					return productName?.toLowerCase() !== "handling fee";
-				})
-				.map((item) => {
-					// Get saving amount (default to 0 if not found)
+			const billToName = [shippingAddress?.firstName, shippingAddress?.lastName]
+				.filter(Boolean)
+				.join(" ")
+				.trim();
+
+			const productLines = order.lines.filter((item) => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+				const { productName } = getSummaryLineProps(item as any);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				return productName?.toLowerCase() !== "handling fee";
+			});
+
+			const itemsHTML = productLines
+				.map((item, index) => {
 					const savingAmount = parseFloat(
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-						(item.variant?.attributes as Array<{ attribute?: { name?: string }; values?: Array<{ name?: string }> }>)?.find(
-							(attr) => attr.attribute?.name === "Saving Amount"
-						)?.values?.[0]?.name || "0"
+						(
+							item.variant?.attributes as Array<{
+								attribute?: { name?: string };
+								values?: Array<{ name?: string }>;
+							}>
+						)?.find((attr) => attr.attribute?.name === "Saving Amount")?.values?.[0]?.name || "0",
 					);
 
-					// Get gross price (default to 0 if not found)
 					const grossAmount = parseFloat(String(item.undiscountedUnitPrice?.gross?.amount || 0));
-
 					const quantity = item.quantity;
-					// Calculate discounted price
-					const discountedPrice = (savingAmount - grossAmount) * quantity;
-					const itemTotal = savingAmount * quantity;
-					const subTotal = quantity * grossAmount;
+					const unitPrice = savingAmount > 0 ? savingAmount : grossAmount;
+					const amount = unitPrice * quantity;
+					const discount = Math.max(0, (unitPrice - grossAmount) * quantity);
+					const taxable = quantity * grossAmount;
+					const weight = getNetWeight(item);
 
 					return `
 						<tr>
-							<td>${item.productName}</td>
-							<td>${item.quantity}</td> 
-							<td>${savingAmount.toFixed(2)}</td>
-							<td>${itemTotal.toFixed(2)}</td>
-							<td>${discountedPrice.toFixed(2)}</td>
-							<td>0.00%</td>
-							<td>${subTotal.toFixed(2)}</td>
+							<td class="c-center">${index + 1}</td>
+							<td class="c-item">
+								<span class="item-name">${item.productName}</span>
+								${weight ? `<span class="item-meta">(${weight})</span>` : ""}
+							</td>
+							<td class="c-center">${quantity}</td>
+							<td class="c-center">${formatINR(unitPrice)}</td>
+							<td class="c-center">${formatINR(amount)}</td>
+							<td class="c-center">${formatINR(discount)}</td>
+							<td class="c-center">${formatINR(taxable)}</td>
 						</tr>
 					`;
 				})
 				.join("");
 
 			const paymentMode = order.metadata?.find((item) => item.key === "paymentMode")?.value || "";
+			const paymentLabel =
+				paymentMode === "cash_on_delivery"
+					? "Cash On Delivery"
+					: paymentMode
+						? paymentMode.replace(/_/g, " ")
+						: "Online Payment";
+
+			const isDelivered = String(order.status) === "FULFILLED";
+			const statusLabel = isDelivered
+				? "DELIVERED"
+				: String(order.status) === "UNFULFILLED"
+					? "PROCESSING"
+					: String(order.status);
+
+			const itemsTotal = Math.round(
+				(order.subtotal?.gross?.amount || 0) - handlingFee + (order.discount?.amount || 0),
+			);
+			const deliveryCharge = order.shippingPrice?.gross?.amount ?? 0;
+			const couponAmount = order.discount?.amount || 0;
+			const grandTotal = order.total?.gross?.amount || 0;
+			const currency = order.total?.gross?.currency || "INR";
+			const deliverySlot = [deliveryDate, deliveryTime].filter(Boolean).join(" ") || "N/A";
 
 			const html = `
 				<html>
 					<head>
 						<style>
-							* {
-								margin: 0;
-								padding: 0;
-								box-sizing: border-box;
-							}
+							* { margin: 0; padding: 0; box-sizing: border-box; }
 							body {
-								font-family: Arial, sans-serif;
-								margin: 20px;
-								color: #333;
-								background: white;
+								font-family: Arial, Helvetica, sans-serif;
+								background: #ffffff;
+								color: #1a1a1a;
 							}
-							.header {
-								display: flex;
-								justify-content: space-between;
-								align-items: flex-start;
-								margin-bottom: 20px;
+							.page {
+								width: 734px;
+								padding: 6px 0 12px;
+								margin: 0 auto;
+								background: #ffffff;
 							}
-							.logo-container {
-								flex: 0 0 auto;
-							}
-							.logo-container img {
-								max-width: 250px;
+							.logo {
+								width: 170px;
 								height: auto;
 								display: block;
-							}
-							.invoice-title {
-								font-size: 28px;
-								font-weight: bold;
-								text-align: center;
-								flex: 1;
-								margin-top: 20px;
-							}
-							.invoice-header {
-								text-align: right;
-								flex: 0 0 auto;
-								min-width: 250px;
-							}
-							.invoice-header h2 {
-								font-size: 18px;
-								margin-bottom: 8px;
-								color: #333;
-								font-weight: bold;
-							}
-							.invoice-header p, .invoice-header div {
-								font-size: 14px;
-								margin: 6px 0;
-								color: #333;
-								line-height: 1.5;
-							}
-							.invoice-header strong {
-								font-weight: bold;
-								color: #333;
-							}
-							.seller-buyer {
-								display: flex;
-								justify-content: space-between;
-								background: #f3f1f1ff;
-								padding: 15px 25px;
-								border-radius: 5px;
-								margin-bottom: 20px;
-								gap: 20px;
-							}
-							.seller, .buyer {
-								flex: 1;
-							}
-							.seller h3, .buyer h3 {
-								font-size: 16px;
-								margin-bottom: 8px;
-								color: #333;
-							}
-							.seller p, .buyer p {
-								font-size: 13px;
-								margin: 4px 0;
-								color: #555;
+								border-radius: 2px;
 							}
 							.divider {
-								width: 2px;
-								background: #a3a3a3ff;
-								border-radius: 5px;
-								flex-shrink: 0;
+								border: 0;
+								border-top: 1px solid #e8e8e8;
+								margin: 8px 0 10px;
 							}
-							.buyer {
-								text-align: right;
-							}
-							.payment-info {
-								display: flex;
-								justify-content: space-between;
-								margin-bottom: 20px;
-								gap: 20px;
-							}
-							.payment-method, .supply-place {
-								flex: 1;
-							}
-							.payment-method p, .supply-place p {
-								font-size: 14px;
-								margin: 4px 0;
-							}
-							table {
+							.parties-table {
 								width: 100%;
 								border-collapse: collapse;
-								margin-bottom: 20px;
+								margin-bottom: 10px;
 							}
-							th, td {
-								border: 1px solid #ddd;
-								padding: 10px 8px;
-								text-align: left;
+							.parties-table td {
+								border: none !important;
+								padding: 0 !important;
+								background: transparent !important;
+								vertical-align: top;
+								width: 50%;
+							}
+							.eyebrow {
+								color: ${LABEL};
+								font-size: 10px;
+								font-weight: 700;
+								letter-spacing: 0.14em;
+								text-transform: uppercase;
+								margin-bottom: 5px;
+							}
+							.party-title {
 								font-size: 13px;
+								font-weight: 700;
+								color: #111111;
+								margin-bottom: 3px;
 							}
-							th {
-								background-color: #f8f8f8;
-								font-weight: bold;
+							.party p {
+								font-size: 11px;
+								color: #444444;
+								line-height: 1.45;
+								margin: 1px 0;
 							}
-							td {
-								background-color: white;
+							.info-table {
+								width: 100%;
+								border-collapse: collapse;
+								margin-bottom: 12px;
+								background: ${ACCENT};
+								border: 1px solid #eadfe2;
+							}
+							.info-table td {
+								width: 33.33%;
+								padding: 8px 12px !important;
+								border: none !important;
+								border-right: 1px solid #eadfe2 !important;
+								background: ${ACCENT} !important;
+								vertical-align: top;
+								text-align: left !important;
+							}
+							.info-table td:last-child {
+								border-right: none !important;
+							}
+							.info-table .eyebrow { margin-bottom: 2px; }
+							.info-table .val {
+								font-size: 12px;
+								font-weight: 700;
+								color: #111111;
+								text-align: left;
 							}
 							.items-table {
-								margin-bottom: 20px;
+								width: 100%;
+								border-collapse: collapse;
+								margin-bottom: 12px;
 							}
-							#bill {
-								text-align: right;
-								margin-top: 20px;
-								font-size: 14px;
+							.items-table thead th {
+								background: ${BRAND};
+								color: #ffffff;
+								font-size: 10px;
+								font-weight: 700;
+								letter-spacing: 0.06em;
+								text-transform: uppercase;
+								padding: 9px 8px;
+								text-align: center;
+								border: 1px solid ${BRAND};
 							}
-							#bill .bill-row {
-								display: flex;
-								justify-content: flex-end;
-								gap: 20px;
-								margin: 6px 0;
-							}
-							#bill .bill-label {
-								min-width: 180px;
-								text-align: right;
-							}
-							#bill .bill-value {
-								min-width: 100px;
-								text-align: right;
-							}
-							#bill .grand-total {
-								border-top: 2px solid #333;
-								padding-top: 8px;
-								margin-top: 8px;
-								font-weight: bold;
-								font-size: 16px;
-							}
-							#note {
-								text-align: left;
-								font-style: italic;
-								margin-top: 30px;
-								font-size: 0.9em;
-								color: #666;
-								line-height: 1.6;
-							}
-							#note p {
-								margin: 6px 0;
-							}
-							.status-badge {
-								padding: 6px 14px;
-								border-radius: 4px;
-								color: white;
-								font-size: 13px;
-								font-weight: 600;
-								display: inline-block;
-								margin-left: 8px;
-								text-transform: capitalize;
+							.items-table thead th.left { text-align: left; }
+							.items-table tbody td {
+								border: 1px solid #e6e6e6;
+								padding: 10px 8px;
+								font-size: 11px;
 								vertical-align: middle;
-								box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+								background: #ffffff;
+							}
+							.c-center { text-align: center; }
+							.c-item { text-align: left; }
+							.item-name {
+								display: block;
+								font-weight: 700;
+								color: #111111;
+							}
+							.item-meta {
+								display: block;
+								margin-top: 2px;
+								font-size: 10px;
+								font-weight: 400;
+								color: #777777;
+							}
+							.bottom-table {
+								width: 100%;
+								border-collapse: collapse;
+							}
+							.bottom-table > tbody > tr > td {
+								border: none !important;
+								padding: 0 !important;
+								background: transparent !important;
+								vertical-align: top;
+							}
+							.notes h4 {
+								font-size: 12px;
+								font-weight: 700;
+								margin-bottom: 6px;
+								color: #111111;
+							}
+							.notes ol {
+								padding-left: 15px;
+								margin-bottom: 12px;
+							}
+							.notes li {
+								font-size: 10px;
+								color: #666666;
+								line-height: 1.5;
+								margin: 2px 0;
+							}
+							.thanks {
+								border-top: 1px solid #e8e8e8;
+								padding-top: 10px;
+								font-size: 11px;
+								font-weight: 700;
+								font-style: italic;
+								color: ${BRAND};
+							}
+							.brand-footer {
+								margin-top: 16px;
+								text-align: center;
+								font-size: 10px;
+								color: #9a9a9a;
 							}
 						</style>
 					</head>
 					<body>
-						<div class="header">
-							<div class="logo-container">
-								<img src="${logoBase64}" alt="Company Logo" />
-							</div>
-							<div class="invoice-title">Invoice</div>
-							<div class="invoice-header"> 
-								<h2>Order #${_encoded}${order.number}</h2> 
-								<div style="margin-bottom: 8px;"><strong>Date:</strong> ${formattedDate}</div>
-								<p style="margin-bottom: 8px;"><strong>Delivery Between:</strong> ${deliveryDate || "N/A"} ${deliveryTime || "N/A"}</p>
-								<p style="margin-bottom: 8px;"><strong>Placed at:</strong> ${orderDate}</p>
-								<div style="margin-bottom: 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
-									<div style="font-weight: bold;">Status:</div> 
-									<div style="background-color: green; color: white; padding: 0px 10px 12px 10px; border-radius: 5px; font-weight: bold; ">${String(order.status) === "FULFILLED" ? "Delivered" : String(order.status) === "UNFULFILLED" ? "Processing" : String(order.status)}</div> 
+						<div class="page">
+							<!-- Header: logo | meta (fixed 240px right column) -->
+							<table width="734" cellpadding="0" cellspacing="0" border="0" style="width:734px; border-collapse:collapse; margin-bottom:8px;">
+								<tr>
+									<td valign="top" style="border:none; padding:0; width:494px;">
+										<img class="logo" src="${logoBase64}" alt="MEATnDOOR" />
+									</td>
+									<td valign="top" style="border:none; padding:0; width:240px;">
+										<table width="240" cellpadding="0" cellspacing="0" border="0" style="width:240px; border-collapse:collapse; table-layout:fixed;">
+											<tr>
+												<td style="text-align:right; color:${BRAND}; font-size:14px; font-weight:700; letter-spacing:0.1em;">
+													TAX INVOICE
+												</td>
+											</tr>
+											<tr>
+												<td style="width:240px; text-align:right; font-size:10px; color:#222222; padding-top:6px; line-height:1.4;">
+													<strong>Invoice No:</strong> ${_encoded}${order.number}
+												</td>
+											</tr>
+											<tr>
+												<td style="width:240px; text-align:right; font-size:10px; color:#222222; line-height:1.4;">
+													<strong>Invoice Date:</strong> ${formattedDate}
+												</td>
+											</tr>
+											<tr>
+												<td style="width:240px; text-align:right; font-size:10px; color:#222222; line-height:1.4;">
+													<strong>Order Placed:</strong> ${orderDate}
+												</td>
+											</tr>
+											<tr>
+												<td style="width:240px; text-align:right; font-size:10px; color:#222222; line-height:1.4;">
+													<strong>Delivery:</strong> ${deliverySlot}
+												</td>
+											</tr>
+											<tr>
+												<td style="width:240px; text-align:right; padding-top:5px;">
+												<div style="margin-bottom: 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+									<div style="font-size:10px; font-weight:700;">Status:</div> 
+									<div style="background:${isDelivered ? STATUS_GREEN : LABEL}; color: white; padding: 0px 10px 12px 10px; border-radius: 5px; font-size:10px; font-weight:700; ">${statusLabel}</div> 
 								</div>
 							</div>
-						</div>
-
-						<div class="seller-buyer">
-							<div class="seller">
-								<h3>Sold by:</h3>
-								<h3>Meatndoor Fresh Foods</h3>
-								<p>301, Tarun Bharat Building, 7th Road, Santacruz East Mumbai 400055</p>
-								<p>FSSAI License Number: 11525005000328</p>
-								<p>GSTN: 27AADPQ5578N1ZW</p> 
-							</div>
-							<div class="divider"></div>
-							<div class="buyer">
-								<h3>Buyer/Consignee:</h3>
-								<p>${order.shippingAddress?.streetAddress1 || ""}</p>
-								${order.shippingAddress?.streetAddress2 ? `<p>${order.shippingAddress.streetAddress2}</p>` : ""}
-								<p>${order.shippingAddress?.city || ""}, ${order.shippingAddress?.postalCode || ""}, ${order.shippingAddress?.country?.country || ""}</p> 
-								<p>Phone: ${order.shippingAddress?.phone || ""}</p>  
-							</div>
-						</div>
-
-						<div class="payment-info">
-							<div class="payment-method">
-								<p><strong>Payment Method:</strong></p>
-								<p>${paymentMode === 'cash_on_delivery' ? "Cash on Delivery" : "Online Payment"}</p>
-							</div> 
-							<div class="supply-place">
-								<p><strong>Place of Supply:</strong></p>
-								<p>Maharashtra</p>
-							</div>
-						</div>
-
-						<table class="items-table">
-							<thead>
-								<tr>
-									<th>Item</th> 
-									<th>Qty</th>
-									<th>Price</th>
-									<th>Items Total</th>
-									<th>Discount</th>
-									<th>GST Rate</th>
-									<th>Subtotal</th>
+													
+												</td>
+											</tr>
+										</table>
+									</td>
 								</tr>
-							</thead>
-							<tbody>
-								${itemsHTML}
-							</tbody>
-						</table>
+							</table>
 
-						<div id="bill">
-							<div class="bill-row">
-								<div class="bill-label">Total:</div>
-								<div class="bill-value">${Math.round((order.subtotal?.gross?.amount || 0) - handlingFee + (order.discount?.amount || 0))}</div>
-							</div>
-							<div class="bill-row">
-								<div class="bill-label">Delivery Charge:</div>
-								<div class="bill-value">${order.shippingPrice?.gross?.amount || "Free"}</div>
-							</div>
-							<div class="bill-row">
-								<div class="bill-label">Handling Fee:</div>
-								<div class="bill-value">${handlingFee}</div>
-							</div>
-							<div class="bill-row">
-								<div class="bill-label">Coupon Applied: (${order.voucherCode || ""})</div>
-								<div class="bill-value">${order.discount?.amount ? "- " + (order.discount.amount || 0) : "0"}</div>
-							</div>
-							<div class="bill-row">
-								<div class="bill-label">Instant Discount:</div>
-								<div class="bill-value">0</div>
-							</div>
-							<div class="bill-row">
-								<div class="bill-label">Meatndoor Cash:</div>
-								<div class="bill-value">0</div>
-							</div>
-							<div class="bill-row grand-total">
-								<div class="bill-label">Grand Total:</div>
-								<div class="bill-value">₹${order.total?.gross?.amount} ${order.total?.gross?.currency}</div>
-							</div>
+							<hr class="divider" />
+
+							<table class="parties-table" width="734" cellpadding="0" cellspacing="0" border="0">
+								<tr>
+									<td align="left">
+										<div class="eyebrow">Sold By</div>
+										<div class="party-title">Meatndoor Fresh Foods</div>
+										<p style="font-size: 10px;">301, Tarun Bharat Building, 7th Road,<br/>Santacruz East, Mumbai 400055</p>
+										<p style="font-size: 10px;">FSSAI: 11525005000328</p>
+										<p style="font-size: 10px;">GSTN: 27AADPQ5578N1ZW</p>
+									</td>
+									<td align="right">
+										<div class="eyebrow">Bill To</div>
+										${billToName ? `<div class="party-title">${billToName}</div>` : ""}
+										<p style="font-size: 10px;">${shippingAddress?.streetAddress1 || ""}</p>
+										${shippingAddress?.streetAddress2 ? `<p>${shippingAddress.streetAddress2}</p>` : ""}
+										<p style="font-size: 10px;">${[shippingAddress?.city, shippingAddress?.postalCode].filter(Boolean).join(" - ")}${
+											shippingAddress?.country?.country ? `, ${shippingAddress.country.country}` : ""
+										}</p>
+										<p style="font-size: 10px;">Phone: ${shippingAddress?.phone || "N/A"}</p>
+									</td>
+								</tr>
+							</table>
+
+							<table class="info-table" width="734" cellpadding="0" cellspacing="0" border="0">
+								<tr>
+									<td>
+										<div class="eyebrow">Payment Method</div>
+										<div class="val">${paymentLabel}</div>
+									</td>
+									<td>
+										<div class="eyebrow">Place of Supply</div>
+										<div class="val">Maharashtra</div>
+									</td>
+									<td>
+										<div class="eyebrow">Items</div>
+										<div class="val">${productLines.length}</div>
+									</td>
+								</tr>
+							</table>
+
+							<table class="items-table" width="734" cellpadding="0" cellspacing="0" border="0">
+								<thead>
+									<tr>
+										<th style="width:34px">#</th>
+										<th class="left">Item Description</th>
+										<th style="width:46px">Qty</th>
+										<th style="width:78px">Unit Price</th>
+										<th style="width:78px">Amount</th>
+										<th style="width:78px">Discount</th>
+										<th style="width:78px">Taxable</th>
+									</tr>
+								</thead>
+								<tbody>${itemsHTML}</tbody>
+							</table>
+
+							<!-- Notes + totals: totals column locked to 240px (same as TAX INVOICE column) -->
+							<table class="bottom-table" width="734" cellpadding="0" cellspacing="0" border="0">
+								<tr>
+									<td valign="top" style="width:470px; padding-right:24px !important;">
+										<div class="notes">
+											<h4>Notes</h4>
+											<ol>
+												<li>This is a computer generated invoice; signature and stamp are not required.</li>
+												<li>Refunds are processed within 48 hours and may take 8–9 days to reflect in your bank account.</li>
+												<li>Questions? Email us at support@meatndoor.com</li>
+											</ol>
+											<div class="thanks">Thank you for shopping with MEATnDOOR</div>
+										</div>
+									</td>
+									<td valign="top" style="width:240px;">
+										<table width="240" cellpadding="0" cellspacing="0" border="0" style="width:240px; border-collapse:collapse; table-layout:fixed;">
+											<tr>
+												<td style="width:150px; text-align:left; color:#555555; font-size:11px; border-bottom:1px solid #e8e8e8; padding:7px 0;">Items Total</td>
+												<td style="width:90px; text-align:right; color:#111111; font-size:11px; font-weight:700; border-bottom:1px solid #e8e8e8; padding:7px 0;">${formatINR(itemsTotal)}</td>
+											</tr>
+											<tr>
+												<td style="width:150px; text-align:left; color:#555555; font-size:11px; border-bottom:1px solid #e8e8e8; padding:7px 0;">Delivery Charge</td>
+												<td style="width:90px; text-align:right; color:#111111; font-size:11px; font-weight:700; border-bottom:1px solid #e8e8e8; padding:7px 0;">${deliveryCharge ? formatINR(deliveryCharge) : "Free"}</td>
+											</tr>
+											<tr>
+												<td style="width:150px; text-align:left; color:#555555; font-size:11px; border-bottom:1px solid #e8e8e8; padding:7px 0;">Handling Fee</td>
+												<td style="width:90px; text-align:right; color:#111111; font-size:11px; font-weight:700; border-bottom:1px solid #e8e8e8; padding:7px 0;">${formatINR(handlingFee)}</td>
+											</tr>
+											<tr>
+												<td style="width:150px; text-align:left; color:#555555; font-size:11px; border-bottom:1px solid #e8e8e8; padding:7px 0;">Coupon${order.voucherCode ? ` (${order.voucherCode})` : ""}</td>
+												<td style="width:90px; text-align:right; color:#111111; font-size:11px; font-weight:700; border-bottom:1px solid #e8e8e8; padding:7px 0;">${couponAmount ? `- ${formatINR(couponAmount)}` : formatINR(0)}</td>
+											</tr>
+											<tr>
+												<td style="width:150px; text-align:left; color:#555555; font-size:11px; border-bottom:1px solid #e8e8e8; padding:7px 0;">Instant Discount</td>
+												<td style="width:90px; text-align:right; color:#111111; font-size:11px; font-weight:700; border-bottom:1px solid #e8e8e8; padding:7px 0;">${formatINR(0)}</td>
+											</tr>
+											<tr>
+												<td style="width:150px; text-align:left; color:#555555; font-size:11px; border-bottom:1px solid #e8e8e8; padding:7px 0;">Meatndoor Cash</td>
+												<td style="width:90px; text-align:right; color:#111111; font-size:11px; font-weight:700; border-bottom:1px solid #e8e8e8; padding:7px 0;">${formatINR(0)}</td>
+											</tr>
+											<tr>
+												<td style="width:150px; background:${BRAND}; color:#ffffff; font-size:13px; font-weight:700; text-align:left; padding:11px 10px;">Grand Total</td>
+												<td style="width:90px; background:${BRAND}; color:#ffffff; font-size:13px; font-weight:700; text-align:right; padding:11px 10px; white-space:nowrap;">${formatINR(grandTotal)} ${currency}</td>
+											</tr>
+										</table>
+									</td>
+								</tr>
+							</table>
+
+							<div class="brand-footer">MEATnDOOR · Quality At Doorstep · www.meatndoor.com</div>
 						</div>
-
-						<div id="note">
-							<p>*This is a computer generated invoice, hence signature and stamp is not required</p>
-							<p>Refund will be processed from our end within 48 hours but may take upto 8-9 days to credit into your bank account.</p>
-							<p>Thank you for using meatndoor.com Let us know how we did, by sending your feedback to support@meatndoor.com</p>
-						</div> 
 					</body>
 				</html>
 			`;
 
-			// Create a temporary div to render HTML
 			const tempDiv = document.createElement("div");
 			tempDiv.innerHTML = html;
 			tempDiv.style.position = "absolute";
 			tempDiv.style.left = "-9999px";
-			tempDiv.style.width = "210mm"; // A4 width
-			tempDiv.style.backgroundColor = "white";
-			tempDiv.style.padding = "20px";
+			tempDiv.style.top = "0";
+			tempDiv.style.width = "794px"; // A4 ~96dpi with side padding
+			tempDiv.style.padding = "0 30px";
+			tempDiv.style.boxSizing = "border-box";
+			tempDiv.style.backgroundColor = "#ffffff";
 			document.body.appendChild(tempDiv);
 
-			// Wait for images to load
-			await new Promise((resolve) => setTimeout(resolve, 500));
+			const logoImg = tempDiv.querySelector("img.logo") ;
+			if (logoImg && !logoImg.complete) {
+				await new Promise<void>((resolve) => {
+					logoImg.onload = () => resolve();
+					logoImg.onerror = () => resolve();
+					setTimeout(() => resolve(), 1500);
+				});
+			} else {
+				await new Promise((resolve) => setTimeout(resolve, 200));
+			}
 
-			// Convert HTML to canvas then to PDF
 			const canvas = await html2canvas(tempDiv, {
 				scale: 2,
 				useCORS: true,
@@ -441,29 +546,26 @@ export const GeneratePDFInvoice: React.FC<GeneratePDFInvoiceProps> = ({
 				height: tempDiv.scrollHeight,
 			});
 
-			// Remove temporary div
 			document.body.removeChild(tempDiv);
 
 			const imgData = canvas.toDataURL("image/png");
 			const pdf = new jsPDF("p", "mm", "a4");
-			const imgWidth = 210; // A4 width in mm
-			const pageHeight = 295; // A4 height in mm
+			const imgWidth = 210;
+			const pageHeight = 297;
 			const imgHeight = (canvas.height * imgWidth) / canvas.width;
 			let heightLeft = imgHeight;
-
 			let position = 0;
 
 			pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
 			heightLeft -= pageHeight;
 
-			while (heightLeft >= 0) {
+			while (heightLeft > 2) {
 				position = heightLeft - imgHeight;
 				pdf.addPage();
 				pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
 				heightLeft -= pageHeight;
 			}
 
-			// Save the PDF
 			pdf.save(`order_${_encoded}_invoice.pdf`);
 		} catch (error) {
 			console.error("Error generating PDF:", error);
@@ -483,4 +585,3 @@ export const GeneratePDFInvoice: React.FC<GeneratePDFInvoiceProps> = ({
 		</button>
 	);
 };
-
