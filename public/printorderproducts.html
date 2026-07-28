@@ -118,9 +118,16 @@
 					typeof data === "object" &&
 					!Array.isArray(data) &&
 					data.number &&
-					Array.isArray(data.lines) &&
-					data.lines.length > 0
+					Array.isArray(data.fulfillments) &&
+					data.fulfillments.length > 0
 				);
+			}
+
+			function getOrderLines(order) {
+				const fulfillments = order?.fulfillments || [];
+				if (fulfillments.length === 0) return [];
+				const lastFulfillment = fulfillments[fulfillments.length - 1];
+				return lastFulfillment?.lines || [];
 			}
 
 			// ✅ Get product slug from URL (example: ?slug=chicken-breast)
@@ -225,7 +232,9 @@
 						card.innerHTML = `
                         <div class="product-name">${order_id + order.number}</div>
                         <div class="product-name">${product.name}</div>
-                        <div class="product-price">₹${linePrice.toFixed(2)}</div>
+                        <div class="product-price"><small style="text-decoration:line-through">${
+													product.saving_amount
+												}</small> ₹${linePrice.toFixed(2)}</div>
                         <div class="use-by">Use by: <small>${futureDateText}</small></div>
                         ${
 													netWeightText
@@ -238,17 +247,19 @@
 
 					const container = document.getElementById("productContainer");
 					container.innerHTML = "";
-					(order?.lines || []).forEach((line) => {
-						if (line.productName === "Handling Fee") return;
+					(getOrderLines(order) || []).forEach((line) => {
+						const orderLine = line.orderLine;
+						if (orderLine.productName === "Handling Fee") return;
 
-						const price = line?.undiscountedUnitPrice?.gross?.amount || 0;
+						const price = orderLine?.undiscountedUnitPrice?.gross?.amount || 0;
 
 						const product = {
-							name: line.productName,
-							attributes: line.variant?.name
-								? [{ attribute: { slug: "net-weight" }, values: [{ name: line.variant.name }] }]
+							name: orderLine.productName,
+							attributes: orderLine.variant?.name
+								? [{ attribute: { slug: "net-weight" }, values: [{ name: orderLine.variant.name }] }]
 								: [],
 							variants: [{ attributes: [] }],
+							saving_amount: orderLine?.metadata?.find((item) => item?.key === "saving_amount")?.value || "",
 						};
 
 						for (let i = 0; i < (line.quantity || 1); i++) {
@@ -257,7 +268,7 @@
 					});
 					const encoded = base32.encode(order?.number || "");
 					const order_id = encoded.replace(/=+$/, "");
-					const totalQuantity = order?.lines
+					const totalQuantity = getOrderLines(order)
 						?.filter((item) => item?.productName !== "Handling Fee")
 						?.reduce((sum, line) => sum + (line.quantity || 0), 0);
 					const paymentStatus = order?.metadata?.find((item) => item?.key === "paymentMode")?.value || "";
