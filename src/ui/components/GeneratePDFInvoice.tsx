@@ -525,7 +525,7 @@ export const GeneratePDFInvoice: React.FC<GeneratePDFInvoiceProps> = ({
 			tempDiv.style.backgroundColor = "#ffffff";
 			document.body.appendChild(tempDiv);
 
-			const logoImg = tempDiv.querySelector("img.logo") ;
+			const logoImg = tempDiv.querySelector<HTMLImageElement>("img.logo") ;
 			if (logoImg && !logoImg.complete) {
 				await new Promise<void>((resolve) => {
 					logoImg.onload = () => resolve();
