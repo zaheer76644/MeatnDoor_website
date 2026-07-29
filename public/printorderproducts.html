@@ -140,6 +140,8 @@
 				document.getElementById("productContainer").innerHTML = "<p>No product selected.</p>";
 			} else {
 				async function handleOrder(order) {
+					console.log(order, "--------------------");
+
 					const deliveryDate = order?.metadata?.find((item) => item?.key === "Delivery_Date")?.value || "";
 					if (deliveryDate) {
 						let dDate = new Date(deliveryDate);
@@ -308,38 +310,62 @@
 					container.appendChild(card);
 				}
 
-				window.addEventListener("message", async (event) => {
-					const data = event.data;
+				// window.addEventListener("message", async (event) => {
+				// 	const data = event.data;
 
-					if (!isValidOrderData(data)) {
-						return;
-					}
+				// 	if (!isValidOrderData(data)) {
+				// 		return;
+				// 	}
+
+				// 	try {
+				// 		sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(data));
+				// 	} catch (e) {
+				// 		/* ignore storage errors */
+				// 	}
+
+				// 	await handleOrder(data);
+				// });
+
+				// try {
+				// 	const savedOrder = sessionStorage.getItem(ORDER_STORAGE_KEY);
+				// 	if (savedOrder) {
+				// 		const order = JSON.parse(savedOrder);
+				// 		if (isValidOrderData(order)) {
+				// 			handleOrder(order);
+				// 		}
+				// 	}
+				// } catch (e) {
+				// 	/* ignore parse/storage errors */
+				// }
+
+				const run = async (o) => {
+					console.log("order:", o);
+					await handleOrder(o);
+					// if(!isValidOrderData(o))return;
 
 					try {
-						sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(data));
-					} catch (e) {
-						/* ignore storage errors */
-					}
+						sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(o));
+					} catch {}
+				};
 
-					await handleOrder(data);
+				window.addEventListener("message", (e) => {
+					console.log("received:", e.data);
+					run(e.data);
 				});
 
 				try {
-					const savedOrder = sessionStorage.getItem(ORDER_STORAGE_KEY);
-					if (savedOrder) {
-						const order = JSON.parse(savedOrder);
-						if (isValidOrderData(order)) {
-							handleOrder(order);
-						}
-					}
-				} catch (e) {
-					/* ignore parse/storage errors */
-				}
+					const o = JSON.parse(sessionStorage.getItem(ORDER_STORAGE_KEY) || "null");
+					if (o) run(o);
+				} catch {}
 
-				if (window.opener && !window.opener.closed) {
-					window.opener.postMessage({ type: "PRINT_ORDER_PRODUCTS_READY" }, "*");
-				}
+				setTimeout(() => window.opener?.postMessage("READY", "*"), 0);
 			}
+
+			window.addEventListener("message", (event) => {
+				console.log("Received:", event.data);
+			});
+
+			window.opener.postMessage("READY", "*");
 		</script>
 	</body>
 </html>
