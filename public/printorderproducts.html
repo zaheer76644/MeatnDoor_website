@@ -124,10 +124,12 @@
 			}
 
 			function getOrderLines(order) {
-				const fulfillments = order?.fulfillments || [];
-				if (fulfillments.length === 0) return [];
-				const lastFulfillment = fulfillments[fulfillments.length - 1];
-				return lastFulfillment?.lines || [];
+				const lines = order?.lines || [];
+				console.log(lines);
+
+				if (lines.length === 0) return [];
+				// const lastFulfillment = lines[lines.length - 1];
+				return lines || [];
 			}
 
 			// ✅ Get product slug from URL (example: ?slug=chicken-breast)
@@ -247,8 +249,9 @@
 
 					const container = document.getElementById("productContainer");
 					container.innerHTML = "";
-					(getOrderLines(order) || []).forEach((line) => {
-						const orderLine = line.orderLine;
+					(getOrderLines(order) || []).forEach((orderLine) => {
+						// console.log(line);
+						// const orderLine = line.orderLine;
 						if (orderLine.productName === "Handling Fee") return;
 
 						const price = orderLine?.undiscountedUnitPrice?.gross?.amount || 0;
@@ -259,19 +262,24 @@
 								? [{ attribute: { slug: "net-weight" }, values: [{ name: orderLine.variant.name }] }]
 								: [],
 							variants: [{ attributes: [] }],
-							saving_amount: orderLine?.metadata?.find((item) => item?.key === "saving_amount")?.value || "",
+							saving_amount:
+								orderLine?.variant?.attributes?.find((a) => a.attribute.slug === "saving-amount")?.values?.[0]
+									?.name || "",
 						};
 
-						for (let i = 0; i < (line.quantity || 1); i++) {
+						console.log(orderLine?.variant?.attributes);
+
+						for (let i = 0; i < (orderLine.quantity || 1); i++) {
 							renderProduct(product, price);
 						}
 					});
 					const encoded = base32.encode(order?.number || "");
 					const order_id = encoded.replace(/=+$/, "");
 					const totalQuantity = getOrderLines(order)
-						?.filter((item) => item?.productName !== "Handling Fee")
-						?.reduce((sum, line) => sum + (line.quantity || 0), 0);
-					const paymentStatus = order?.metadata?.find((item) => item?.key === "paymentMode")?.value || "";
+						?.filter((orderLine) => !orderLine?.productName?.toLowerCase().includes("handling"))
+						?.reduce((sum, orderLine) => sum + (orderLine.quantity || 0), 0);
+					const paymentStatus =
+						order?.metadata?.find((orderLine) => orderLine?.key === "paymentMode")?.value || "";
 					const totalAmount = order?.total?.gross?.amount || 0;
 					const card = document.createElement("div");
 					card.className = "product-card";
