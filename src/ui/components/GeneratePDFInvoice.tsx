@@ -453,7 +453,7 @@ export const GeneratePDFInvoice: React.FC<GeneratePDFInvoiceProps> = ({
 										<th style="width:78px">Unit Price</th>
 										<th style="width:78px">Amount</th>
 										<th style="width:78px">Discount</th>
-										<th style="width:78px">Taxable</th>
+										<th style="width:78px">Sub Total</th>
 									</tr>
 								</thead>
 								<tbody>${itemsHTML}</tbody>

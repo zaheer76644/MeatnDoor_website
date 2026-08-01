@@ -1,251 +1,226 @@
-// "use client";
-// import Image from "next/image";
-// import { useState, useEffect } from "react";
-
-// // Import images from the src folder
-// import img1 from "@/img/img1.jpg";
-// import img2 from "@/img/img2.jpg";
-// // import img3 from "@/img/img1.jpg";
-// // import img4 from "@/img/img2.jpg";
-
-// const images = [img1, img2, img1, img2, img1];
-
-// export const CustomSlider = () => {
-// 	const [current, setCurrent] = useState(0);
-
-// 	useEffect(() => {
-// 		const interval = setInterval(() => {
-// 			setCurrent((prev) => (prev + 1) % images.length);
-// 		}, 3000); // Auto slide every 3 seconds
-// 		return () => clearInterval(interval);
-// 	}, []);
-
-// 	return (
-// 		<div id="custom-carousel" className="relative mb-20 w-full">
-// 			{/* Carousel wrapper */}
-// 			<div className="relative block h-[32rem] overflow-hidden md:h-[500px]">
-// 				{images.map((img, index) => (
-// 					<div
-// 						key={index}
-// 						className={`absolute inset-0 flex items-center justify-center transition-opacity duration-700 ${
-// 							index === current ? "opacity-100" : "opacity-0"
-// 						}`}
-// 					>
-// 						<Image
-// 							fill
-// 							src={img}
-// 							// width={400}
-// 							// height={200}
-// 							className="h-auto w-full object-cover"
-// 							alt={`Slide ${index + 1}`}
-// 							priority={index === 0}
-// 						/>
-// 					</div>
-// 				))}
-// 			</div>
-
-// 			{/* Slider indicators */}
-// 			<div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 space-x-3">
-// 				{images.map((_, index) => (
-// 					<button
-// 						key={index}
-// 						type="button"
-// 						className={`h-3 w-3 rounded-full ${index === current ? "bg-white" : "bg-gray-400"}`}
-// 						onClick={() => setCurrent(index)}
-// 					></button>
-// 				))}
-// 			</div>
-// 		</div>
-// 	);
-// };
-// components/Hero.tsx
 import Image from "next/image";
+import { Playfair_Display, Source_Sans_3 } from "next/font/google";
+
+const display = Playfair_Display({
+	subsets: ["latin"],
+	display: "swap",
+});
+
+const body = Source_Sans_3({
+	subsets: ["latin"],
+	display: "swap",
+});
+
+const GOLD = "#d4af37";
+const RED = "#e21e36";
+
+const features = [
+	{
+		lines: ["100% Quality", "Assured"],
+		icon: (
+			<svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
+				<path strokeLinecap="round" strokeLinejoin="round" d="M12 3.2l6.5 2.6v5.1c0 4.2-2.7 7.4-6.5 8.7-3.8-1.3-6.5-4.5-6.5-8.7V5.8L12 3.2z" />
+				<path strokeLinecap="round" strokeLinejoin="round" d="M9.1 11.8l2 2 3.9-4.1" />
+			</svg>
+		),
+	},
+	{
+		lines: ["Carefully", "Packed"],
+		icon: (
+			<svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M12 3.5c2.6 3.2 5.8 5.2 5.8 9a5.8 5.8 0 11-11.6 0c0-3.8 3.2-5.8 5.8-9z"
+				/>
+			</svg>
+		),
+	},
+	{
+		lines: ["On-Time", "Delivery"],
+		icon: (
+			<svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
+				<path
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					d="M3 8h10v8H3V8zm10 2h3.5L20 13v3h-7v-6z"
+				/>
+				<path strokeLinecap="round" strokeLinejoin="round" d="M6.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm10 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+			</svg>
+		),
+	},
+] as const;
+
+function ProductTag({
+	label,
+	className,
+	lineTo = "right",
+}: {
+	label: string;
+	className?: string;
+	lineTo?: "left" | "right";
+}) {
+	return (
+		<div className={`absolute z-[5] flex items-center ${className ?? ""}`}>
+			{lineTo === "left" && (
+				<span className="mr-1 flex items-center">
+					<span className="h-1.5 w-1.5 rounded-full bg-[#d4af37]" />
+					<span className="h-px w-7 bg-[#d4af37]/80 sm:w-9" />
+				</span>
+			)}
+			<span className="rounded-[3px] border border-[#d4af37]/65 bg-[#12080a]/80 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur-[2px] md:text-[10px]">
+				{label}
+			</span>
+			{lineTo === "right" && (
+				<span className="ml-1 flex items-center">
+					<span className="h-px w-7 bg-[#d4af37]/80 sm:w-9" />
+					<span className="h-1.5 w-1.5 rounded-full bg-[#d4af37]" />
+				</span>
+			)}
+		</div>
+	);
+}
 
 export function CustomSlider() {
 	return (
-		<section id="home" className="relative overflow-hidden bg-gradient-to-br from-[#47141e] via-[#5a1a2a] to-[#47141e] py-16 md:py-24">
-			{/* Mesh Gradient Background - Enhanced */}
-			<div className="absolute inset-0 opacity-40">
-				<div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(237,66,100,0.5),transparent_45%)]"></div>
-				<div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(255,107,157,0.4),transparent_45%)]"></div>
-				<div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(71,20,30,0.6),transparent_60%)]"></div>
-				<div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_80%,rgba(237,66,100,0.3),transparent_40%)]"></div>
-				<div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_20%,rgba(255,107,157,0.3),transparent_40%)]"></div>
+		<section
+			id="home"
+			className={`${body.className} relative isolate h-[calc(100svh-4rem)] w-full overflow-hidden bg-black text-white`}
+		>
+			{/* Mobile banner */}
+			<Image
+				src="/banner_mobile.png"
+				alt="Fresh mutton, chicken and fish"
+				fill
+				priority
+				className="object-cover object-bottom md:hidden"
+				sizes="100vw"
+			/>
+
+			{/* Desktop banner */}
+			<Image
+				src="/banner_image_with_meat.png"
+				alt="Fresh mutton, chicken and fish"
+				fill
+				priority
+				className="hidden object-none object-top md:block"
+				sizes="100vw"
+			/>
+
+			<div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-full bg-gradient-to-b from-black/70 via-black/40 to-transparent md:w-[55%] md:bg-gradient-to-r md:from-black md:via-black/55 md:to-transparent" />
+
+			<div className="pointer-events-none absolute inset-0 z-[2] hidden md:block">
+				<ProductTag label="Mutton" className="right-[30%] top-[33%]" lineTo="right" />
+				<ProductTag label="Chicken" className="bottom-[28%] left-[35%]" lineTo="right" />
+				<ProductTag label="Fish" className="bottom-[10%] right-[5%]" lineTo="left" />
 			</div>
 
-			{/* Animated Grid Pattern */}
-			<div className="absolute inset-0 opacity-[0.04]">
-				<div className="absolute inset-0" style={{
-					backgroundImage: `
-						linear-gradient(rgba(237, 66, 100, 0.1) 1px, transparent 1px),
-						linear-gradient(90deg, rgba(237, 66, 100, 0.1) 1px, transparent 1px)
-					`,
-					backgroundSize: '60px 60px'
-				}}></div>
-			</div>
-
-			{/* Animated Background Pattern - Dots */}
-			<div className="absolute inset-0 opacity-[0.05]">
-				<div className="absolute inset-0" style={{
-					backgroundImage: `radial-gradient(circle at 2px 2px, rgba(237, 66, 100, 0.8) 1px, transparent 0)`,
-					backgroundSize: '50px 50px'
-				}}></div>
-			</div>
-
-			{/* Animated Gradient Orbs - Multiple Layers */}
-			<div className="absolute inset-0 overflow-hidden">
-				{/* Large orbs */}
-				<div className="absolute -top-32 -right-32 h-[600px] w-[600px] animate-pulse rounded-full bg-gradient-to-br from-[#ed4264] to-[#ff6b9d] opacity-18 blur-3xl"></div>
-				<div className="absolute -bottom-32 -left-32 h-[600px] w-[600px] animate-pulse rounded-full bg-gradient-to-tr from-[#ed4264] to-[#ff6b9d] opacity-18 blur-3xl" style={{ animationDelay: '1.5s' }}></div>
-				
-				{/* Medium orbs */}
-				<div className="absolute top-1/4 right-1/4 h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] opacity-12 blur-3xl" style={{ animationDelay: '0.5s' }}></div>
-				<div className="absolute bottom-1/4 left-1/4 h-96 w-96 animate-pulse rounded-full bg-gradient-to-l from-[#ed4264] to-[#ff6b9d] opacity-12 blur-3xl" style={{ animationDelay: '2.5s' }}></div>
-				
-				{/* Small accent orbs */}
-				<div className="absolute top-1/2 left-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] opacity-10 blur-3xl" style={{ animationDelay: '1s' }}></div>
-				<div className="absolute top-1/3 left-2/3 h-48 w-48 animate-pulse rounded-full bg-gradient-to-br from-[#ff6b9d] to-[#ed4264] opacity-8 blur-3xl" style={{ animationDelay: '2s' }}></div>
-			</div>
-
-			{/* Wave Effects */}
-			<div className="absolute inset-0 overflow-hidden opacity-10">
-				<svg className="absolute bottom-0 left-0 w-full animate-pulse" viewBox="0 0 1200 120" preserveAspectRatio="none">
-					<path
-						d="M0,60 C300,20 600,100 900,40 C1050,20 1150,60 1200,50 L1200,120 L0,120 Z"
-						fill="url(#waveGradient)"
-					/>
-					<defs>
-						<linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-							<stop offset="0%" stopColor="#ed4264" stopOpacity="0.4" />
-							<stop offset="50%" stopColor="#ff6b9d" stopOpacity="0.4" />
-							<stop offset="100%" stopColor="#ed4264" stopOpacity="0.4" />
-						</linearGradient>
-					</defs>
-				</svg>
-			</div>
-
-			{/* Geometric Shapes - Enhanced */}
-			<div className="absolute inset-0 overflow-hidden opacity-8">
-				{/* Rotated squares */}
-				<div className="absolute top-20 left-10 h-32 w-32 rotate-45 border-2 border-[#ed4264] animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-				<div className="absolute bottom-20 right-10 h-24 w-24 rotate-12 border-2 border-[#ff6b9d] animate-pulse" style={{ animationDelay: '1.5s' }}></div>
-				<div className="absolute top-1/2 right-20 h-16 w-16 -rotate-45 border-2 border-white/30 animate-pulse" style={{ animationDelay: '2.5s' }}></div>
-				<div className="absolute top-1/3 left-1/4 h-20 w-20 rotate-90 border-2 border-[#ed4264]/50"></div>
-				{/* Circles */}
-				<div className="absolute bottom-1/3 right-1/4 h-28 w-28 rounded-full border-2 border-[#ff6b9d]/50"></div>
-				<div className="absolute top-2/3 left-1/3 h-16 w-16 rounded-full border-2 border-white/20"></div>
-			</div>
-
-			{/* Light Rays Effect */}
-			<div className="absolute inset-0 overflow-hidden opacity-15">
-				<div className="absolute top-0 left-1/4 h-full w-px bg-gradient-to-b from-transparent via-[#ed4264] to-transparent rotate-12"></div>
-				<div className="absolute top-0 right-1/3 h-full w-px bg-gradient-to-b from-transparent via-[#ff6b9d] to-transparent -rotate-12"></div>
-				<div className="absolute top-0 left-1/2 h-full w-px bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
-			</div>
-
-			{/* Shimmer Effect - Multiple */}
-			<div className="absolute inset-0 overflow-hidden">
-				<div className="absolute -left-1/2 top-0 h-full w-1/2 animate-shimmer bg-gradient-to-r from-transparent via-white/15 to-transparent"></div>
-				<div className="absolute -left-1/3 top-0 h-full w-1/3 animate-shimmer bg-gradient-to-r from-transparent via-[#ed4264]/25 to-transparent" style={{ animationDelay: '1.5s' }}></div>
-				<div className="absolute -left-1/4 top-0 h-full w-1/4 animate-shimmer bg-gradient-to-r from-transparent via-[#ff6b9d]/20 to-transparent" style={{ animationDelay: '3s' }}></div>
-			</div>
-
-			{/* Floating Particles Effect - Enhanced */}
-			<div className="absolute inset-0 overflow-hidden">
-				{Array?.from({ length: 12 }).map((_, i) => (
-					<div
-						key={i}
-						className="absolute rounded-full bg-[#ed4264] opacity-25 animate-pulse"
-						style={{
-							left: `${10 + (i * 7.5)}%`,
-							top: `${5 + (i % 4) * 25}%`,
-							width: `${4 + (i % 3) * 2}px`,
-							height: `${4 + (i % 3) * 2}px`,
-							animationDelay: `${i * 0.3}s`,
-							animationDuration: `${2.5 + (i % 4) * 0.5}s`,
-						}}
-					></div>
-				))}
-				{/* Larger floating elements */}
-				{Array?.from({ length: 4 }).map((_, i) => (
-					<div
-						key={`large-${i}`}
-						className="absolute rounded-full bg-gradient-to-br from-[#ed4264] to-[#ff6b9d] opacity-15 animate-pulse blur-sm"
-						style={{
-							left: `${15 + i * 25}%`,
-							top: `${20 + (i % 2) * 50}%`,
-							width: `${12 + i * 4}px`,
-							height: `${12 + i * 4}px`,
-							animationDelay: `${i * 1.2}s`,
-							animationDuration: `${4 + i * 0.5}s`,
-						}}
-					></div>
-				))}
-			</div>
-
-			{/* Animated Lines */}
-			<div className="absolute inset-0 overflow-hidden opacity-5">
-				<div className="absolute top-1/4 left-0 h-px w-full bg-gradient-to-r from-transparent via-[#ed4264] to-transparent"></div>
-				<div className="absolute bottom-1/4 left-0 h-px w-full bg-gradient-to-r from-transparent via-[#ff6b9d] to-transparent"></div>
-			</div>
-
-			<div className="container relative mx-auto px-4">
-				<div className="grid items-center gap-8 md:grid-cols-2 md:gap-12">
-					{/* Left Content */}
-					<div className="z-10 text-center md:text-left">
-						<h1 className="mb-6 text-4xl font-extrabold leading-tight text-white drop-shadow-lg md:text-5xl lg:text-6xl">
-							Get Fresh Meat Delivered to Your{" "}
-							<span className="bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] bg-clip-text text-transparent">
-								Doorstep
+			{/* Text block — matches mockup; mobile sized to avoid overlap */}
+			<div className="relative z-[3] flex h-full w-full items-start overflow-y-auto pt-5 sm:pt-8 md:items-center md:overflow-visible md:pt-0">
+				<div className="w-full max-w-[1400px] px-4 sm:px-8 lg:px-14 xl:px-20">
+					<div className="flex w-full max-w-none flex-col items-start text-left md:max-w-[420px]">
+						{/* Eyebrow */}
+						<div className="mb-3 flex w-full max-w-[320px] items-center gap-2 sm:mb-5 sm:max-w-none sm:gap-3">
+							<span className="h-px w-5 shrink-0 bg-[#d4af37]/90 sm:w-9" />
+							<span
+								className="inline-flex min-w-0 items-center gap-1.5 text-[8px] font-semibold uppercase tracking-[0.14em] sm:gap-2 sm:text-[10px] sm:tracking-[0.22em]"
+								style={{ color: GOLD }}
+							>
+								<svg className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7} aria-hidden>
+									<path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7 3v5c0 4.5-2.8 7.8-7 9-4.2-1.2-7-4.5-7-9V6l7-3z" />
+									<path strokeLinecap="round" strokeLinejoin="round" d="M9.2 12l2 2 4-4.2" />
+								</svg>
+								<span className="whitespace-nowrap">Quality at your doorstep</span>
 							</span>
+							<span className="h-px w-5 shrink-0 bg-[#d4af37]/90 sm:w-9" />
+						</div>
+
+						{/* Headline — roomy line-height so serif glyphs don’t collide */}
+						<h1
+							className={`${display.className} mb-3 text-[1.9rem] font-bold leading-[1.2] tracking-[-0.01em] text-white sm:mb-5 sm:text-[clamp(2.4rem,5.5vw,3.75rem)] sm:leading-[1.12]`}
+						>
+							Premium Meat,
+							<br />
+							<span style={{ color: RED }}>Delivered</span>
+							<br />
+							with Care.
 						</h1>
-						<p className="mb-8 text-lg leading-relaxed text-gray-100 md:text-xl">
-							Order high-quality fresh meat in just a few clicks. Convenient, fast, and reliable delivery with{" "}
-							<span className="font-semibold text-white">meatndoor.com</span>.
+
+						{/* Red divider */}
+						<div className="mb-3 flex items-center sm:mb-4">
+							<span className="h-px w-12 sm:w-16" style={{ backgroundColor: RED }} />
+							<span
+								className="ml-[-1px] inline-block h-1.5 w-1.5 rotate-45"
+								style={{ backgroundColor: RED }}
+								aria-hidden
+							/>
+						</div>
+
+						{/* Subhead */}
+						<p className="mb-5 max-w-[280px] text-[12px] leading-[1.5] text-white/90 sm:mb-8 sm:max-w-[320px] sm:text-[14px] sm:leading-[1.55]">
+							Handpicked quality. Carefully packed.
+							<br />
+							Delivered fresh to your doorstep.
 						</p>
 
-						<div className="flex flex-col gap-4 sm:flex-row sm:justify-center md:justify-start">
-							{/* App Store Button */}
+						{/* Feature icons — fixed 3-col grid, no wrap/overlap */}
+						<div className="mb-5 grid w-full max-w-[340px] grid-cols-3 sm:mb-8 sm:max-w-[380px]">
+							{features.map((feature, index) => (
+								<div
+									key={feature.lines.join(" ")}
+									className={`flex flex-col items-center px-1 text-center ${
+										index > 0 ? "border-l" : ""
+									}`}
+									style={index > 0 ? { borderColor: `${RED}99` } : undefined}
+								>
+									<div
+										className="mb-2 flex h-10 w-10 items-center justify-center rounded-full border sm:h-[52px] sm:w-[52px]"
+										style={{ borderColor: GOLD, color: GOLD }}
+									>
+										{feature.icon}
+									</div>
+									<p className="text-[9px] font-medium leading-snug text-white/90 sm:text-[11px]">
+										{feature.lines.map((line) => (
+											<span key={line} className="block">
+												{line}
+											</span>
+										))}
+									</p>
+								</div>
+							))}
+						</div>
+
+						{/* Store buttons */}
+						<div className="flex flex-nowrap gap-2 sm:gap-3">
 							<a
 								href="https://apps.apple.com/in/app/meatndoor/id6755533727"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="group flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 font-bold text-[#47141e] shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[#ed4264] hover:text-white hover:shadow-xl"
+								className="inline-flex min-w-0 flex-1 items-center gap-1.5 rounded-md border border-white/80 bg-black px-2 py-1.5 transition hover:border-white hover:bg-black/80 sm:flex-none sm:gap-2 sm:px-3 sm:py-2"
 							>
-								<svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+								<svg className="h-5 w-5 shrink-0 sm:h-7 sm:w-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
 									<path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
 								</svg>
-								<span>App Store</span>
+								<span className="min-w-0 text-left leading-tight">
+									<span className="block text-[7px] uppercase tracking-wide text-white/70 sm:text-[9px]">Download on the</span>
+									<span className="block text-[11px] font-semibold sm:text-[15px]">App Store</span>
+								</span>
 							</a>
 
-							{/* Google Play Button */}
 							<a
 								href="https://play.google.com/store/apps/details?id=com.themanagemate.meatndoor&hl=en_IN"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="group flex items-center justify-center gap-2 rounded-xl border-2 border-white bg-transparent px-6 py-3.5 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-white hover:text-[#47141e] hover:shadow-xl"
+								className="inline-flex min-w-0 flex-1 items-center gap-1.5 rounded-md border border-white/80 bg-black px-2 py-1.5 transition hover:border-white hover:bg-black/80 sm:flex-none sm:gap-2 sm:px-3 sm:py-2"
 							>
-								<svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+								<svg className="h-5 w-5 shrink-0 sm:h-7 sm:w-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
 									<path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" />
 								</svg>
-								<span>Google Play</span>
+								<span className="min-w-0 text-left leading-tight">
+									<span className="block text-[7px] uppercase tracking-wide text-white/70 sm:text-[9px]">Get it on</span>
+									<span className="block text-[11px] font-semibold sm:text-[15px]">Google Play</span>
+								</span>
 							</a>
-						</div>
-					</div>
-
-					{/* Right Image */}
-					<div className="relative z-10 flex justify-center">
-						<div className="relative">
-							{/* Glow effect behind image */}
-							<div className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] opacity-20 blur-3xl"></div>
-							<Image
-								src="/banner_image.png"
-								width={500}
-								height={500}
-								alt="MEATnDOOR - Quality at Doorstep"
-								className="drop-shadow-2xl transition-transform duration-300 hover:scale-105"
-								priority
-							/>
 						</div>
 					</div>
 				</div>
@@ -253,40 +228,3 @@ export function CustomSlider() {
 		</section>
 	);
 }
-
-// "use client";
-// import { useEffect, useState } from "react";
-
-// export function CustomSlider() {
-// 	const [showContent, setShowContent] = useState(false);
-
-// 	useEffect(() => {
-// 		const timer = setTimeout(() => {
-// 			setShowContent(true);
-// 		}, 2000); // curtain open hone ke baad content dikhana
-// 		return () => clearTimeout(timer);
-// 	}, []);
-
-// 	return (
-// 		<section className="relative flex h-screen w-full items-center justify-center overflow-hidden bg-black">
-// 			{/* Curtains */}
-// 			<div className="animate-openLeft absolute left-0 top-0 h-full w-1/2 border-r-2 border-black bg-gradient-to-r from-red-950 to-red-800"></div>
-// 			<div className="animate-openRight absolute right-0 top-0 h-full w-1/2 border-l-2 border-black bg-gradient-to-l from-red-950 to-red-800"></div>
-
-// 			{/* Hero Content */}
-// 			<div
-// 				className={`relative z-10 text-center transition-opacity duration-1000 ${
-// 					showContent ? "opacity-100" : "opacity-0"
-// 				}`}
-// 			>
-// 				<h1 className="mb-4 text-5xl font-extrabold text-white drop-shadow-lg md:text-6xl">
-// 					Welcome to CineWorld
-// 				</h1>
-// 				<p className="mb-6 text-lg text-gray-200 md:text-xl">Experience the Magic of Movies</p>
-// 				<button className="rounded-full bg-red-700 px-6 py-3 text-lg text-white transition-all hover:bg-red-800">
-// 					Get Started
-// 				</button>
-// 			</div>
-// 		</section>
-// 	);
-// }
