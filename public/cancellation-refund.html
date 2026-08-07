@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Cancellation &amp; Refund Policy | MEATnDOOR</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			:root {
+				--primary: #47141e;
+				--primary-light: #5a1a28;
+				--accent: #ed4264;
+				--accent-light: #ff6b9d;
+				--text: #1f2937;
+				--text-muted: #6b7280;
+				--bg: #f9fafb;
+				--white: #ffffff;
+				--border: #e5e7eb;
+				--shadow: 0 10px 40px rgba(71, 20, 30, 0.08);
+				--radius: 16px;
+			}
+
+			*,
+			*::before,
+			*::after {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				font-family:
+					"Inter",
+					system-ui,
+					-apple-system,
+					sans-serif;
+				color: var(--text);
+				background: var(--bg);
+				line-height: 1.7;
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+			}
+
+			a {
+				color: var(--accent);
+			}
+
+			a:hover {
+				text-decoration: underline;
+			}
+
+			.container {
+				width: 100%;
+				max-width: 900px;
+				margin: 0 auto;
+				padding: 0 1.25rem;
+			}
+
+			.site-header {
+				position: sticky;
+				top: 0;
+				z-index: 100;
+				background: var(--primary);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+			}
+
+			.header-inner {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 1rem;
+				min-height: 72px;
+			}
+
+			.logo img {
+				height: 50px;
+				width: auto;
+				max-width: 200px;
+				object-fit: contain;
+			}
+
+			.nav-desktop {
+				display: none;
+				align-items: center;
+				gap: 2rem;
+				list-style: none;
+				margin: 0;
+				padding: 0;
+			}
+
+			.nav-desktop a {
+				color: var(--white);
+				font-size: 0.9rem;
+				font-weight: 500;
+				transition: color 0.2s;
+				text-decoration: none;
+			}
+
+			.nav-desktop a:hover {
+				color: var(--accent);
+			}
+
+			@media (min-width: 768px) {
+				.nav-desktop {
+					display: flex;
+				}
+			}
+
+			.hero {
+				position: relative;
+				overflow: hidden;
+				background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--primary) 100%);
+				padding: 4.5rem 0 5rem;
+				text-align: center;
+			}
+
+			.hero-content {
+				position: relative;
+				z-index: 1;
+				max-width: 640px;
+				margin: 0 auto;
+			}
+
+			.hero h1 {
+				margin: 0 0 1rem;
+				font-size: clamp(2rem, 5vw, 3rem);
+				font-weight: 800;
+				color: var(--white);
+				letter-spacing: -0.02em;
+			}
+
+			.hero-divider {
+				width: 96px;
+				height: 4px;
+				margin: 0 auto 1.25rem;
+				border-radius: 999px;
+				background: linear-gradient(90deg, var(--accent), var(--accent-light), var(--accent));
+			}
+
+			.hero p {
+				margin: 0;
+				color: rgba(255, 255, 255, 0.9);
+				font-size: 1.05rem;
+			}
+
+			.main-content {
+				flex: 1;
+				padding: 3rem 0 4rem;
+			}
+
+			.section {
+				background: var(--white);
+				border: 1px solid var(--border);
+				border-radius: var(--radius);
+				box-shadow: var(--shadow);
+				padding: 1.75rem;
+				margin-bottom: 1.25rem;
+			}
+
+			.section h2 {
+				margin: 0 0 1rem;
+				font-size: 1.25rem;
+				font-weight: 700;
+				color: var(--primary);
+			}
+
+			.section ul {
+				margin: 0.5rem 0 0;
+				padding-left: 1.5rem;
+			}
+
+			.section li {
+				margin-bottom: 0.4rem;
+			}
+
+			.section p {
+				margin: 0.5rem 0 0;
+			}
+
+			.updated {
+				margin-top: 2rem;
+				padding: 1.5rem;
+				border-radius: var(--radius);
+				background: linear-gradient(135deg, var(--primary), var(--primary-light));
+				color: var(--white);
+				text-align: center;
+			}
+
+			.site-footer {
+				background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--primary) 100%);
+				color: rgba(255, 255, 255, 0.85);
+				padding: 2rem 0;
+				margin-top: auto;
+			}
+
+			.site-footer .container {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				justify-content: space-between;
+				gap: 1rem;
+			}
+
+			.site-footer a {
+				color: rgba(255, 255, 255, 0.75);
+				text-decoration: none;
+				font-size: 0.9rem;
+				margin-left: 1.25rem;
+			}
+
+			.site-footer a:hover {
+				color: var(--accent);
+			}
+
+			.copyright {
+				font-size: 0.85rem;
+				color: rgba(255, 255, 255, 0.65);
+			}
+
+			.copyright strong {
+				color: var(--white);
+			}
+		</style>
+	</head>
+	<body>
+		<header class="site-header">
+			<div class="container">
+				<div class="header-inner">
+					<a href="/in" class="logo" aria-label="MEATnDOOR Home">
+						<img class="brand-logo" src="/img/log.png" alt="MEATnDOOR" width="200" height="50" />
+					</a>
+					<ul class="nav-desktop">
+						<li><a href="/in">Home</a></li>
+						<li><a href="/in/about">About</a></li>
+						<li><a href="/in/products">Products</a></li>
+						<li><a href="/in/contact">Contact Us</a></li>
+					</ul>
+				</div>
+			</div>
+		</header>
+
+		<section class="hero">
+			<div class="container">
+				<div class="hero-content">
+					<h1>Cancellation &amp; Refund Policy</h1>
+					<div class="hero-divider"></div>
+					<p>Learn about our cancellation and refund terms for your orders.</p>
+				</div>
+			</div>
+		</section>
+
+		<main class="main-content">
+			<div class="container">
+				<div class="section">
+					<h2>Cancellation and Refund Policy</h2>
+					<p>
+						This Cancellation and Refund Policy outlines the terms under which you may cancel an order and
+						request a refund through the Meatndoor mobile app or website Meatndoor.com.
+					</p>
+				</div>
+
+				<div class="section">
+					<h2>1. Order Cancellation</h2>
+					<ul>
+						<li>
+							You may cancel an order within 5 minutes of placing it, provided the order has not already been
+							processed or dispatched.
+						</li>
+						<li>
+							Once the order has moved to the "Processing" or "Out for Delivery" stage, it cannot be canceled.
+						</li>
+						<li>
+							Cancellation requests must be made through the app under the "My Orders" section or by
+							contacting support@meatndoor.com.
+						</li>
+					</ul>
+				</div>
+
+				<div class="section">
+					<h2>2. Refund Eligibility</h2>
+					<p>Refunds are only issued under the following conditions:</p>
+					<ul>
+						<li>
+							The item received was damaged, spoiled, or of poor quality (photo evidence may be required).
+						</li>
+						<li>The item delivered was incorrect or missing.</li>
+						<li>The order was canceled within the allowable time window.</li>
+					</ul>
+				</div>
+
+				<div class="section">
+					<h2>3. Non-Refundable Items</h2>
+					<p>
+						Due to the perishable nature of fresh meat products, we do not offer refunds for the following:
+					</p>
+					<ul>
+						<li>Change of mind after the order is processed or delivered.</li>
+						<li>Delayed delivery due to factors outside our control (traffic, weather, etc.).</li>
+						<li>Incorrect delivery address provided by the user.</li>
+					</ul>
+				</div>
+
+				<div class="section">
+					<h2>4. Refund Process</h2>
+					<p>Once your refund request is approved:</p>
+					<ul>
+						<li>Refunds will be processed within 5-7 business days.</li>
+						<li>Refunds will be issued to the original payment method used at checkout.</li>
+						<li>You will receive a confirmation email once the refund has been initiated.</li>
+					</ul>
+				</div>
+
+				<div class="section">
+					<h2>5. Contact Us</h2>
+					<p>If you have questions about your order or our refund process, please contact us at:</p>
+					<p>Email: <a href="mailto:support@meatndoor.com">support@meatndoor.com</a></p>
+					<p>Customer Support Hours: 9 AM – 6 PM (IST), Monday to Saturday</p>
+					<p>© 2026 Meatndoor Fresh Foods. All rights reserved.</p>
+				</div>
+
+				<div class="updated">Last Updated: 1 July 2026</div>
+			</div>
+		</main>
+
+		<footer class="site-footer">
+			<div class="container">
+				<p class="copyright">© 2026 <strong>MEATnDOOR</strong> Fresh Foods. All rights reserved.</p>
+				<p>
+					<a href="/privacy-policy.html">Privacy Policy</a>
+					<a href="/terms-and-conditions.html">Terms &amp; Conditions</a>
+					<a href="/cancellation-refund.html">Cancellation &amp; Refund</a>
+				</p>
+			</div>
+		</footer>
+	</body>
+</html>

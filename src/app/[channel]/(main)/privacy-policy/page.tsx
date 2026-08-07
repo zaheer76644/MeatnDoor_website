@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-
 const sections = [
 	{
 		question: "Welcome to Meatndoor!",
@@ -118,12 +115,6 @@ function formatText(text: string) {
 }
 
 export default function PrivacyPolicyPage() {
-	const [openSection, setOpenSection] = useState<number | null>(0);
-
-	const toggleSection = (index: number) => {
-		setOpenSection(openSection === index ? null : index);
-	};
-
 	return (
 		<div className="w-full bg-gradient-to-b from-gray-50 to-white">
 			{/* HERO SECTION */}
@@ -147,29 +138,14 @@ export default function PrivacyPolicyPage() {
 					{sections.map((section, index) => (
 						<div
 							key={index}
-							className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-md transition-all duration-300 hover:shadow-lg"
+							className="rounded-xl border border-gray-200 bg-white p-6 shadow-md"
 						>
-							<button
-								type="button"
-								onClick={() => toggleSection(index)}
-								className="flex w-full items-center justify-between p-6 text-left transition-colors hover:bg-gray-50"
-							>
-								<h2 className="text-xl font-bold text-[#47141e] md:text-2xl">{section.question}</h2>
-								<ChevronDown
-									className={`h-6 w-6 text-[#47141e] transition-transform duration-300 ${
-										openSection === index ? "rotate-180" : ""
-									}`}
-								/>
-							</button>
-							<div
-								className={`overflow-hidden transition-all duration-300 ${
-									openSection === index ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
-								}`}
-							>
-								<div className="border-t border-gray-200 px-6 pb-6 pt-4">
-									<div className="prose prose-sm max-w-none text-gray-700">
-										{formatText(section.answer)}
-									</div>
+							<h2 className="mb-3 text-xl font-bold text-[#47141e] md:text-2xl">
+								{section.question}
+							</h2>
+							<div className="border-t border-gray-200 pt-4">
+								<div className="prose prose-sm max-w-none text-gray-700">
+									{formatText(section.answer)}
 								</div>
 							</div>
 						</div>

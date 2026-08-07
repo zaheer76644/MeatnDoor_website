@@ -273,16 +273,14 @@ export function Footer() {
 								<div>
 									<h3 className="mb-4 text-lg font-bold text-white">Legal</h3>
 									<ul className="space-y-2.5">
-										{/* <li>
-											<Link
-												href="https://meatndoor.com/terms-and-conditions.html"
-												target="_blank"
-												rel="noopener noreferrer"
+										<li>
+											<LinkWithChannel
+												href="/terms-and-conditions"
 												className="text-sm text-gray-300 transition-all duration-200 hover:translate-x-1 hover:text-[#ed4264] hover:underline"
 											>
 												Terms & Conditions
-											</Link>
-										</li> */}
+											</LinkWithChannel>
+										</li>
 										<li>
 											<LinkWithChannel
 												href="/privacy-policy"

@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Terms &amp; Conditions | MEATnDOOR</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			:root {
+				--primary: #47141e;
+				--primary-light: #5a1a28;
+				--accent: #ed4264;
+				--accent-light: #ff6b9d;
+				--text: #1f2937;
+				--text-muted: #6b7280;
+				--bg: #f9fafb;
+				--white: #ffffff;
+				--border: #e5e7eb;
+				--shadow: 0 10px 40px rgba(71, 20, 30, 0.08);
+				--radius: 16px;
+			}
+
+			*,
+			*::before,
+			*::after {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				font-family:
+					"Inter",
+					system-ui,
+					-apple-system,
+					sans-serif;
+				color: var(--text);
+				background: var(--bg);
+				line-height: 1.7;
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+			}
+
+			a {
+				color: var(--accent);
+			}
+
+			a:hover {
+				text-decoration: underline;
+			}
+
+			.container {
+				width: 100%;
+				max-width: 900px;
+				margin: 0 auto;
+				padding: 0 1.25rem;
+			}
+
+			/* Header */
+			.site-header {
+				position: sticky;
+				top: 0;
+				z-index: 100;
+				background: var(--primary);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+			}
+
+			.header-inner {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 1rem;
+				min-height: 72px;
+			}
+
+			.logo img {
+				height: 50px;
+				width: auto;
+				max-width: 200px;
+				object-fit: contain;
+			}
+
+			.nav-desktop {
+				display: none;
+				align-items: center;
+				gap: 2rem;
+				list-style: none;
+				margin: 0;
+				padding: 0;
+			}
+
+			.nav-desktop a {
+				color: var(--white);
+				font-size: 0.9rem;
+				font-weight: 500;
+				transition: color 0.2s;
+				text-decoration: none;
+			}
+
+			.nav-desktop a:hover {
+				color: var(--accent);
+			}
+
+			@media (min-width: 768px) {
+				.nav-desktop {
+					display: flex;
+				}
+			}
+
+			/* Hero */
+			.hero {
+				position: relative;
+				overflow: hidden;
+				background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--primary) 100%);
+				padding: 4.5rem 0 5rem;
+				text-align: center;
+			}
+
+			.hero-content {
+				position: relative;
+				z-index: 1;
+				max-width: 640px;
+				margin: 0 auto;
+			}
+
+			.hero h1 {
+				margin: 0 0 1rem;
+				font-size: clamp(2rem, 5vw, 3rem);
+				font-weight: 800;
+				color: var(--white);
+				letter-spacing: -0.02em;
+			}
+
+			.hero-divider {
+				width: 96px;
+				height: 4px;
+				margin: 0 auto 1.25rem;
+				border-radius: 999px;
+				background: linear-gradient(90deg, var(--accent), var(--accent-light), var(--accent));
+			}
+
+			.hero p {
+				margin: 0;
+				color: rgba(255, 255, 255, 0.9);
+				font-size: 1.05rem;
+			}
+
+			/* Content */
+			.main-content {
+				flex: 1;
+				padding: 3rem 0 4rem;
+			}
+
+			.section {
+				background: var(--white);
+				border: 1px solid var(--border);
+				border-radius: var(--radius);
+				box-shadow: var(--shadow);
+				padding: 1.75rem 1.75rem;
+				margin-bottom: 1.25rem;
+			}
+
+			.section h2 {
+				margin: 0 0 1rem;
+				font-size: 1.25rem;
+				font-weight: 700;
+				color: var(--primary);
+			}
+
+			.section ul {
+				margin: 0.5rem 0 0;
+				padding-left: 1.5rem;
+			}
+
+			.section li {
+				margin-bottom: 0.4rem;
+			}
+
+			.section p {
+				margin: 0.5rem 0 0;
+			}
+
+			.updated {
+				margin-top: 2rem;
+				padding: 1.5rem;
+				border-radius: var(--radius);
+				background: linear-gradient(135deg, var(--primary), var(--primary-light));
+				color: var(--white);
+				text-align: center;
+			}
+
+			/* Footer */
+			.site-footer {
+				background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--primary) 100%);
+				color: rgba(255, 255, 255, 0.85);
+				padding: 2rem 0;
+				margin-top: auto;
+			}
+
+			.site-footer .container {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				justify-content: space-between;
+				gap: 1rem;
+			}
+
+			.site-footer a {
+				color: rgba(255, 255, 255, 0.75);
+				text-decoration: none;
+				font-size: 0.9rem;
+				margin-left: 1.25rem;
+			}
+
+			.site-footer a:hover {
+				color: var(--accent);
+			}
+
+			.copyright {
+				font-size: 0.85rem;
+				color: rgba(255, 255, 255, 0.65);
+			}
+
+			.copyright strong {
+				color: var(--white);
+			}
+		</style>
+	</head>
+	<body>
+		<header class="site-header">
+			<div class="container">
+				<div class="header-inner">
+					<a href="/in" class="logo" aria-label="MEATnDOOR Home">
+						<img class="brand-logo" src="/img/log.png" alt="MEATnDOOR" width="200" height="50" />
+					</a>
+					<ul class="nav-desktop">
+						<li><a href="/in">Home</a></li>
+						<li><a href="/in/about">About</a></li>
+						<li><a href="/in/products">Products</a></li>
+						<li><a href="/in/contact">Contact Us</a></li>
+					</ul>
+				</div>
+			</div>
+		</header>
+
+		<section class="hero">
+			<div class="container">
+				<div class="hero-content">
+					<h1>Terms &amp; Conditions</h1>
+					<div class="hero-divider"></div>
+					<p>Please read these terms carefully before using MEATnDOOR.</p>
+				</div>
+			</div>
+		</section>
+
+		<main class="main-content">
+			<div class="container">
+				<div class="section">
+					<h2>1. Acceptance of Terms</h2>
+					<p>
+						By accessing or using the MEATnDOOR mobile application (the "App") or website Meatndoor.com (the
+						"Website"), you agree to be bound by these Terms and Conditions (the "Terms"). If you do not agree
+						to these Terms, you may not access or use our platform.
+					</p>
+					<p>
+						These Terms apply to all users, including customers and any authorised representatives, and form a
+						binding agreement between you and Meatndoor Fresh Foods.
+					</p>
+				</div>
+
+				<div class="section">
+					<h2>2. Use of Platform</h2>
+					<p>
+						You agree to use the App and Website only for lawful purposes and in a manner consistent with
+						these Terms. You must not:
+					</p>
+					<ul>
+						<li>Use the platform to place fraudulent or unlawful orders.</li>
+						<li>Misuse, disrupt, or interfere with the App or Website.</li>
+						<li>Provide inaccurate or false information during account registration or checkout.</li>
+						<li>Attempt to access any restricted areas of the platform without authorisation.</li>
+					</ul>
+				</div>
+
+				<div class="section">
+					<h2>3. Eligibility</h2>
+					<p>
+						To place an order, you must be at least 18 years of age and legally capable of entering into
+						binding contracts. By placing an order, you represent that you meet these requirements.
+					</p>
+				</div>
+
+				<div class="section">
+					<h2>4. Orders &amp; Pricing</h2>
+					<p>
+						All orders are subject to availability. We use reasonable efforts to ensure the accuracy of
+						product descriptions and pricing, but we accept failures.
+					</p>
+					<ul>
+						<li>Prices shown are inclusive of applicable taxes unless stated otherwise.</li>
+						<li>
+							Any additional charges such as delivery fees will be clearly shown before you confirm your
+							order.
+						</li>
+						<li>We reserve the right to refuse or cancel any order at our discretion.</li>
+						<li>Payment must be made in full at the time of placing an order.</li>
+					</ul>
+				</div>
+
+				<div class="section">
+					<h2>5. Payment</h2>
+					<p>
+						Payments are processed securely through third-party payment gateways. By providing payment
+						details, you authorise the transaction. We do not store complete payment card details on our
+						servers. You are responsible for ensuring that the payment method used is valid and authorised for
+						the transaction.
+					</p>
+				</div>
+
+				<div class="section">
+					<h2>6. Delivery</h2>
+					<ul>
+						<li>We will use reasonable efforts to deliver orders within the estimated delivery time.</li>
+						<li>Delivery times may vary based on your location, traffic, and weather conditions.</li>
+						<li>You must ensure that the delivery address and contact details you provide are accurate.</li>
+						<li>
+							Where fresh meat products are concerned, please ensure the delivery is received promptly to
+							maintain quality.
+						</li>
+					</ul>
+				</div>
+
+				<div class="section">
+					<h2>7. Cancellations &amp; Refunds</h2>
+					<p>
+						Order cancellation and refund requests are handled in accordance with our
+						<a href="/cancellation-refund.html">Cancellation and Refund Policy</a>, which forms part of these
+						Terms. Please refer to that policy for details on eligibility and the refund process.
+					</p>
+				</div>
+
+				<div class="section">
+					<h2>8. Intellectual Property</h2>
+					<p>
+						All content on the App and Website, including text, logos, images, graphics, and software, is the
+						property of Meatndoor Fresh Foods or its licensors and is protected by applicable intellectual
+						property laws. You may not reproduce, distribute, or create derivative works from this content
+						without our prior written consent.
+					</p>
+				</div>
+
+				<div class="section">
+					<h2>9. Limitation of Liability</h2>
+					<p>
+						To the maximum extent permitted by applicable law, Meatndoor Fresh Foods shall not be liable for
+						any indirect, incidental, special, consequential, or punitive damages arising out of or in
+						connection with your use of the App, Website, or any orders placed through them.
+					</p>
+				</div>
+
+				<div class="section">
+					<h2>10. Privacy</h2>
+					<p>
+						Your use of the App and Website is subject to our
+						<a href="/privacy-policy.html">Privacy Policy</a>, which explains how we collect, use, and protect
+						your personal information.
+					</p>
+				</div>
+
+				<div class="section">
+					<h2>11. Changes to These Terms</h2>
+					<p>
+						We may update these Terms from time to time. Any changes will be effective when we post the
+						revised Terms on the Website or App. Your continued use of the platform after such changes
+						constitutes your acceptance of the updated Terms.
+					</p>
+				</div>
+
+				<div class="section">
+					<h2>12. Governing Law</h2>
+					<p>
+						These Terms and any disputes arising out of or in connection with them shall be governed by and
+						construed in accordance with the laws of India, subject to the exclusive jurisdiction of the
+						courts located in India.
+					</p>
+				</div>
+
+				<div class="section">
+					<h2>13. Contact Us</h2>
+					<p>If you have any questions about these Terms, please contact us at:</p>
+					<p>Email: <a href="mailto:support@meatndoor.com">support@meatndoor.com</a></p>
+					<p>Website: www.meatndoor.com</p>
+					<p>Customer Support Hours: 9 AM – 6 PM (IST), Monday to Saturday</p>
+				</div>
+
+				<div class="updated">Last Updated: 7 August 2026</div>
+			</div>
+		</main>
+
+		<footer class="site-footer">
+			<div class="container">
+				<p class="copyright">© 2026 <strong>MEATnDOOR</strong> Fresh Foods. All rights reserved.</p>
+				<p>
+					<a href="/privacy-policy.html">Privacy Policy</a>
+					<a href="/terms-and-conditions.html">Terms &amp; Conditions</a>
+					<a href="/cancellation-refund.html">Cancellation &amp; Refund</a>
+				</p>
+			</div>
+		</footer>
+	</body>
+</html>
