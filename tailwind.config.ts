@@ -21,6 +21,8 @@ const config: Config = {
 			animation: {
 				shimmer: "shimmer 3s infinite",
 				float: "float 6s ease-in-out infinite",
+				floatSlow: "float 8s ease-in-out infinite",
+				floatDelayed: "float 7s ease-in-out 1.2s infinite",
 			},
 		},
 	},
