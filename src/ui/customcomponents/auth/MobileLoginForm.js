@@ -156,7 +156,7 @@
 
 "use client";
 import { setTokenCookie } from "./validateCode";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createSaleorAuthClient } from "@saleor/auth-sdk";
 import { apiConfig } from "@/config/SaleorApi";
@@ -171,6 +171,12 @@ export function MobileLoginForm() {
 	const [otpSent, setOtpSent] = useState(false);
 	const [isGeneratingOtp, setIsGeneratingOtp] = useState(false);
 	const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+	const [isLocalhost, setIsLocalhost] = useState(false);
+
+	useEffect(() => {
+		const host = window.location.hostname;
+		setIsLocalhost(host === "localhost" || host === "127.0.0.1" || host === "[::1]");
+	}, []);
 	// 🔹 Saleor Auth Client setup
 	const saleorAuthClient = createSaleorAuthClient({
 		saleorApiUrl: process.env.NEXT_PUBLIC_SALEOR_API_URL || "",
@@ -247,6 +253,167 @@ export function MobileLoginForm() {
 		}
 	};
 
+	// 🔹 Shared login-success handler (saves tokens, cookies, user metadata, redirects)
+	const handleAuthSuccess = async (data) => {
+		await setTokenCookie(data);
+		localStorage.setItem(
+			process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_module_auth_state",
+			"signedIn",
+		);
+		localStorage.setItem(
+			process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_module_refresh_token",
+			data?.refresh_token,
+		);
+
+		let userInfo = null;
+		const userInfoQuery = `
+			query {
+				me {
+					id
+					email
+					firstName
+					lastName
+				}
+			}`;
+		try {
+			const userInfoResponse = await fetch(process.env.NEXT_PUBLIC_SALEOR_API_URL, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${data?.access_token}`,
+				},
+				body: JSON.stringify({ query: userInfoQuery }),
+			});
+
+			const userInfoData = await userInfoResponse.json();
+			userInfo = userInfoData?.data?.me;
+		} catch (err) {
+			console.error("Failed to fetch user info", err);
+		}
+
+		// 🔹 Store login source data in user metadata
+		if (userInfo?.id) {
+			try {
+				const mutation = `
+					mutation UpdateUserMetadata($id: ID!, $key: String!, $value: String!) {
+						updateMetadata(
+							id: $id
+							input: [
+								{
+									key: $key
+									value: $value
+								}
+							]
+						) {
+							item {
+								... on User {
+									id
+									email
+									firstName
+									lastName
+									metadata {
+										key
+										value
+									}
+								}
+							}
+							errors {
+								field
+								message
+							}
+						}
+					}
+				`;
+
+				const graphqlUrl = process.env.NEXT_PUBLIC_SALEOR_API_URL || apiConfig.GRAPHQL_ENDPOINT;
+				const response = await saleorAuthClient.fetchWithAuth(
+					graphqlUrl,
+					{
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							query: mutation,
+							variables: {
+								id: userInfo.id,
+								key: "last_login_source",
+								value: "Website",
+							},
+						}),
+					},
+				);
+
+				const result = await response.json();
+				if (result.errors) {
+					console.error("Error updating user metadata:", result.errors);
+				} else {
+					console.log("✅ Login source data stored successfully");
+				}
+			} catch (error) {
+				console.error("Error storing login source data:", error);
+			}
+		}
+
+		toast.success("Login successful!");
+		router.push(pathname.includes("/cart") ? "/in/cart" : "/in");
+	};
+
+	// 🔹 Test login (tokenCreate mutation — standalone, only stores tokens in localStorage)
+	const testLogin = async () => {
+		const email = "user@example.com";
+		const password = "user123!";
+		try {
+			const query = `
+				mutation {
+					tokenCreate(email: "${email}", password: "${password}") {
+						token
+						refreshToken
+						errors {
+							field
+							message
+						}
+					}
+				}
+			`;
+			const response = await fetch(process.env.NEXT_PUBLIC_SALEOR_API_URL || apiConfig.GRAPHQL_ENDPOINT, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ query }),
+			});
+			const result = await response.json();
+			const tokenCreate = result?.data?.tokenCreate;
+
+			if (tokenCreate?.token) {
+				localStorage.setItem(
+					process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_module_auth_state",
+					"signedIn",
+				);
+				localStorage.setItem(
+					process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_access_token",
+					tokenCreate.token,
+				);
+				localStorage.setItem(
+					process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_module_refresh_token",
+					tokenCreate.refreshToken || "",
+				);
+				// Set cookies too so server-side cart/checkout auth (me query) recognizes the session
+				await setTokenCookie({
+					access_token: tokenCreate.token,
+					refresh_token: tokenCreate.refreshToken || "",
+				});
+				toast.success("Test login successful!");
+				router.push(pathname.includes("/cart") ? "/in/cart" : "/in");
+			} else {
+				const errorMsg = tokenCreate?.errors?.map((e) => e.message).join(", ") || "❌ Invalid credentials.";
+				toast.error(errorMsg);
+			}
+		} catch (error) {
+			console.error("Error in test login:", error);
+			toast.error("Test login failed. Please try again.");
+		}
+	};
+
 	// 🔹 Verify OTP
 	const verifyOtp = async () => {
 		if (!otp || otp.length !== 6) {
@@ -281,111 +448,7 @@ export function MobileLoginForm() {
 			// 	alert(data.error || "❌ Invalid OTP. Please try again.");
 			// }
 			if (data.access_token) {
-				await setTokenCookie(data);
-				// window.opener.location.href = '/in/orders/';
-				localStorage.setItem(
-					process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_module_auth_state",
-					"signedIn",
-				);
-				localStorage.setItem(
-					process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_module_refresh_token",
-					data?.refresh_token,
-				);
-				
-				let userInfo = null;
-				const userInfoQuery = `
-					query {
-						me {
-							id
-							email
-							firstName
-							lastName
-						}
-					}`;
-				try {
-					const userInfoResponse = await fetch(process.env.NEXT_PUBLIC_SALEOR_API_URL, {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-							Authorization: `Bearer ${data?.access_token}`,
-						},
-						body: JSON.stringify({ query: userInfoQuery }),
-					});
-
-					const userInfoData = await userInfoResponse.json();
-					userInfo = userInfoData?.data?.me;
-				} catch (err) {
-					console.error("Failed to fetch user info", err);
-				}
-
-				// 🔹 Store login source data in user metadata
-				if (userInfo?.id) {
-					try {
-						const mutation = `
-							mutation UpdateUserMetadata($id: ID!, $key: String!, $value: String!) {
-								updateMetadata(
-									id: $id
-									input: [
-										{
-											key: $key
-											value: $value
-										}
-									]
-								) {
-									item {
-										... on User {
-											id
-											email
-											firstName
-											lastName
-											metadata {
-												key
-												value
-											}
-										}
-									}
-									errors {
-										field
-										message
-									}
-								}
-							}
-						`;
-
-						const graphqlUrl = process.env.NEXT_PUBLIC_SALEOR_API_URL || apiConfig.GRAPHQL_ENDPOINT;
-						const response = await saleorAuthClient.fetchWithAuth(
-							graphqlUrl,
-							{
-								method: "POST",
-								headers: {
-									"Content-Type": "application/json",
-								},
-								body: JSON.stringify({
-									query: mutation,
-									variables: {
-										id: userInfo.id,
-										key: "last_login_source",
-										value: "Website",
-									},
-								}),
-							},
-						);
-
-						const result = await response.json();
-						if (result.errors) {
-							console.error("Error updating user metadata:", result.errors);
-						} else {
-							console.log("✅ Login source data stored successfully");
-						}
-					} catch (error) {
-						console.error("Error storing login source data:", error);
-					}
-				}
-
-				// window.opener.location.reload();
-				// window.close();
-				toast.success('Login successful!');
-				router.push(pathname.includes("/cart") ? "/in/cart" : "/in");
+				await handleAuthSuccess(data);
 			} else {
 				toast.error(data.error || "❌ Invalid OTP. Please try again.");
 			}
@@ -536,6 +599,49 @@ export function MobileLoginForm() {
 						</div>
 					)}
 				</form>
+
+			{/* Test Login - only on localhost */}
+			{isLocalhost && (
+				<div className="mt-6 border-t border-dashed border-gray-300 pt-6">
+					<div className="mb-4 text-center">
+						<h3 className="text-lg font-bold text-[#47141e]">Test Login</h3>
+						<p className="mt-1 text-xs text-gray-500">Use these test credentials to log in for review purposes</p>
+					</div>
+					<div className="space-y-4">
+						<div>
+							<label htmlFor="loginEmail" className="mb-1 block text-sm font-medium text-gray-700">
+								Email
+							</label>
+							<input
+								type="email"
+								id="loginEmail"
+								className="w-full rounded-md border border-gray-300 px-3 py-2"
+								value="user@example.com"
+								readOnly
+							/>
+						</div>
+						<div>
+							<label htmlFor="loginPassword" className="mb-1 block text-sm font-medium text-gray-700">
+								Password
+							</label>
+							<input
+								type="password"
+								id="loginPassword"
+								className="w-full rounded-md border border-gray-300 px-3 py-2"
+								value="user123!"
+								readOnly
+							/>
+						</div>
+						<button
+							type="button"
+							onClick={testLogin}
+							className="w-full rounded-xl bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] px-6 py-3 text-center text-base font-bold text-white shadow-lg transition-all duration-300 hover:shadow-xl"
+						>
+							Submit Test Login
+						</button>
+					</div>
+				</div>
+			)}
 			</div>
 		</div>
 	);

@@ -327,7 +327,9 @@ export enum AccountErrorCode {
   PasswordTooCommon = 'PASSWORD_TOO_COMMON',
   PasswordTooShort = 'PASSWORD_TOO_SHORT',
   PasswordTooSimilar = 'PASSWORD_TOO_SIMILAR',
+  ReferralAlreadyApplied = 'REFERRAL_ALREADY_APPLIED',
   Required = 'REQUIRED',
+  SelfReferral = 'SELF_REFERRAL',
   Unique = 'UNIQUE',
   UnknownIpAddress = 'UNKNOWN_IP_ADDRESS'
 }
@@ -440,6 +442,19 @@ export type AccountSetPasswordRequested = Event & {
   user?: Maybe<User>;
   /** Saleor version that triggered the event. */
   version?: Maybe<Scalars['String']['output']>;
+};
+
+/**
+ * Sets the user who referred the logged-in customer, looked up by phone number. Can be used only once and never for self-referral.
+ *
+ * Requires one of the following permissions: AUTHENTICATED_USER.
+ */
+export type AccountSetReferredBy = {
+  __typename?: 'AccountSetReferredBy';
+  /** @deprecated This field will be removed in Saleor 4.0. Use `errors` field instead. */
+  accountErrors: Array<AccountError>;
+  errors: Array<AccountError>;
+  user?: Maybe<User>;
 };
 
 /**
@@ -10005,6 +10020,12 @@ export type Mutation = {
    */
   accountSetDefaultAddress?: Maybe<AccountSetDefaultAddress>;
   /**
+   * Sets the user who referred the logged-in customer, looked up by phone number. Can be used only once and never for self-referral.
+   *
+   * Requires one of the following permissions: AUTHENTICATED_USER.
+   */
+  accountSetReferredBy?: Maybe<AccountSetReferredBy>;
+  /**
    * Updates the account of the logged-in user.
    *
    * Requires one of following set of permissions: AUTHENTICATED_USER or AUTHENTICATED_APP + IMPERSONATE_USER.
@@ -12292,6 +12313,11 @@ export type MutationAccountRequestDeletionArgs = {
 export type MutationAccountSetDefaultAddressArgs = {
   id: Scalars['ID']['input'];
   type: AddressTypeEnum;
+};
+
+
+export type MutationAccountSetReferredByArgs = {
+  referrerPhone: Scalars['String']['input'];
 };
 
 
@@ -27176,6 +27202,8 @@ export type User = Node & ObjectWithMetadata & {
   isActive: Scalars['Boolean']['output'];
   /** Determines if user has confirmed email. */
   isConfirmed: Scalars['Boolean']['output'];
+  /** Determines if the user was referred by another user. */
+  isReferred?: Maybe<Scalars['Boolean']['output']>;
   /** Determine if the user is a staff admin. */
   isStaff: Scalars['Boolean']['output'];
   /** User language code. */
@@ -27216,6 +27244,8 @@ export type User = Node & ObjectWithMetadata & {
   privateMetafield?: Maybe<Scalars['String']['output']>;
   /** Private metadata. Requires staff permissions to access. Use `keys` to control which fields you want to include. The default is to include everything. */
   privateMetafields?: Maybe<Scalars['Metadata']['output']>;
+  /** The user who referred this user. */
+  referredBy?: Maybe<User>;
   /** Determine if user have restricted access to channels. False if at least one user group has `restrictedAccessToChannels` set to False. */
   restrictedAccessToChannels: Scalars['Boolean']['output'];
   /** Returns a list of user's stored payment methods that can be used in provided channel. The field returns a list of stored payment methods by payment apps. When `amount` is not provided, 0 will be used as default value. */
@@ -29864,13 +29894,17 @@ export class TypedDocumentString<TResult, TVariables>
   extends String
   implements DocumentTypeDecoration<TResult, TVariables>
 {
-  __apiType?: DocumentTypeDecoration<TResult, TVariables>['__apiType'];
+  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>['__apiType']>;
+  private value: string;
+  public __meta__?: Record<string, any> | undefined;
 
-  constructor(private value: string, public __meta__?: Record<string, any>) {
+  constructor(value: string, __meta__?: Record<string, any> | undefined) {
     super(value);
+    this.value = value;
+    this.__meta__ = __meta__;
   }
 
-  toString(): string & DocumentTypeDecoration<TResult, TVariables> {
+  override toString(): string & DocumentTypeDecoration<TResult, TVariables> {
     return this.value;
   }
 }

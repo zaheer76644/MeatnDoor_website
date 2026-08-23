@@ -245,8 +245,9 @@ export default function AboutPage() {
 					<div className="grid gap-4 md:grid-cols-2">
 						{[
 							{
-								title: "Premium Quality",
-								description: "Hormone-free, antibiotic-free meat cuts handled under strict hygiene protocols.",
+							title: "Premium Quality",
+							description:
+								"Fresh-cut meat, carefully prepared and packed to preserve freshness, tenderness, and flavor.",
 							},
 							{
 								title: "Cold-Chain Assurance",
