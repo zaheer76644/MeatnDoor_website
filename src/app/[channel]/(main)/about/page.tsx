@@ -184,7 +184,7 @@ export default function AboutPage() {
 				<div className="mb-16 rounded-2xl bg-white p-8 shadow-lg md:p-12">
 					<p className="text-lg leading-relaxed text-gray-700 md:text-xl">
 
-					We are a modern meat delivery platform built on generations of trust and expertise, combining traditional knowledge with cutting-edge technology. Founded by Imran Qureshi, a 4th-generation meat dealer and wholesaler, Indian government-certified agent with 20 years of experience from Deonar, Govandi, our mission is to deliver high-quality, fresh meat right to your doorstep. We source meat only from trusted suppliers, maintain strict quality standards, and use sealed packaging to ensure freshness. With a fast, reliable delivery system and a user-friendly app designed by experts in AI, app development, marketing, and finance, we offer a seamless and consistent experience. Whether you&apos;re a busy household or a meat lover, we bring clean, affordable, and premium meat to your home—delivered with care every single time.
+					We are a modern meat delivery platform built on generations of trust and expertise, combining traditional knowledge with cutting-edge technology. Founded by Imran Qureshi, a 4th-generation meat dealer and wholesaler, Indian government-certified agent with 20 years of experience from Deonar, Govandi, our mission is to deliver high-quality, fresh meat right to your doorstep. We source meat only from trusted suppliers, maintain strict quality standards, and use sealed packaging to ensure freshness. With a fast, reliable delivery system and a user-friendly app designed by experts in AI, app development, marketing, and finance, we offer a seamless and consistent experience. 					Whether you&apos;re a busy household or a meat lover, we bring affordable, premium meat to your home—delivered with care every single time.
 
 					</p>
 				</div>
@@ -200,7 +200,7 @@ export default function AboutPage() {
 								icon: "✔️",
 								title: "Generations of Trust",
 								description:
-									"Led by Imran Qureshi, a 4th-generation meat dealer and wholesaler, Indian government-certified agent with 20 years of experience. We source from trusted suppliers, prioritize hygiene, and ensure each cut meets our strict quality standards.",
+									"Led by Imran Qureshi, a 4th-generation meat dealer and wholesaler, Indian government-certified agent with 20 years of experience. We source from trusted suppliers and ensure each cut meets our strict quality standards.",
 							},
 							{
 								icon: "🚀",
@@ -271,8 +271,8 @@ export default function AboutPage() {
 					<h2 className="mb-6 text-center text-3xl font-bold text-[#47141e] md:text-4xl">Why Choose Us?</h2>
 					<p className="mb-6 text-lg leading-relaxed text-gray-700">
 						India&apos;s online meat market is rapidly growing—yet well over 99% of meat sales still happen
-						through unregulated channels, often compromising on hygiene and consistency. Modern consumers
-						demand the convenience of doorstep delivery, without sacrificing freshness or safety.
+						through unregulated channels, often compromising on consistency. Modern consumers
+						demand the convenience of doorstep delivery, without sacrificing freshness.
 					</p>
 					<p className="mb-4 font-semibold text-[#47141e]">We fill that gap with:</p>
 					<div className="grid gap-3 md:grid-cols-2">
