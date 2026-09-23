@@ -5,6 +5,7 @@ import { type Metadata } from "next";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { DraftModeNotification } from "@/ui/components/DraftModeNotification";
+import { PromoOfferModal } from "@/ui/components/PromoOfferModal";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,6 +29,7 @@ export default function RootLayout(props: { children: ReactNode }) {
 		<html lang="en" className="min-h-dvh">
 			<body className={`${inter.className} min-h-dvh`}>
 				{children}
+				<PromoOfferModal />
 				<ToastContainer
 					position="top-right"
 					autoClose={4000}
