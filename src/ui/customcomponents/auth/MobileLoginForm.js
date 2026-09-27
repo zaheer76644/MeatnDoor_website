@@ -264,6 +264,14 @@ export function MobileLoginForm() {
 			process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_module_refresh_token",
 			data?.refresh_token,
 		);
+		if (data?.access_token) {
+			localStorage.setItem(
+				process.env.NEXT_PUBLIC_SALEOR_API_URL + "+saleor_auth_access_token",
+				data.access_token,
+			);
+			localStorage.setItem("access_token", data.access_token);
+		}
+		await saveTokensToSaleorClient(data?.access_token, data?.refresh_token);
 
 		let userInfo = null;
 		const userInfoQuery = `

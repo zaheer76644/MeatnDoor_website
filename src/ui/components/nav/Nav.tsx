@@ -4,6 +4,7 @@ import { CartNavItem } from "./components/CartNavItem";
 import { NavLinks } from "./components/NavLinks";
 import { MobileMenu } from "./components/MobileMenu";
 import { SearchBar } from "./components/SearchBar";
+import { WalletNavItem } from "./components/WalletNavItem";
 
 export const Nav = ({ channel }: { channel: string }) => {
 	return (
@@ -17,6 +18,9 @@ export const Nav = ({ channel }: { channel: string }) => {
 				</div>
 				<Suspense fallback={<div className="w-8" />}>
 					<UserMenuContainer />
+				</Suspense>
+				<Suspense fallback={null}>
+					<WalletNavItem />
 				</Suspense>
 			</div>
 			<div className="flex items-center">

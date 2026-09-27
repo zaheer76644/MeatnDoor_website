@@ -21,6 +21,13 @@ export const RAZORPAY_GATEWAY_ENDPOINT = `${SALEOR_BACKEND_URI}/payments/gateway
 export const DELIVERY_SLOTS_ENDPOINT = `${SALEOR_BACKEND_URI}/delivery-slots/`;
 export const DELIVERY_CONFIG_ENDPOINT = `${SALEOR_BACKEND_URI}/delivery-config/`;
 export const DISCOUNTS_AND_CHEAP_PRODUCTS_ENDPOINT = `${SALEOR_BACKEND_URI}/discounts-and-cheap-products/`;
+export const WALLET_BALANCE_ENDPOINT = `${SALEOR_BACKEND_URI}/wallet/balance/`;
+export const WALLET_CONFIG_ENDPOINT = `${SALEOR_BACKEND_URI}/wallet/config/`;
+export const WALLET_CREDITS_ENDPOINT = `${SALEOR_BACKEND_URI}/wallet/credits/`;
+export const walletUseEndpoint = (checkoutToken: string) =>
+	`${SALEOR_BACKEND_URI}/wallet/checkouts/${checkoutToken}/use/`;
+export const walletRestoreEndpoint = (checkoutToken: string) =>
+	`${SALEOR_BACKEND_URI}/wallet/checkouts/${checkoutToken}/restore/`;
 
 export const apiConfig = {
 	SALEOR_BACKEND_URI,
@@ -31,6 +38,9 @@ export const apiConfig = {
 	DELIVERY_SLOTS_ENDPOINT,
 	DELIVERY_CONFIG_ENDPOINT,
 	DISCOUNTS_AND_CHEAP_PRODUCTS_ENDPOINT,
+	WALLET_BALANCE_ENDPOINT,
+	WALLET_CONFIG_ENDPOINT,
+	WALLET_CREDITS_ENDPOINT,
 };
 
 // if we use export defaulut for api config

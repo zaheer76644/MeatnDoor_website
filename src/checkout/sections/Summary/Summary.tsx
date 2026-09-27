@@ -24,6 +24,8 @@ import {
 	fetchProductThumbnail,
 } from "@/checkout/sections/Summary/couponApi";
 import { type CheapProduct, type Coupon } from "@/checkout/sections/Summary/couponUtils";
+import { WalletSection } from "@/checkout/sections/Summary/WalletSection";
+import { ReferralSection } from "@/checkout/sections/Summary/ReferralSection";
 
 interface SummaryProps {
 	editable?: boolean;
@@ -60,6 +62,7 @@ export const Summary: FC<SummaryProps> = ({
 		null,
 	);
 	const [includesShippingSavings, setIncludesShippingSavings] = useState(false);
+	const [walletApplied, setWalletApplied] = useState(0);
 
 	useEffect(() => {
 		if (shippingMethods?.length > 0) {
@@ -310,14 +313,18 @@ export const Summary: FC<SummaryProps> = ({
 			)}
 
 			{editable && (
-				<CouponsDrawer
-					open={couponsOpen}
-					onClose={() => setCouponsOpen(false)}
-					coupons={coupons}
-					cheapProducts={cheapProducts}
-					thumbnails={cheapProductThumbnails}
-					loading={couponsLoading}
-				/>
+				<>
+					<CouponsDrawer
+						open={couponsOpen}
+						onClose={() => setCouponsOpen(false)}
+						coupons={coupons}
+						cheapProducts={cheapProducts}
+						thumbnails={cheapProductThumbnails}
+						loading={couponsLoading}
+					/>
+					<WalletSection onAppliedChange={setWalletApplied} />
+					<ReferralSection />
+				</>
 			)}
 
 			<Divider />
@@ -362,6 +369,12 @@ export const Summary: FC<SummaryProps> = ({
 				{handlingFeeAmount && (
 					<SummaryMoneyRow label="Handling Fee" ariaLabel="handling cost" money={handlingFeeAmount} />
 				)}
+				{walletApplied > 0 && (
+					<div className="mb-2 flex justify-between text-sm font-semibold text-[#1b7a3d]">
+						<span>Wallet credit</span>
+						<span>− ₹{Math.round(walletApplied)}</span>
+					</div>
+				)}
 				<Divider className="my-4" />
 				<div className="flex flex-row items-baseline justify-between pb-4">
 					<div className="flex flex-row items-baseline">
@@ -375,7 +388,14 @@ export const Summary: FC<SummaryProps> = ({
 						money={
 							subtotalPrice?.gross
 								? {
-										amount: Math.round((subtotalPrice.gross.amount || 0) + (shippingPriceAmount?.amount ?? 0)),
+										amount: Math.max(
+											0,
+											Math.round(
+												(subtotalPrice.gross.amount || 0) +
+													(shippingPriceAmount?.amount ?? 0) -
+													walletApplied,
+											),
+										),
 										currency: subtotalPrice.gross.currency,
 									}
 								: undefined
