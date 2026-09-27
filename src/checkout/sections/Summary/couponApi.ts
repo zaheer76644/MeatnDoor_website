@@ -44,7 +44,9 @@ export const fetchDiscountsAndCheapProducts = async (): Promise<DiscountsAndChea
 		products?: CheapProduct[];
 	};
 
-	const discounts = data.discounts ?? [];
+	const discounts = (data.discounts ?? []).filter(
+		(discount) => String(discount.code || "").toUpperCase() !== "DF40",
+	);
 	const cheapProducts = data.cheapProducts ?? data.cheap_products ?? data.products ?? [];
 
 	return {

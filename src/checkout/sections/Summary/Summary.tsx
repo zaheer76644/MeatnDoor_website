@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo, type FC } from "react";
+import { useState, useEffect, useMemo, useCallback, type FC } from "react";
 import clsx from "clsx";
+import { toast } from "react-toastify";
 import { SummaryItem, type SummaryLine } from "./SummaryItem";
 import { SummaryMoneyRow } from "./SummaryMoneyRow";
 import { SummaryPromoCodeRow } from "./SummaryPromoCodeRow";
@@ -15,6 +16,8 @@ import {
 	type Money as MoneyType,
 	type OrderLineFragment,
 	type ShippingMethod,
+	useCheckoutLinesUpdateMutation,
+	useCheckoutRemovePromoCodeMutation,
 } from "@/checkout/graphql";
 import { SummaryItemMoneySection } from "@/checkout/sections/Summary/SummaryItemMoneySection";
 import { type GrossMoney, type GrossMoneyWithTax } from "@/checkout/lib/globalTypes";
@@ -26,6 +29,8 @@ import {
 import { type CheapProduct, type Coupon } from "@/checkout/sections/Summary/couponUtils";
 import { WalletSection } from "@/checkout/sections/Summary/WalletSection";
 import { ReferralSection } from "@/checkout/sections/Summary/ReferralSection";
+import { useCheckout } from "@/checkout/hooks/useCheckout";
+import { isOrderConfirmationPage } from "@/checkout/lib/utils/url";
 
 interface SummaryProps {
 	editable?: boolean;
@@ -63,6 +68,11 @@ export const Summary: FC<SummaryProps> = ({
 	);
 	const [includesShippingSavings, setIncludesShippingSavings] = useState(false);
 	const [walletApplied, setWalletApplied] = useState(0);
+	const [removingOffer, setRemovingOffer] = useState(false);
+
+	const { checkout } = useCheckout({ pause: isOrderConfirmationPage() });
+	const [, removePromoCode] = useCheckoutRemovePromoCodeMutation();
+	const [, updateLines] = useCheckoutLinesUpdateMutation();
 
 	useEffect(() => {
 		if (shippingMethods?.length > 0) {
@@ -80,7 +90,8 @@ export const Summary: FC<SummaryProps> = ({
 	const filteredLines = useMemo(() => {
 		return lines.filter((line) => {
 			const { productName } = getSummaryLineProps(line);
-			return productName?.toLowerCase() !== "handling fee";
+			const name = productName?.toLowerCase().trim() ?? "";
+			return !name.includes("handling");
 		});
 	}, [lines]);
 
@@ -100,10 +111,20 @@ export const Summary: FC<SummaryProps> = ({
 		[filteredLines, cheapVariantIds],
 	);
 
+	const productsSubtotalAmount = useMemo(() => {
+		return filteredLines.reduce((sum, line) => {
+			if ("totalPrice" in line && line.totalPrice?.gross?.amount != null) {
+				return sum + line.totalPrice.gross.amount;
+			}
+			return sum;
+		}, 0);
+	}, [filteredLines]);
+
 	useEffect(() => {
 		const handlingFeeLine = lines.find((line) => {
 			const { productName } = getSummaryLineProps(line);
-			return productName?.toLowerCase() === "handling fee";
+			const name = productName?.toLowerCase().trim() ?? "";
+			return name.includes("handling");
 		});
 
 		if (handlingFeeLine && "totalPrice" in handlingFeeLine && handlingFeeLine.totalPrice) {
@@ -224,6 +245,63 @@ export const Summary: FC<SummaryProps> = ({
 
 	const appliedOfferLabel = voucherCode ? voucherCode : hasCheapDealApplied ? "₹1 deal" : null;
 
+	const handleRemoveOffer = useCallback(async () => {
+		if (!checkout?.id || removingOffer) return;
+
+		setRemovingOffer(true);
+		try {
+			if (voucherCode) {
+				const result = await removePromoCode({
+					checkoutId: checkout.id,
+					languageCode: "EN_US",
+					promoCode: voucherCode,
+				});
+				if (result.data?.checkoutRemovePromoCode?.errors?.length) {
+					toast.error(
+						result.data.checkoutRemovePromoCode.errors[0]?.message || "Could not remove coupon.",
+					);
+				} else {
+					toast.success("Coupon removed");
+				}
+				return;
+			}
+
+			if (hasCheapDealApplied) {
+				const dealLine = lines.find((line) => {
+					if (!("variant" in line) || !line.variant || !("id" in line.variant)) return false;
+					return cheapVariantIds.has(line.variant.id);
+				});
+				const variantId =
+					dealLine && "variant" in dealLine && dealLine.variant && "id" in dealLine.variant
+						? dealLine.variant.id
+						: null;
+				if (!variantId) {
+					toast.error("Could not find the applied deal.");
+					return;
+				}
+				await updateLines({
+					checkoutId: checkout.id,
+					languageCode: "EN_US",
+					lines: [{ variantId, quantity: 0 }],
+				});
+				toast.success("Deal removed");
+			}
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : "Could not remove offer");
+		} finally {
+			setRemovingOffer(false);
+		}
+	}, [
+		checkout?.id,
+		removingOffer,
+		voucherCode,
+		hasCheapDealApplied,
+		lines,
+		cheapVariantIds,
+		removePromoCode,
+		updateLines,
+	]);
+
 	return (
 		<div
 			className={clsx(
@@ -250,16 +328,18 @@ export const Summary: FC<SummaryProps> = ({
 
 			{editable && (
 				<>
-					<button
-						type="button"
-						onClick={() => setCouponsOpen(true)}
-						className={`my-4 flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border p-4 text-left shadow-sm transition ${
+					<div
+						className={`my-4 flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border p-4 shadow-sm ${
 							appliedOfferLabel
-								? "border-green-300 bg-gradient-to-r from-green-50 to-emerald-50 hover:border-green-400"
-								: "border-[rgba(71,20,30,0.08)] bg-gradient-to-br from-[#fff8f9] to-white hover:border-[#ed4264]/30 hover:shadow-md"
+								? "border-green-300 bg-gradient-to-r from-green-50 to-emerald-50"
+								: "border-[rgba(71,20,30,0.08)] bg-gradient-to-br from-[#fff8f9] to-white"
 						}`}
 					>
-						<div className="flex min-w-0 items-center gap-3">
+						<button
+							type="button"
+							onClick={() => setCouponsOpen(true)}
+							className="flex min-w-0 flex-1 items-center gap-3 text-left transition hover:opacity-90"
+						>
 							<div
 								className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white shadow-md ${
 									appliedOfferLabel
@@ -297,17 +377,35 @@ export const Summary: FC<SummaryProps> = ({
 									</p>
 								)}
 							</div>
-						</div>
-						<span
-							className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold ${
-								appliedOfferLabel
-									? "border border-green-300 bg-white text-green-700"
-									: "bg-gradient-to-r from-[#ed4264] to-[#47141e] text-white"
-							}`}
-						>
-							{appliedOfferLabel ? "Change" : "Apply"}
-						</span>
-					</button>
+						</button>
+						{appliedOfferLabel ? (
+							<div className="flex shrink-0 items-center gap-2">
+								<button
+									type="button"
+									onClick={() => setCouponsOpen(true)}
+									className="rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-50"
+								>
+									Change
+								</button>
+								<button
+									type="button"
+									onClick={() => void handleRemoveOffer()}
+									disabled={removingOffer}
+									className="rounded-lg border border-[#ed4264]/30 bg-white px-3 py-1.5 text-xs font-bold text-[#ed4264] transition hover:bg-[#fff0f3] disabled:opacity-60"
+								>
+									{removingOffer ? "…" : "Remove"}
+								</button>
+							</div>
+						) : (
+							<button
+								type="button"
+								onClick={() => setCouponsOpen(true)}
+								className="shrink-0 rounded-lg bg-gradient-to-r from-[#ed4264] to-[#47141e] px-3 py-1.5 text-xs font-bold text-white"
+							>
+								Apply
+							</button>
+						)}
+					</div>
 					<Divider />
 				</>
 			)}
@@ -334,9 +432,7 @@ export const Summary: FC<SummaryProps> = ({
 					money={
 						subtotalPrice?.gross
 							? {
-									amount: Math.round(
-										(subtotalPrice.gross.amount || 0) + (discount?.amount || 0) - (handlingFeeAmount?.amount ?? 0),
-									),
+									amount: Math.round(productsSubtotalAmount),
 									currency: subtotalPrice.gross.currency,
 								}
 							: undefined
@@ -391,8 +487,11 @@ export const Summary: FC<SummaryProps> = ({
 										amount: Math.max(
 											0,
 											Math.round(
-												(subtotalPrice.gross.amount || 0) +
-													(shippingPriceAmount?.amount ?? 0) -
+												productsSubtotalAmount +
+													(shippingPriceAmount?.amount ?? 0) +
+													(handlingFeeAmount?.amount ?? 0) -
+													(discount?.amount ?? 0) -
+													giftCards.reduce((sum, card) => sum + (card.currentBalance?.amount ?? 0), 0) -
 													walletApplied,
 											),
 										),
