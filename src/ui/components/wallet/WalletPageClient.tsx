@@ -171,7 +171,7 @@ export function WalletPageClient({ isLoggedIn, userName }: Props) {
 				) : (
 					<>
 						{/* Remaining balance hero card */}
-						<div className="overflow-hidden rounded-2xl bg-gradient-to-r from-[#47141e] via-[#5a1a28] to-[#6b2234] px-6 py-7 text-white shadow-md sm:px-8 sm:py-8">
+						<div className="overflow-hidden rounded-2xl bg-gradient-to-r from-[#47141e] via-[#8c2844] to-[#ed4264] px-6 py-7 text-white shadow-md sm:px-8 sm:py-8">
 							<p className="text-sm font-medium text-white/80">Remaining balance</p>
 							<p className="mt-2 text-4xl font-extrabold tracking-tight sm:text-5xl">
 								₹{Math.round(balance)}

@@ -36,12 +36,13 @@ export const WalletSection: FC<Props> = ({ onAppliedChange }) => {
 
 	const orderTotalBeforeWallet = useMemo(() => {
 		const subtotal = checkout?.subtotalPrice?.gross?.amount ?? 0;
-		const shipping =
-			checkout?.shippingMethods?.reduce((min, method) =>
-				method.price.amount < min.price.amount ? method : min,
-			)?.price?.amount ??
-			checkout?.shippingPrice?.gross?.amount ??
-			0;
+		const methods = checkout?.shippingMethods ?? [];
+		const shippingFromMethods =
+			methods.length > 0
+				? methods.reduce((min, method) => (method.price.amount < min.price.amount ? method : min))
+						.price.amount
+				: undefined;
+		const shipping = shippingFromMethods ?? checkout?.shippingPrice?.gross?.amount ?? 0;
 		return Math.max(subtotal + shipping, 0);
 	}, [checkout]);
 
