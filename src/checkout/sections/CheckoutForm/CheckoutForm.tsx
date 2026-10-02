@@ -124,6 +124,7 @@ import { Suspense, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import DeliverySlotPicker from "../../../ui/customcomponents/DeliverySlotPicker";
 import { Summary, SummarySkeleton } from "../Summary";
+import { getSummaryLineProps } from "../Summary/utils";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { Contact } from "@/checkout/sections/Contact";
 import { DeliveryMethods } from "@/checkout/sections/DeliveryMethods";
@@ -160,6 +161,7 @@ export const CheckoutForm = () => {
 	const [showOnlyContact, setShowOnlyContact] = useState(!!passwordResetToken);
 	const [loading, setLoading] = useState(false);
 	const [selectedSlot, setSelectedSlot] = useState<DeliverySlot | null>(null);
+	const [handlingFeeAmount, setHandlingFeeAmount] = useState<{ amount: number; currency: string } | null>(null);
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
 			if (!checkoutFetching && checkout?.shippingMethods?.length === 0) {
@@ -657,6 +659,19 @@ export const CheckoutForm = () => {
 	const onPlaceOrder = async () => {
 		await handlePlaceOrder(checkout, user, setLoading, GRAPHQL_ENDPOINT, selectedSlot);
 	};
+	useEffect(() => {
+		const handlingFeeLine = checkout?.lines.find((line) => {
+			const { productName } = getSummaryLineProps(line);
+			return productName?.toLowerCase() === "handling fee";
+		});
+		
+		if (handlingFeeLine && "totalPrice" in handlingFeeLine && handlingFeeLine.totalPrice) {
+			setHandlingFeeAmount(handlingFeeLine.totalPrice.gross);
+		} else {
+			setHandlingFeeAmount(null);
+		}
+	}, [checkout?.lines]);
+	const greaterThanThousand = Math.round((checkout?.subtotalPrice.gross.amount || 0) - (handlingFeeAmount?.amount || 0))
 	// const totalPriceValue = Math.round((checkout?.subtotalPrice?.gross.amount || 0) - (checkout?.discount?.amount || 0))
 	// const handlePlaceOrder = async () => {
 	// 	try {
@@ -780,20 +795,20 @@ export const CheckoutForm = () => {
 								<h1 className="mb-4 text-lg font-semibold text-[#47141e] mt-3">Payment Method</h1>
 								<div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
 									{/* ✅ Cash on Delivery Button */}
-									<button
+									{greaterThanThousand <= 1000 && <button
 										type="button"
 										title={checkout?.shippingMethods?.length === 0 ? 'No delivery available in selected address.' : ''}
 										onClick={onPlaceOrder}
 										disabled={loading || checkout?.shippingMethods?.length === 0 ||checkoutFetching}
-										className="group relative z-0 h-14 w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] px-8 py-4 text-center text-lg font-bold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#ed4264]/50 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
+										className="group relative h-14 w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#ed4264] to-[#ff6b9d] px-8 py-4 text-center text-lg font-bold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#ed4264]/50 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
 									>
 										{/* Shimmer effect */}
 										<div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full"></div>
 										{/* Button content */}
-										<span className="relative flex items-center justify-center gap-2">
+										<span className="relative z-10 flex items-center justify-center gap-2">
 											{loading ? "Placing Order..." : "Cash on Delivery"}
 										</span>
-									</button>
+									</button>}
 									{/* Pay Online Button */}
 									<button
 										type="button"
