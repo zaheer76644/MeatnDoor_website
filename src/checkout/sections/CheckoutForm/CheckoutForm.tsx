@@ -143,6 +143,7 @@ import { useUser } from "@/checkout/hooks/useUser";
 import { GRAPHQL_ENDPOINT, apiConfig } from "@/config/SaleorApi"; // 👈 tumhare config se endpoint le rahe hain
 import { formatLocalDate } from "@/lib/localDate";
 import { loadRazorpay } from "@/lib/loadRazorpay";
+import { commitPendingWallet } from "@/lib/wallet";
 
 interface DeliverySlot {
 	date: Date;
@@ -478,6 +479,13 @@ export const CheckoutForm = () => {
 				body: JSON.stringify({ query: metaQuery }),
 			});
 
+			// Commit wallet amount only when placing order (not on Apply click)
+			const walletCommit = await commitPendingWallet(checkout.id);
+			if (!walletCommit.ok) {
+				alert(walletCommit.error || "Failed to apply wallet credit.");
+				return;
+			}
+
 			// -------------------------
 			// 2️⃣ Complete checkout
 			// -------------------------
@@ -628,6 +636,11 @@ export const CheckoutForm = () => {
 				name: "MEATnDOOR",
 				image: "/logo.png",
 				handler: async () => {
+					const walletCommit = await commitPendingWallet(checkout.id);
+					if (!walletCommit.ok) {
+						alert(walletCommit.error || "Failed to apply wallet credit.");
+						return;
+					}
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					const order = await completeCheckoutSaleor(user);
 					if (order) {

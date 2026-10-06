@@ -184,6 +184,8 @@ export const GeneratePDFInvoice: React.FC<GeneratePDFInvoiceProps> = ({
 			);
 			const deliveryCharge = order.shippingPrice?.gross?.amount ?? 0;
 			const couponAmount = order.discount?.amount || 0;
+			const walletDiscount =
+				order.discounts?.find((d) => d.name?.toLowerCase() === "wallet")?.amount?.amount || 0;
 			const grandTotal = order.total?.gross?.amount || 0;
 			const currency = order.total?.gross?.currency || "INR";
 			const deliverySlot = [deliveryDate, deliveryTime].filter(Boolean).join(" ") || "N/A";
@@ -490,6 +492,10 @@ export const GeneratePDFInvoice: React.FC<GeneratePDFInvoiceProps> = ({
 											<tr>
 												<td style="width:150px; text-align:left; color:#555555; font-size:11px; border-bottom:1px solid #e8e8e8; padding:7px 0;">Coupon${order.voucherCode ? ` (${order.voucherCode})` : ""}</td>
 												<td style="width:90px; text-align:right; color:#111111; font-size:11px; font-weight:700; border-bottom:1px solid #e8e8e8; padding:7px 0;">${couponAmount ? `- ${formatINR(couponAmount)}` : formatINR(0)}</td>
+											</tr>
+											<tr>
+												<td style="width:150px; text-align:left; color:#555555; font-size:11px; border-bottom:1px solid #e8e8e8; padding:7px 0;">Meatndoor Cash</td>
+												<td style="width:90px; text-align:right; color:#00A67E; font-size:11px; font-weight:700; border-bottom:1px solid #e8e8e8; padding:7px 0;">${walletDiscount ? `- ${formatINR(walletDiscount)}` : formatINR(0)}</td>
 											</tr>
 											<tr>
 												<td style="width:150px; text-align:left; color:#555555; font-size:11px; border-bottom:1px solid #e8e8e8; padding:7px 0;">Instant Discount</td>

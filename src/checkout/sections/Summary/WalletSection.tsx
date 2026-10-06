@@ -4,10 +4,9 @@ import { useCallback, useEffect, useMemo, useState, type FC } from "react";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useUser } from "@/checkout/hooks/useUser";
 import {
-	applyWallet,
 	getWalletBalance,
 	getWalletConfig,
-	restoreWallet,
+	setPendingWalletApplyAmount,
 } from "@/lib/wallet";
 
 type Props = {
@@ -23,13 +22,14 @@ export const WalletSection: FC<Props> = ({ onAppliedChange }) => {
 	const [walletMaxPerOrder, setWalletMaxPerOrder] = useState(0);
 	const [walletApplied, setWalletApplied] = useState(0);
 	const [walletInput, setWalletInput] = useState("");
-	const [walletProcessing, setWalletProcessing] = useState(false);
 	const [message, setMessage] = useState("");
 
 	const setApplied = useCallback(
 		(amount: number) => {
-			setWalletApplied(amount);
-			onAppliedChange?.(amount);
+			const next = Math.max(0, amount);
+			setWalletApplied(next);
+			setPendingWalletApplyAmount(next);
+			onAppliedChange?.(next);
 		},
 		[onAppliedChange],
 	);
@@ -51,6 +51,9 @@ export const WalletSection: FC<Props> = ({ onAppliedChange }) => {
 		0,
 	);
 
+	/** Display balance after local apply (API not hit until checkout). */
+	const displayBalance = Math.max(walletBalance - walletApplied, 0);
+
 	const loadWallet = useCallback(async () => {
 		if (!authenticated || !checkoutId) return;
 		const [balanceRes, configRes] = await Promise.all([getWalletBalance(), getWalletConfig()]);
@@ -60,50 +63,19 @@ export const WalletSection: FC<Props> = ({ onAppliedChange }) => {
 			configRes?.walletConfig?.max_wallet_usage_per_order ??
 			0;
 		setWalletMaxPerOrder(maxPerOrder);
-		try {
-			const memo = await applyWallet(checkoutId, 0);
-			if (memo?.walletAllocation) {
-				setApplied(memo.walletAllocation.amount || 0);
-			} else {
-				setApplied(0);
-			}
-		} catch {
-			setApplied(0);
-		}
-	}, [authenticated, checkoutId, setApplied]);
+	}, [authenticated, checkoutId]);
 
 	useEffect(() => {
 		void loadWallet();
 	}, [loadWallet]);
 
-	const refundWallet = async () => {
-		if (!checkoutId) return;
-		setWalletProcessing(true);
+	const removeWallet = () => {
+		setApplied(0);
+		setWalletInput("");
 		setMessage("");
-		try {
-			const res = await applyWallet(checkoutId, 0);
-			const currentApplied = res?.walletAllocation?.amount || 0;
-			if (currentApplied) {
-				const restore = await restoreWallet(checkoutId);
-				if (restore.restored) {
-					setApplied(0);
-					setWalletInput("");
-					const refreshed = await getWalletBalance();
-					if (!refreshed.error) setWalletBalance(refreshed.balance || 0);
-				}
-			} else {
-				setApplied(0);
-				setWalletInput("");
-			}
-		} catch (e) {
-			setMessage(e instanceof Error ? e.message : "Could not remove wallet credit.");
-		} finally {
-			setWalletProcessing(false);
-		}
 	};
 
-	const handleApplyWallet = async () => {
-		if (!checkoutId) return;
+	const handleApplyWallet = () => {
 		const amount = parseFloat(walletInput);
 		if (Number.isNaN(amount) || amount <= 0) {
 			setMessage("Enter a valid amount to apply.");
@@ -113,26 +85,14 @@ export const WalletSection: FC<Props> = ({ onAppliedChange }) => {
 			setMessage(`You can apply up to ₹${Math.round(walletSpendable)} on this checkout.`);
 			return;
 		}
-		setWalletProcessing(true);
-		setMessage("");
-		try {
-			const appliedAmount = Math.min(amount, orderTotalBeforeWallet);
-			const res = await applyWallet(checkoutId, appliedAmount);
-			if (res?.error) {
-				setMessage(res.error);
-			} else if (res?.walletAllocation) {
-				setApplied(res.walletAllocation.amount || 0);
-				setWalletInput("");
-				const refreshedBalance = await getWalletBalance();
-				if (!refreshedBalance.error) setWalletBalance(refreshedBalance.balance || 0);
-			} else if (res?.applied === 0 && !res?.walletAllocation) {
-				setMessage("No wallet credit available for this checkout.");
-			}
-		} catch (e) {
-			setMessage(e instanceof Error ? e.message : "Could not apply wallet.");
-		} finally {
-			setWalletProcessing(false);
+		const appliedAmount = Math.min(amount, orderTotalBeforeWallet);
+		if (appliedAmount <= 0) {
+			setMessage("No amount available to apply on this checkout.");
+			return;
 		}
+		setMessage("");
+		setApplied(appliedAmount);
+		setWalletInput("");
 	};
 
 	if (!authenticated) return null;
@@ -154,12 +114,14 @@ export const WalletSection: FC<Props> = ({ onAppliedChange }) => {
 					<p className="text-sm font-semibold text-[#47141e]">Wallet</p>
 				</div>
 				<p className="text-xs font-semibold text-[#8a6b73]">
-					Balance: ₹{Number(walletBalance).toFixed(0)}
+					Balance: ₹{Number(displayBalance).toFixed(0)}
 				</p>
 			</div>
 
 			<p className="mt-2 text-xs text-[#8a6b73]">
-				You can use up to ₹{Math.round(walletSpendable)} on this checkout.
+				{walletApplied > 0
+					? `₹${Math.round(walletApplied)} will be used from your wallet on this order.`
+					: `You can use up to ₹${Math.round(walletSpendable)} on this checkout.`}
 			</p>
 
 			{Number(walletBalance) === 0 ? (
@@ -175,9 +137,8 @@ export const WalletSection: FC<Props> = ({ onAppliedChange }) => {
 					</p>
 					<button
 						type="button"
-						onClick={() => void refundWallet()}
-						disabled={walletProcessing}
-						className="text-xs font-bold text-[#ed4264] hover:underline disabled:opacity-60"
+						onClick={removeWallet}
+						className="text-xs font-bold text-[#ed4264] hover:underline"
 					>
 						Remove
 					</button>
@@ -195,11 +156,11 @@ export const WalletSection: FC<Props> = ({ onAppliedChange }) => {
 					/>
 					<button
 						type="button"
-						onClick={() => void handleApplyWallet()}
-						disabled={walletProcessing || walletSpendable <= 0}
+						onClick={handleApplyWallet}
+						disabled={walletSpendable <= 0}
 						className="shrink-0 rounded-lg bg-gradient-to-r from-[#ed4264] to-[#47141e] px-4 py-2 text-sm font-bold text-white shadow-md transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
 					>
-						{walletProcessing ? "Applying…" : "Apply"}
+						Apply
 					</button>
 				</div>
 			)}

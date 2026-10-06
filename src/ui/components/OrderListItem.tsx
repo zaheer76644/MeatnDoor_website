@@ -209,7 +209,7 @@ const OrderStatusTimeline = ({ status, deliveryDate, deliveryTime }: OrderStatus
 };
 
 export const OrderListItem = ({ order }: Props) => {
-	
+	console.log('order', order)
 	const [isOpen, setIsOpen] = useState(false);
 	const [handlingFeeAmount, setHandlingFeeAmount] = useState<{ amount: number; currency: string } | null>(null);
 	const [totalSavings, setTotalSavings] = useState<{ amount: number; currency: string } | null>(null);
@@ -735,6 +735,20 @@ export const OrderListItem = ({ order }: Props) => {
 											{order?.discount?.amount
 												? formatMoney(order.discount.amount, order.discount.currency)
 												: formatMoney(0, order.total.gross.currency)}
+										</span>
+									</div>
+									<div className="flex justify-between">
+										<span className="text-neutral-600">Wallet Discount applied:</span>
+										<span className="font-medium text-green-600">
+											{(() => {
+												const walletDiscount = order?.discounts?.find(
+													(d) => d.name?.toLowerCase() === "wallet",
+												);
+												const money = walletDiscount?.amount;
+												return money?.amount
+													? formatMoney(money.amount, money.currency)
+													: formatMoney(0, order.total.gross.currency);
+											})()}
 										</span>
 									</div>
 									<div className="flex justify-between">

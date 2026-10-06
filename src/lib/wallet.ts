@@ -170,6 +170,19 @@ export const getWalletTransactions = async (): Promise<{
 	}
 };
 
+/** Pending wallet amount selected in UI; committed via applyWallet on successful checkout. */
+let pendingWalletApplyAmount = 0;
+
+export const setPendingWalletApplyAmount = (amount: number) => {
+	pendingWalletApplyAmount = Math.max(0, amount);
+};
+
+export const getPendingWalletApplyAmount = () => pendingWalletApplyAmount;
+
+export const clearPendingWalletApplyAmount = () => {
+	pendingWalletApplyAmount = 0;
+};
+
 export const applyWallet = async (checkoutId: string, amount: number) => {
 	const token = (await ensureAccessToken()) || getAccessToken();
 	if (!token) throw new Error("Not authenticated");
@@ -184,6 +197,16 @@ export const applyWallet = async (checkoutId: string, amount: number) => {
 		applied?: number;
 		error?: string;
 	}>;
+};
+
+/** Commit pending wallet amount to the API (call once checkout/payment succeeds). */
+export const commitPendingWallet = async (checkoutId: string) => {
+	const amount = getPendingWalletApplyAmount();
+	if (!checkoutId || amount <= 0) return { ok: true as const, amount: 0 };
+	const res = await applyWallet(checkoutId, amount);
+	if (res?.error) return { ok: false as const, amount, error: res.error };
+	clearPendingWalletApplyAmount();
+	return { ok: true as const, amount: res?.walletAllocation?.amount ?? amount };
 };
 
 export const restoreWallet = async (checkoutId: string) => {
