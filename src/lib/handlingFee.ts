@@ -1,25 +1,47 @@
 import { find } from "./checkout";
 import {
 	CheckoutAddLineDocument,
+	CheckoutDeleteLinesDocument,
 	CheckoutLineUpdateDocument,
 	ProductDetailsDocument,
 } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 
-export async function ensureHandlingFee(checkoutId: string) {
-	console.log(`ensureHandlingFee called for checkoutId: ${checkoutId}`);
+/** One in-flight ensure per checkout so overlapping page loads don't both add the fee. */
+const inflight = new Map<string, Promise<void>>();
 
-	// 1. Fetch checkout to get the channel
+type CheckoutLine = {
+	id: string;
+	quantity: number;
+	variant?: {
+		id?: string | null;
+		product?: { name?: string | null; slug?: string | null } | null;
+	} | null;
+};
+
+const isHandlingFeeLine = (line: CheckoutLine, variantId: string) => {
+	const name = line.variant?.product?.name?.toLowerCase();
+	const slug = line.variant?.product?.slug?.toLowerCase();
+	return line.variant?.id === variantId || name === "handling fee" || slug === "handling-fee";
+};
+
+async function setQuantityToOne(checkoutId: string, lineId: string) {
+	await executeGraphQL(CheckoutLineUpdateDocument, {
+		variables: {
+			id: checkoutId,
+			lines: [{ lineId, quantity: 1 }],
+		},
+		cache: "no-cache",
+	});
+}
+
+async function ensureHandlingFeeOnce(checkoutId: string) {
 	const checkout = await find(checkoutId);
 	if (!checkout) {
-		console.error("Checkout not found in ensureHandlingFee");
 		return;
 	}
 
 	const channel = checkout.channel.slug;
-	console.log(`Checkout found. Channel: ${channel}`);
-
-	// 2. Find the "Handling Fee" product in this channel
 	const searchResult = await executeGraphQL(ProductDetailsDocument, {
 		variables: {
 			slug: "handling-fee",
@@ -27,25 +49,19 @@ export async function ensureHandlingFee(checkoutId: string) {
 		},
 		cache: "no-cache",
 	});
-	
-	const handlingFeeProduct = searchResult.product;
 
+	const handlingFeeProduct = searchResult.product;
 	if (!handlingFeeProduct || !handlingFeeProduct.variants?.length) {
 		console.warn(`Handling Fee product not found in channel ${channel}`);
-		// Log what was found to be sure
 		return;
 	}
 
-	console.log("Handling Fee product found:", handlingFeeProduct.id, handlingFeeProduct.name);
+	const handlingFeeVariantId = handlingFeeProduct.variants[0].id;
+	let feeLines = (checkout.lines as CheckoutLine[]).filter((line) =>
+		isHandlingFeeLine(line, handlingFeeVariantId),
+	);
 
-	const handlingFeeVariantId = handlingFeeProduct.variants[0].id; // Use the first variant
-
-	// 3. Check if it's in the checkout
-	const handlingFeeLine = checkout.lines.find((line) => line.variant?.id === handlingFeeVariantId);
-
-	if (!handlingFeeLine) {
-		// Add it
-		console.log("Adding Handling Fee to checkout...");
+	if (feeLines.length === 0) {
 		await executeGraphQL(CheckoutAddLineDocument, {
 			variables: {
 				id: checkoutId,
@@ -53,24 +69,43 @@ export async function ensureHandlingFee(checkoutId: string) {
 			},
 			cache: "no-cache",
 		});
-		console.log("Handling Fee added.");
-	} else if (handlingFeeLine.quantity !== 1) {
-		// Update quantity to 1
-		console.log("Fixing Handling Fee quantity...");
-		await executeGraphQL(CheckoutLineUpdateDocument, {
+
+		// A parallel request may have added the same line, which Saleor merges by increasing quantity.
+		const refreshed = await find(checkoutId);
+		feeLines = ((refreshed?.lines ?? []) as CheckoutLine[]).filter((line) =>
+			isHandlingFeeLine(line, handlingFeeVariantId),
+		);
+	}
+
+	if (feeLines.length === 0) {
+		return;
+	}
+
+	const [keep, ...extras] = feeLines;
+	if (extras.length > 0) {
+		await executeGraphQL(CheckoutDeleteLinesDocument, {
 			variables: {
-				id: checkoutId,
-				lines: [
-					{
-						variantId: handlingFeeVariantId,
-						quantity: 1,
-					},
-				],
+				checkoutId,
+				lineIds: extras.map((line) => line.id),
 			},
 			cache: "no-cache",
 		});
-		console.log("Handling Fee quantity fixed.");
-	} else {
-		console.log("Handling Fee already present and correct.");
 	}
+
+	if (keep.quantity !== 1) {
+		await setQuantityToOne(checkoutId, keep.id);
+	}
+}
+
+export function ensureHandlingFee(checkoutId: string) {
+	const running = inflight.get(checkoutId);
+	if (running) {
+		return running;
+	}
+
+	const task = ensureHandlingFeeOnce(checkoutId).finally(() => {
+		inflight.delete(checkoutId);
+	});
+	inflight.set(checkoutId, task);
+	return task;
 }

@@ -26325,6 +26325,7 @@ export type ThumbnailCreated = Event & {
 
 export enum ThumbnailFormatEnum {
   Avif = 'AVIF',
+  Jpg = 'JPG',
   Original = 'ORIGINAL',
   Webp = 'WEBP'
 }

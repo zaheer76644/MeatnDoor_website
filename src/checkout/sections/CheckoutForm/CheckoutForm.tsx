@@ -237,6 +237,7 @@ export const CheckoutForm = () => {
 	// };
 	interface Checkout {
 		id: string;
+		shippingMethods?: { id: string }[];
 	}
 
 	interface User {
@@ -444,6 +445,10 @@ export const CheckoutForm = () => {
 				alert("❌ Please login first");
 				return;
 			}
+			if (!checkout.shippingMethods?.length) {
+				alert("No delivery available for the selected address.");
+				return;
+			}
 			const slotExpired = await slotAvailable(selectedSlot);
 			if (slotExpired) {
 				alert("❌ Selected slot is not available. Please select a different slot.");
@@ -578,6 +583,10 @@ export const CheckoutForm = () => {
 		}
 		if (!user) {
 			alert("❌ Please login first");
+			return;
+		}
+		if (!checkout.shippingMethods?.length) {
+			alert("No delivery available for the selected address.");
 			return;
 		}
 		setLoadingOnline(true);
