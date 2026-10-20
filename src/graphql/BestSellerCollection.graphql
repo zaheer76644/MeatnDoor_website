@@ -1,0 +1,9 @@
+query BestSellerCollection {
+	collection(slug: "best-seller") {
+		name
+		backgroundImage {
+			url
+			alt
+		}
+	}
+}

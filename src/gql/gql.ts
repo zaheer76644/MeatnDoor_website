@@ -14,6 +14,7 @@ import * as types from './graphql';
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  */
 const documents = {
+    "query BestSellerCollection {\n  collection(slug: \"best-seller\") {\n    name\n    backgroundImage {\n      url\n      alt\n    }\n  }\n}": types.BestSellerCollectionDocument,
     "query Categories {\n  categories(level: 0, first: 100) {\n    edges {\n      node {\n        id\n        name\n        slug\n        children(first: 100) {\n          edges {\n            node {\n              id\n              name\n              slug\n            }\n          }\n        }\n      }\n    }\n  }\n}": types.CategoriesDocument,
     "query ChannelsList {\n  channels {\n    id\n    name\n    slug\n    isActive\n    currencyCode\n    countries {\n      country\n      code\n    }\n  }\n}": types.ChannelsListDocument,
     "mutation CheckoutAddLine($id: ID!, $productVariantId: ID!) {\n  checkoutLinesAdd(id: $id, lines: [{quantity: 1, variantId: $productVariantId}]) {\n    checkout {\n      id\n      lines {\n        id\n        quantity\n        variant {\n          name\n          product {\n            name\n          }\n        }\n      }\n    }\n    errors {\n      message\n    }\n  }\n}": types.CheckoutAddLineDocument,
@@ -37,6 +38,10 @@ const documents = {
     "fragment VariantDetails on ProductVariant {\n  id\n  name\n  quantityAvailable\n  pricing {\n    price {\n      gross {\n        currency\n        amount\n      }\n    }\n  }\n  attributes {\n    attribute {\n      id\n      name\n      slug\n    }\n    values {\n      id\n      name\n      value\n    }\n  }\n}": types.VariantDetailsFragmentDoc,
 };
 
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "query BestSellerCollection {\n  collection(slug: \"best-seller\") {\n    name\n    backgroundImage {\n      url\n      alt\n    }\n  }\n}"): typeof import('./graphql').BestSellerCollectionDocument;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

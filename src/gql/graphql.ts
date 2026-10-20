@@ -29754,6 +29754,11 @@ export type _Service = {
   sdl?: Maybe<Scalars['String']['output']>;
 };
 
+export type BestSellerCollectionQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type BestSellerCollectionQuery = { __typename?: 'Query', collection?: { __typename?: 'Collection', name: string, backgroundImage?: { __typename?: 'Image', url: string, alt?: string | null } | null } | null };
+
 export type CategoriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -29895,13 +29900,17 @@ export class TypedDocumentString<TResult, TVariables>
   extends String
   implements DocumentTypeDecoration<TResult, TVariables>
 {
-  __apiType?: DocumentTypeDecoration<TResult, TVariables>['__apiType'];
+  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>['__apiType']>;
+  private value: string;
+  public __meta__?: Record<string, any> | undefined;
 
-  constructor(private value: string, public __meta__?: Record<string, any>) {
+  constructor(value: string, __meta__?: Record<string, any> | undefined) {
     super(value);
+    this.value = value;
+    this.__meta__ = __meta__;
   }
 
-  toString(): string & DocumentTypeDecoration<TResult, TVariables> {
+  override toString(): string & DocumentTypeDecoration<TResult, TVariables> {
     return this.value;
   }
 }
@@ -30202,6 +30211,17 @@ export const VariantDetailsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"VariantDetails"}) as unknown as TypedDocumentString<VariantDetailsFragment, unknown>;
+export const BestSellerCollectionDocument = new TypedDocumentString(`
+    query BestSellerCollection {
+  collection(slug: "best-seller") {
+    name
+    backgroundImage {
+      url
+      alt
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<BestSellerCollectionQuery, BestSellerCollectionQueryVariables>;
 export const CategoriesDocument = new TypedDocumentString(`
     query Categories {
   categories(level: 0, first: 100) {
