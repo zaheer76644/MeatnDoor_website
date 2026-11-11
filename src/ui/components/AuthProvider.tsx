@@ -25,7 +25,13 @@ const makeUrqlClient = () => {
 		url: saleorApiUrl,
 		suspense: true,
 		// requestPolicy: "cache-first",
-		fetch: (input, init) => saleorAuthClient.fetchWithAuth(input as NodeJS.fetch.RequestInfo, init),
+		// The JWT `iss` may not match the configured API URL in local development
+		// (the backend can issue tokens for its production public URL). Since every
+		// request from this client targets `saleorApiUrl`, always attach the token.
+		fetch: (input, init) =>
+			saleorAuthClient.fetchWithAuth(input as NodeJS.fetch.RequestInfo, init, {
+				allowPassingTokenToThirdPartyDomains: true,
+			}),
 		exchanges: [dedupExchange, cacheExchange, fetchExchange],
 	});
 };

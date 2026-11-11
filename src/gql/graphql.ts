@@ -3888,6 +3888,51 @@ export enum CheckoutChargeStatusEnum {
 }
 
 /**
+ * Adds a combo (all of its products at the fixed combo prices) to the checkout. Adding the same combo again increases the quantity of the existing combo group.
+ *
+ * Triggers the following webhook events:
+ * - CHECKOUT_UPDATED (async): A checkout was updated.
+ */
+export type CheckoutComboAdd = {
+  __typename?: 'CheckoutComboAdd';
+  /** An updated checkout. */
+  checkout?: Maybe<Checkout>;
+  /** @deprecated This field will be removed in Saleor 4.0. Use `errors` field instead. */
+  checkoutErrors: Array<CheckoutError>;
+  errors: Array<CheckoutError>;
+};
+
+/**
+ * Removes one combo group (all its lines) from the checkout.
+ *
+ * Triggers the following webhook events:
+ * - CHECKOUT_UPDATED (async): A checkout was updated.
+ */
+export type CheckoutComboRemove = {
+  __typename?: 'CheckoutComboRemove';
+  /** An updated checkout. */
+  checkout?: Maybe<Checkout>;
+  /** @deprecated This field will be removed in Saleor 4.0. Use `errors` field instead. */
+  checkoutErrors: Array<CheckoutError>;
+  errors: Array<CheckoutError>;
+};
+
+/**
+ * Updates the quantity of one combo group in the checkout.
+ *
+ * Triggers the following webhook events:
+ * - CHECKOUT_UPDATED (async): A checkout was updated.
+ */
+export type CheckoutComboUpdateQuantity = {
+  __typename?: 'CheckoutComboUpdateQuantity';
+  /** An updated checkout. */
+  checkout?: Maybe<Checkout>;
+  /** @deprecated This field will be removed in Saleor 4.0. Use `errors` field instead. */
+  checkoutErrors: Array<CheckoutError>;
+  errors: Array<CheckoutError>;
+};
+
+/**
  * Completes the checkout. As a result a new order is created. The mutation allows to create the unpaid order when setting `orderSettings.allowUnpaidOrders` for given `Channel` is set to `true`. When `orderSettings.allowUnpaidOrders` is set to `false`, checkout can be completed only when attached `Payment`/`TransactionItem`s fully cover the checkout's total. When processing the checkout with `Payment`, in case of required additional confirmation step like 3D secure, the `confirmationNeeded` flag will be set to True and no order will be created until payment is confirmed with second call of this mutation.
  *
  * Triggers the following webhook events:
@@ -4146,6 +4191,10 @@ export enum CheckoutErrorCode {
   BillingAddressNotSet = 'BILLING_ADDRESS_NOT_SET',
   ChannelInactive = 'CHANNEL_INACTIVE',
   CheckoutNotFullyPaid = 'CHECKOUT_NOT_FULLY_PAID',
+  ComboLineProtected = 'COMBO_LINE_PROTECTED',
+  ComboNotAvailableForPurchase = 'COMBO_NOT_AVAILABLE_FOR_PURCHASE',
+  ComboNotAvailableInChannel = 'COMBO_NOT_AVAILABLE_IN_CHANNEL',
+  ComboPriceMissing = 'COMBO_PRICE_MISSING',
   DeliveryMethodNotApplicable = 'DELIVERY_METHOD_NOT_APPLICABLE',
   EmailNotSet = 'EMAIL_NOT_SET',
   GiftCardNotApplicable = 'GIFT_CARD_NOT_APPLICABLE',
@@ -4238,6 +4287,8 @@ export type CheckoutLanguageCodeUpdate = {
 /** Represents an item in the checkout. */
 export type CheckoutLine = Node & ObjectWithMetadata & {
   __typename?: 'CheckoutLine';
+  /** Combo grouping information for lines created from a combo. */
+  combo?: Maybe<ComboLineInfo>;
   /** The ID of the checkout line. */
   id: Scalars['ID']['output'];
   /**
@@ -4414,7 +4465,7 @@ export type CheckoutLineUpdateInput = {
 };
 
 /**
- * Adds a checkout line to the existing checkout.If line was already in checkout, its quantity will be increased.
+ * Adds a checkout line to the existing checkout.If the line was already in checkout, its quantity will be updated to the provided value.
  *
  * Triggers the following webhook events:
  * - CHECKOUT_UPDATED (async): A checkout was updated.
@@ -5222,6 +5273,346 @@ export type CollectionWhereInput = {
   OR?: InputMaybe<Array<CollectionWhereInput>>;
   ids?: InputMaybe<Array<Scalars['ID']['input']>>;
   metadata?: InputMaybe<Array<MetadataFilter>>;
+};
+
+/** Represents a combo: a named bundle of product variants with fixed per-channel discounted prices. */
+export type Combo = Node & ObjectWithMetadata & {
+  __typename?: 'Combo';
+  /**
+   * List of channels in which the combo is available.
+   *
+   * Requires one of the following permissions: MANAGE_PRODUCTS.
+   */
+  channelListings?: Maybe<Array<ComboChannelListing>>;
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  /** Image of the combo. */
+  image?: Maybe<Image>;
+  /** Alt text for the combo image. */
+  imageAlt?: Maybe<Scalars['String']['output']>;
+  /** Whether the combo is published and purchasable in the channel. */
+  isAvailableForPurchase?: Maybe<Scalars['Boolean']['output']>;
+  /** List of product variants in this combo. */
+  items?: Maybe<Array<ComboItem>>;
+  /** List of public metadata items. Can be accessed without permissions. */
+  metadata: Array<MetadataItem>;
+  /**
+   * A single key from public metadata.
+   *
+   * Tip: Use GraphQL aliases to fetch multiple keys.
+   */
+  metafield?: Maybe<Scalars['String']['output']>;
+  /** Public metadata. Use `keys` to control which fields you want to include. The default is to include everything. */
+  metafields?: Maybe<Scalars['Metadata']['output']>;
+  name: Scalars['String']['output'];
+  /** Combo price breakdown for a channel. */
+  pricing?: Maybe<ComboPricing>;
+  /** List of private metadata items. Requires staff permissions to access. */
+  privateMetadata: Array<MetadataItem>;
+  /**
+   * A single key from private metadata. Requires staff permissions to access.
+   *
+   * Tip: Use GraphQL aliases to fetch multiple keys.
+   */
+  privateMetafield?: Maybe<Scalars['String']['output']>;
+  /** Private metadata. Requires staff permissions to access. Use `keys` to control which fields you want to include. The default is to include everything. */
+  privateMetafields?: Maybe<Scalars['Metadata']['output']>;
+  slug: Scalars['String']['output'];
+};
+
+
+/** Represents a combo: a named bundle of product variants with fixed per-channel discounted prices. */
+export type ComboIsAvailableForPurchaseArgs = {
+  channel?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+/** Represents a combo: a named bundle of product variants with fixed per-channel discounted prices. */
+export type ComboMetafieldArgs = {
+  key: Scalars['String']['input'];
+};
+
+
+/** Represents a combo: a named bundle of product variants with fixed per-channel discounted prices. */
+export type ComboMetafieldsArgs = {
+  keys?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+
+/** Represents a combo: a named bundle of product variants with fixed per-channel discounted prices. */
+export type ComboPricingArgs = {
+  channel?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+/** Represents a combo: a named bundle of product variants with fixed per-channel discounted prices. */
+export type ComboPrivateMetafieldArgs = {
+  key: Scalars['String']['input'];
+};
+
+
+/** Represents a combo: a named bundle of product variants with fixed per-channel discounted prices. */
+export type ComboPrivateMetafieldsArgs = {
+  keys?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+/** Combo availability in a channel. */
+export type ComboChannelListing = {
+  __typename?: 'ComboChannelListing';
+  /** The date and time when the combo becomes available for purchase. */
+  availableForPurchaseAt?: Maybe<Scalars['DateTime']['output']>;
+  /** The date and time when the combo is no longer available for purchase. */
+  availableUntil?: Maybe<Scalars['DateTime']['output']>;
+  channel: Channel;
+  currency: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  isPublished: Scalars['Boolean']['output'];
+  /** Publication date time. */
+  publishedAt?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type ComboChannelListingInput = {
+  /** The date and time when the combo becomes available for purchase. */
+  availableForPurchaseAt?: InputMaybe<Scalars['DateTime']['input']>;
+  /** The date and time when the combo is no longer available for purchase. */
+  availableUntil?: InputMaybe<Scalars['DateTime']['input']>;
+  /** ID of a channel. */
+  channelId: Scalars['ID']['input'];
+  /** Determines if combo is published in the channel. */
+  isPublished?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Publication date time. */
+  publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+/**
+ * Manage combo availability in channels.
+ *
+ * Requires one of the following permissions: MANAGE_PRODUCTS.
+ */
+export type ComboChannelListingUpdate = {
+  __typename?: 'ComboChannelListingUpdate';
+  /** An updated combo instance. */
+  combo?: Maybe<Combo>;
+  /** @deprecated This field will be removed in Saleor 4.0. Use `errors` field instead. */
+  comboErrors: Array<ComboError>;
+  errors: Array<ComboError>;
+};
+
+export type ComboChannelListingUpdateInput = {
+  /** List of channels to which the combo should be assigned. */
+  addChannels?: InputMaybe<Array<ComboChannelListingInput>>;
+  /** List of channels from which the combo should be unassigned. */
+  removeChannels?: InputMaybe<Array<Scalars['ID']['input']>>;
+};
+
+export type ComboCountableConnection = {
+  __typename?: 'ComboCountableConnection';
+  edges: Array<ComboCountableEdge>;
+  /** Pagination data for this connection. */
+  pageInfo: PageInfo;
+  /** A total count of items in the collection. */
+  totalCount?: Maybe<Scalars['Int']['output']>;
+};
+
+export type ComboCountableEdge = {
+  __typename?: 'ComboCountableEdge';
+  /** A cursor for use in pagination. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: Combo;
+};
+
+/**
+ * Creates a new combo.
+ *
+ * Requires one of the following permissions: MANAGE_PRODUCTS.
+ */
+export type ComboCreate = {
+  __typename?: 'ComboCreate';
+  combo?: Maybe<Combo>;
+  /** @deprecated This field will be removed in Saleor 4.0. Use `errors` field instead. */
+  comboErrors: Array<ComboError>;
+  errors: Array<ComboError>;
+};
+
+export type ComboCreateInput = {
+  /** Combo description. */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Image file of the combo. */
+  image: Scalars['Upload']['input'];
+  /** Alt text for the combo image. */
+  imageAlt?: InputMaybe<Scalars['String']['input']>;
+  /** List of combo items. */
+  items: Array<ComboItemInput>;
+  /** Fields required to update the combo metadata. */
+  metadata?: InputMaybe<Array<MetadataInput>>;
+  /** Combo name. */
+  name: Scalars['String']['input'];
+  /** Fields required to update the combo private metadata. */
+  privateMetadata?: InputMaybe<Array<MetadataInput>>;
+  /** Combo slug. Generated automatically if empty. */
+  slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+/**
+ * Deletes a combo.
+ *
+ * Requires one of the following permissions: MANAGE_PRODUCTS.
+ */
+export type ComboDelete = {
+  __typename?: 'ComboDelete';
+  combo?: Maybe<Combo>;
+  /** @deprecated This field will be removed in Saleor 4.0. Use `errors` field instead. */
+  comboErrors: Array<ComboError>;
+  errors: Array<ComboError>;
+};
+
+export type ComboError = {
+  __typename?: 'ComboError';
+  /** The error code. */
+  code: ComboErrorCode;
+  /** Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field. */
+  field?: Maybe<Scalars['String']['output']>;
+  /** The error message. */
+  message?: Maybe<Scalars['String']['output']>;
+  /** Variant ID which causes the error. */
+  variant?: Maybe<Scalars['ID']['output']>;
+};
+
+export enum ComboErrorCode {
+  ComboLineProtected = 'COMBO_LINE_PROTECTED',
+  ComboNotAvailableForPurchase = 'COMBO_NOT_AVAILABLE_FOR_PURCHASE',
+  ComboNotAvailableInChannel = 'COMBO_NOT_AVAILABLE_IN_CHANNEL',
+  ComboPriceMissing = 'COMBO_PRICE_MISSING',
+  DuplicateVariant = 'DUPLICATE_VARIANT',
+  GraphqlError = 'GRAPHQL_ERROR',
+  InsufficientStock = 'INSUFFICIENT_STOCK',
+  Invalid = 'INVALID',
+  InvalidItemCount = 'INVALID_ITEM_COUNT',
+  InvalidPrice = 'INVALID_PRICE',
+  InvalidQuantity = 'INVALID_QUANTITY',
+  MissingPrice = 'MISSING_PRICE',
+  NotFound = 'NOT_FOUND',
+  QuantityGreaterThanLimit = 'QUANTITY_GREATER_THAN_LIMIT',
+  Required = 'REQUIRED',
+  Unique = 'UNIQUE',
+  VariantNotAvailableInChannel = 'VARIANT_NOT_AVAILABLE_IN_CHANNEL',
+  ZeroQuantity = 'ZERO_QUANTITY'
+}
+
+export type ComboFilterInput = {
+  metadata?: InputMaybe<Array<MetadataFilter>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** A single product variant inside a combo. */
+export type ComboItem = {
+  __typename?: 'ComboItem';
+  /**
+   * Fixed prices of this item per channel.
+   *
+   * Requires one of the following permissions: MANAGE_PRODUCTS.
+   */
+  channelPrices?: Maybe<Array<ComboItemChannelPrice>>;
+  /** Fixed unit price of this item inside the combo. */
+  discountedPrice?: Maybe<Money>;
+  id: Scalars['ID']['output'];
+  quantity: Scalars['Int']['output'];
+  sortOrder: Scalars['Int']['output'];
+  variant: ProductVariant;
+};
+
+
+/** A single product variant inside a combo. */
+export type ComboItemDiscountedPriceArgs = {
+  channel?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Fixed discounted unit price of a combo item in a channel. */
+export type ComboItemChannelPrice = {
+  __typename?: 'ComboItemChannelPrice';
+  channel: Channel;
+  discountedPrice: Money;
+  id: Scalars['ID']['output'];
+};
+
+export type ComboItemInput = {
+  /** Fixed prices per channel (at least one per channel). */
+  prices?: InputMaybe<Array<ComboItemPriceInput>>;
+  /** Quantity per combo. */
+  quantity?: InputMaybe<Scalars['Int']['input']>;
+  /** Variant ID. */
+  variantId: Scalars['ID']['input'];
+};
+
+export type ComboItemPriceInput = {
+  /** Channel of the price. */
+  channelId: Scalars['ID']['input'];
+  /** Fixed discounted unit price of the item in this channel. */
+  discountedPrice: Scalars['PositiveDecimal']['input'];
+};
+
+/** Combo grouping information for a checkout line. */
+export type ComboLineInfo = {
+  __typename?: 'ComboLineInfo';
+  /** ID of the combo. */
+  comboId: Scalars['ID']['output'];
+  /** Name of the combo. */
+  comboName: Scalars['String']['output'];
+  /** Number of combo units this line represents. */
+  comboQuantity: Scalars['Int']['output'];
+  /** ID of the combo group in the checkout. */
+  groupId: Scalars['UUID']['output'];
+};
+
+/** Combo total, undiscounted total and savings for a channel. */
+export type ComboPricing = {
+  __typename?: 'ComboPricing';
+  price: Money;
+  savings: Money;
+  undiscountedPrice: Money;
+};
+
+export enum ComboSortField {
+  /** Sort combos by created at. */
+  CreatedAt = 'CREATED_AT',
+  /** Sort combos by name. */
+  Name = 'NAME'
+}
+
+export type ComboSortingInput = {
+  /** Specifies the direction in which to sort combos. */
+  direction: OrderDirection;
+  /** Sort combos by the selected field. */
+  field: ComboSortField;
+};
+
+/**
+ * Updates a combo.
+ *
+ * Requires one of the following permissions: MANAGE_PRODUCTS.
+ */
+export type ComboUpdate = {
+  __typename?: 'ComboUpdate';
+  combo?: Maybe<Combo>;
+  /** @deprecated This field will be removed in Saleor 4.0. Use `errors` field instead. */
+  comboErrors: Array<ComboError>;
+  errors: Array<ComboError>;
+};
+
+export type ComboUpdateInput = {
+  /** Combo description. */
+  description?: InputMaybe<Scalars['String']['input']>;
+  /** Image file of the combo. */
+  image?: InputMaybe<Scalars['Upload']['input']>;
+  /** Alt text for the combo image. */
+  imageAlt?: InputMaybe<Scalars['String']['input']>;
+  /** Replace the list of combo items. The previous items are removed. */
+  items?: InputMaybe<Array<ComboItemInput>>;
+  /** Combo name. */
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** Combo slug. */
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Stores information about a single configuration field. */
@@ -10395,6 +10786,27 @@ export type Mutation = {
    */
   checkoutBillingAddressUpdate?: Maybe<CheckoutBillingAddressUpdate>;
   /**
+   * Adds a combo (all of its products at the fixed combo prices) to the checkout. Adding the same combo again increases the quantity of the existing combo group.
+   *
+   * Triggers the following webhook events:
+   * - CHECKOUT_UPDATED (async): A checkout was updated.
+   */
+  checkoutComboAdd?: Maybe<CheckoutComboAdd>;
+  /**
+   * Removes one combo group (all its lines) from the checkout.
+   *
+   * Triggers the following webhook events:
+   * - CHECKOUT_UPDATED (async): A checkout was updated.
+   */
+  checkoutComboRemove?: Maybe<CheckoutComboRemove>;
+  /**
+   * Updates the quantity of one combo group in the checkout.
+   *
+   * Triggers the following webhook events:
+   * - CHECKOUT_UPDATED (async): A checkout was updated.
+   */
+  checkoutComboUpdateQuantity?: Maybe<CheckoutComboUpdateQuantity>;
+  /**
    * Completes the checkout. As a result a new order is created. The mutation allows to create the unpaid order when setting `orderSettings.allowUnpaidOrders` for given `Channel` is set to `true`. When `orderSettings.allowUnpaidOrders` is set to `false`, checkout can be completed only when attached `Payment`/`TransactionItem`s fully cover the checkout's total. When processing the checkout with `Payment`, in case of required additional confirmation step like 3D secure, the `confirmationNeeded` flag will be set to True and no order will be created until payment is confirmed with second call of this mutation.
    *
    * Triggers the following webhook events:
@@ -10479,7 +10891,7 @@ export type Mutation = {
    */
   checkoutLineDelete?: Maybe<CheckoutLineDelete>;
   /**
-   * Adds a checkout line to the existing checkout.If line was already in checkout, its quantity will be increased.
+   * Adds a checkout line to the existing checkout.If the line was already in checkout, its quantity will be updated to the provided value.
    *
    * Triggers the following webhook events:
    * - CHECKOUT_UPDATED (async): A checkout was updated.
@@ -10578,6 +10990,30 @@ export type Mutation = {
    * Requires one of the following permissions: MANAGE_PRODUCTS.
    */
   collectionUpdate?: Maybe<CollectionUpdate>;
+  /**
+   * Manage combo availability in channels.
+   *
+   * Requires one of the following permissions: MANAGE_PRODUCTS.
+   */
+  comboChannelListingUpdate?: Maybe<ComboChannelListingUpdate>;
+  /**
+   * Creates a new combo.
+   *
+   * Requires one of the following permissions: MANAGE_PRODUCTS.
+   */
+  comboCreate?: Maybe<ComboCreate>;
+  /**
+   * Deletes a combo.
+   *
+   * Requires one of the following permissions: MANAGE_PRODUCTS.
+   */
+  comboDelete?: Maybe<ComboDelete>;
+  /**
+   * Updates a combo.
+   *
+   * Requires one of the following permissions: MANAGE_PRODUCTS.
+   */
+  comboUpdate?: Maybe<ComboUpdate>;
   /**
    * Confirm user account with token sent by email during registration.
    *
@@ -12601,6 +13037,32 @@ export type MutationCheckoutBillingAddressUpdateArgs = {
 };
 
 
+export type MutationCheckoutComboAddArgs = {
+  checkoutId?: InputMaybe<Scalars['ID']['input']>;
+  comboId: Scalars['ID']['input'];
+  id?: InputMaybe<Scalars['ID']['input']>;
+  quantity?: InputMaybe<Scalars['Int']['input']>;
+  token?: InputMaybe<Scalars['UUID']['input']>;
+};
+
+
+export type MutationCheckoutComboRemoveArgs = {
+  checkoutId?: InputMaybe<Scalars['ID']['input']>;
+  groupId: Scalars['UUID']['input'];
+  id?: InputMaybe<Scalars['ID']['input']>;
+  token?: InputMaybe<Scalars['UUID']['input']>;
+};
+
+
+export type MutationCheckoutComboUpdateQuantityArgs = {
+  checkoutId?: InputMaybe<Scalars['ID']['input']>;
+  groupId: Scalars['UUID']['input'];
+  id?: InputMaybe<Scalars['ID']['input']>;
+  quantity: Scalars['Int']['input'];
+  token?: InputMaybe<Scalars['UUID']['input']>;
+};
+
+
 export type MutationCheckoutCompleteArgs = {
   checkoutId?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -12781,6 +13243,28 @@ export type MutationCollectionTranslateArgs = {
 export type MutationCollectionUpdateArgs = {
   id: Scalars['ID']['input'];
   input: CollectionInput;
+};
+
+
+export type MutationComboChannelListingUpdateArgs = {
+  id: Scalars['ID']['input'];
+  input: ComboChannelListingUpdateInput;
+};
+
+
+export type MutationComboCreateArgs = {
+  input: ComboCreateInput;
+};
+
+
+export type MutationComboDeleteArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationComboUpdateArgs = {
+  id: Scalars['ID']['input'];
+  input: ComboUpdateInput;
 };
 
 
@@ -22006,6 +22490,10 @@ export type Query = {
   collection?: Maybe<Collection>;
   /** List of the shop's collections. Requires one of the following permissions to include the unpublished items: MANAGE_ORDERS, MANAGE_DISCOUNTS, MANAGE_PRODUCTS. */
   collections?: Maybe<CollectionCountableConnection>;
+  /** Look up a combo by ID or slug. */
+  combo?: Maybe<Combo>;
+  /** List of the storefront's combos. */
+  combos?: Maybe<ComboCountableConnection>;
   /**
    * List of the shop's customers. This list includes all users who registered through the accountRegister mutation. Additionally, staff users who have placed an order using their account will also appear in this list.
    *
@@ -22474,6 +22962,24 @@ export type QueryCollectionsArgs = {
   last?: InputMaybe<Scalars['Int']['input']>;
   sortBy?: InputMaybe<CollectionSortingInput>;
   where?: InputMaybe<CollectionWhereInput>;
+};
+
+
+export type QueryComboArgs = {
+  channel?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryCombosArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  channel?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<ComboFilterInput>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  sortBy?: InputMaybe<ComboSortingInput>;
 };
 
 
@@ -27596,6 +28102,8 @@ export type Voucher = Node & ObjectWithMetadata & {
   applyOncePerCustomer: Scalars['Boolean']['output'];
   /** Determine if the voucher should be applied once per order. If set to True, the voucher is applied to a single cheapest eligible product in checkout. */
   applyOncePerOrder: Scalars['Boolean']['output'];
+  /** Determine whether voucher discounts can be applied to checkout lines that originate from a combo (checkoutComboAdd). Defaults to true. */
+  applyToComboLines?: Maybe<Scalars['Boolean']['output']>;
   /** List of categories this voucher applies to. */
   categories?: Maybe<CategoryCountableConnection>;
   /**
@@ -28098,6 +28606,8 @@ export type VoucherInput = {
   applyOncePerCustomer?: InputMaybe<Scalars['Boolean']['input']>;
   /** Voucher should be applied to the cheapest item or entire order. */
   applyOncePerOrder?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Determine whether voucher discounts can be applied to combo checkout lines. Defaults to True. */
+  applyToComboLines?: InputMaybe<Scalars['Boolean']['input']>;
   /** Categories discounted by the voucher. */
   categories?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Code to use the voucher. This field will be removed in Saleor 4.0. Use `addCodes` instead. */

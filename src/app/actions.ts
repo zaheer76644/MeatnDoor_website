@@ -63,6 +63,69 @@ export async function updateCartItem(lineId: string, variantId: string, quantity
 	revalidatePath("/");
 }
 
+const CHECKOUT_COMBO_ADD_MUTATION = `
+	mutation CheckoutComboAdd($id: ID!, $comboId: ID!, $quantity: Int!) {
+		checkoutComboAdd(id: $id, comboId: $comboId, quantity: $quantity) {
+			checkout {
+				id
+			}
+			errors {
+				field
+				code
+				message
+			}
+		}
+	}
+`;
+
+type CheckoutComboAddResponse = {
+	data?: {
+		checkoutComboAdd?: {
+			checkout?: { id: string } | null;
+			errors?: { field: string | null; code: string; message: string }[];
+		} | null;
+	};
+	errors?: { message: string }[];
+};
+
+export async function addComboToCart(comboId: string, channel: string, quantity = 1) {
+	"use server";
+	const checkout = await Checkout.findOrCreate({
+		checkoutId: await Checkout.getIdFromCookies(channel),
+		channel,
+	});
+	invariant(checkout, "This should never happen");
+
+	await Checkout.saveIdToCookie(channel, checkout.id);
+
+	const response = await fetch(process.env.NEXT_PUBLIC_SALEOR_API_URL as string, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			query: CHECKOUT_COMBO_ADD_MUTATION,
+			variables: { id: checkout.id, comboId, quantity },
+		}),
+		cache: "no-cache",
+	});
+
+	const result = (await response.json()) as CheckoutComboAddResponse;
+
+	if (result.errors?.length) {
+		throw new Error(result.errors[0].message);
+	}
+
+	const comboAdd = result.data?.checkoutComboAdd;
+
+	if (!comboAdd || comboAdd.errors?.length) {
+		throw new Error(comboAdd?.errors?.[0]?.message ?? "Could not add this combo to your cart.");
+	}
+
+	revalidatePath("/cart");
+	revalidatePath("/");
+}
+
 export async function addToCart(variantId: string, channel: string) {
 	"use server";
 	const checkout = await Checkout.findOrCreate({

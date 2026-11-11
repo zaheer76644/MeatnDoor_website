@@ -163,6 +163,7 @@ export const CheckoutForm = () => {
 	const [loading, setLoading] = useState(false);
 	const [selectedSlot, setSelectedSlot] = useState<DeliverySlot | null>(null);
 	const [handlingFeeAmount, setHandlingFeeAmount] = useState<{ amount: number; currency: string } | null>(null);
+	const [cashPaymentThreshold, setCashPaymentThreshold] = useState<number | null>(1000);
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
 			if (!checkoutFetching && checkout?.shippingMethods?.length === 0) {
@@ -172,6 +173,64 @@ export const CheckoutForm = () => {
 
 		return () => clearTimeout(timeoutId);
 	}, [checkout?.shippingMethods, checkoutFetching])
+
+	useEffect(() => {
+		let cancelled = false;
+
+		const fetchCashPaymentThreshold = async () => {
+			try {
+				const query = `
+					query CheckoutPageSettings {
+						page(slug: "checkout-page-settings") {
+							attributes {
+								attribute {
+									slug
+								}
+								values {
+									name
+								}
+							}
+						}
+					}
+				`;
+
+				const response = await fetch(GRAPHQL_ENDPOINT, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ query }),
+					cache: "no-cache",
+				});
+
+				const result = (await response.json()) as {
+					data?: {
+						page?: {
+							attributes?: {
+								attribute: { slug: string };
+								values: { name: string }[];
+							}[];
+						} | null;
+					};
+				};
+
+				const thresholdAttribute = result.data?.page?.attributes?.find(
+					(entry) => entry.attribute.slug === "cash-payment-threshold",
+				);
+				const threshold = Number(thresholdAttribute?.values?.[0]?.name);
+
+				if (!cancelled && Number.isFinite(threshold)) {
+					setCashPaymentThreshold(threshold);
+				}
+			} catch (error) {
+				console.error("Could not load cash payment threshold", error);
+			}
+		};
+
+		void fetchCashPaymentThreshold();
+
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
 	// ✅ Complete order using fetch()
 	// const handlePlaceOrder = async () => {	
@@ -300,8 +359,7 @@ export const CheckoutForm = () => {
 		// 	return null;
 		// }
 		if (result?.errors && result.errors.length > 0) {
-			// alert("❌ " + result.errors[0].message); // this says checkout email must be set
-			alert("❌ Please login First");
+			alert("❌ " + (result.errors[0]?.message || "Failed to complete checkout"));
 			return;
 		}
 
@@ -466,7 +524,7 @@ export const CheckoutForm = () => {
 			input: [
 				{ key: "Delivery_Date", value: "${deliveryDate}" },
 				{ key: "Delivery_Time", value: "${selectedSlot.slot}" },
-				{ key: "paymentMode", value: "cash_on_delivery" }
+				{ key: "paymentMode", value: "cash_on_delivery" },
 				{ key: "ordered_platform", value: "Website" }
 				]
 				) {
@@ -479,7 +537,6 @@ export const CheckoutForm = () => {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: user?.token ? `JWT ${user.token}` : "",
 				},
 				body: JSON.stringify({ query: metaQuery }),
 			});
@@ -694,6 +751,8 @@ export const CheckoutForm = () => {
 		}
 	}, [checkout?.lines]);
 	const greaterThanThousand = Math.round((checkout?.subtotalPrice.gross.amount || 0) - (handlingFeeAmount?.amount || 0))
+	const isCashOnDeliveryAvailable =
+		cashPaymentThreshold !== null && greaterThanThousand <= cashPaymentThreshold;
 	// const totalPriceValue = Math.round((checkout?.subtotalPrice?.gross.amount || 0) - (checkout?.discount?.amount || 0))
 	// const handlePlaceOrder = async () => {
 	// 	try {
@@ -817,7 +876,7 @@ export const CheckoutForm = () => {
 								<h1 className="mb-4 text-lg font-semibold text-[#47141e] mt-3">Payment Method</h1>
 								<div className="flex flex-col gap-4 sm:flex-row sm:gap-5">
 									{/* ✅ Cash on Delivery Button */}
-									{greaterThanThousand <= 1000 && <button
+									{isCashOnDeliveryAvailable && <button
 										type="button"
 										title={checkout?.shippingMethods?.length === 0 ? 'No delivery available in selected address.' : ''}
 										onClick={onPlaceOrder}

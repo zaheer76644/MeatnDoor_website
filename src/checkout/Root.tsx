@@ -25,7 +25,10 @@ export const Root = ({ saleorApiUrl }: { saleorApiUrl: string }) => {
 			url: saleorApiUrl,
 			suspense: true,
 			requestPolicy: "cache-first",
-			fetch: (input, init) => saleorAuthClient.fetchWithAuth(input as NodeJS.fetch.RequestInfo, init),
+			fetch: (input, init) =>
+				saleorAuthClient.fetchWithAuth(input as NodeJS.fetch.RequestInfo, init, {
+					allowPassingTokenToThirdPartyDomains: true,
+				}),
 			exchanges: [dedupExchange, cacheExchange, fetchExchange],
 		});
 

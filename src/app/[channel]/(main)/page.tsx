@@ -81,7 +81,7 @@ export default async function Page(props: {
 	return (
 		<section className="pb-16">
 			{/* <CustomPage products={productList} /> */}
-			<CustomPage {...cartItems}/>
+			<CustomPage cartItems={cartItems} channel={params.channel} />
 		</section>
 	);
 }

@@ -10,8 +10,14 @@ export const DEFAULT_CHANNEL = "in";
 // export const RAZORPAY_PUBLIC_KEY="rzp_test_8swUcpx10LhxpH"
 export const RAZORPAY_PUBLIC_KEY = "rzp_live_OujUgN4UdSkIhu";
 
-export const SALEOR_BACKEND_URI = "https://api.meatify.in";
-export const SALEOR_API_URL = "https://api.meatify.in/graphql/";
+const FALLBACK_API_URL = "https://api.meatify.in/graphql/";
+
+// Follow NEXT_PUBLIC_SALEOR_API_URL so the storefront, custom REST endpoints and
+// GraphQL calls all point at the same backend (e.g. a local Saleor instance).
+export const SALEOR_API_URL = process.env.NEXT_PUBLIC_SALEOR_API_URL || FALLBACK_API_URL;
+export const SALEOR_BACKEND_URI =
+	process.env.NEXT_PUBLIC_SALEOR_BACKEND_URI ||
+	SALEOR_API_URL.replace(/\/graphql\/?$/, "");
 
 export const GRAPHQL_ENDPOINT = `${SALEOR_BACKEND_URI}/graphql/`;
 export const SEND_OTP_ENDPOINT = `${SALEOR_BACKEND_URI}/auth/send-otp/`;

@@ -172,6 +172,8 @@ export function MobileLoginForm() {
 	const [isGeneratingOtp, setIsGeneratingOtp] = useState(false);
 	const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 	const [isLocalhost, setIsLocalhost] = useState(false);
+	const [testEmail, setTestEmail] = useState("customer@example.com");
+	const [testPassword, setTestPassword] = useState("YourPassword@123");
 
 	useEffect(() => {
 		const host = window.location.hostname;
@@ -369,12 +371,10 @@ export function MobileLoginForm() {
 
 	// 🔹 Test login (tokenCreate mutation — standalone, only stores tokens in localStorage)
 	const testLogin = async () => {
-		const email = "user@example.com";
-		const password = "user123!";
 		try {
 			const query = `
-				mutation {
-					tokenCreate(email: "${email}", password: "${password}") {
+				mutation TestLogin($email: String!, $password: String!) {
+					tokenCreate(email: $email, password: $password) {
 						token
 						refreshToken
 						errors {
@@ -387,7 +387,10 @@ export function MobileLoginForm() {
 			const response = await fetch(process.env.NEXT_PUBLIC_SALEOR_API_URL || apiConfig.GRAPHQL_ENDPOINT, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ query }),
+				body: JSON.stringify({
+					query,
+					variables: { email: testEmail.trim(), password: testPassword },
+				}),
 			});
 			const result = await response.json();
 			const tokenCreate = result?.data?.tokenCreate;
@@ -624,8 +627,8 @@ export function MobileLoginForm() {
 								type="email"
 								id="loginEmail"
 								className="w-full rounded-md border border-gray-300 px-3 py-2"
-								value="user@example.com"
-								readOnly
+								value={testEmail}
+								onChange={(e) => setTestEmail(e.target.value)}
 							/>
 						</div>
 						<div>
@@ -636,8 +639,8 @@ export function MobileLoginForm() {
 								type="password"
 								id="loginPassword"
 								className="w-full rounded-md border border-gray-300 px-3 py-2"
-								value="user123!"
-								readOnly
+								value={testPassword}
+								onChange={(e) => setTestPassword(e.target.value)}
 							/>
 						</div>
 						<button
