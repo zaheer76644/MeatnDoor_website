@@ -14,6 +14,10 @@ export interface ComboProductItem {
 	variant: {
 		id: string;
 		name: string;
+		attributes: {
+			attribute: { slug: string; name: string };
+			values: { name: string }[];
+		}[];
 		product: {
 			id: string;
 			name: string;
@@ -38,6 +42,30 @@ export interface ComboProduct {
 	} | null;
 	items: ComboProductItem[];
 }
+
+const SAVING_AMOUNT_ATTRIBUTE_SLUG = "saving-amount";
+
+const getVariantSavingAmount = (item: ComboProductItem) => {
+	const attribute = item.variant.attributes?.find(
+		(entry) => entry.attribute.slug === SAVING_AMOUNT_ATTRIBUTE_SLUG,
+	);
+	const amount = Number(attribute?.values?.[0]?.name);
+
+	return Number.isFinite(amount) ? amount : 0;
+};
+
+/**
+ * The struck-through amount is the sum of each item's "Saving Amount"
+ * variant attribute, multiplied by the quantity in the combo.
+ */
+const getComboOriginalAmount = (combo: ComboProduct) => {
+	const total = combo.items.reduce(
+		(sum, item) => sum + getVariantSavingAmount(item) * (item.quantity || 1),
+		0,
+	);
+
+	return total > 0 ? total : (combo.pricing?.undiscountedPrice?.amount ?? 0);
+};
 
 export function ComboSection({ combos }: { combos: ComboProduct[] }) {
 	const { channel } = useParams<{ channel?: string }>();
@@ -85,6 +113,12 @@ export function ComboSection({ combos }: { combos: ComboProduct[] }) {
 		});
 	};
 
+	const selectedPrice = selectedCombo?.pricing?.price;
+	const selectedOriginalPrice = selectedCombo ? getComboOriginalAmount(selectedCombo) : 0;
+	const selectedSaveAmount = selectedPrice
+		? Math.max(selectedOriginalPrice - selectedPrice.amount, 0)
+		: 0;
+
 	return (
 		<section className="container mx-auto my-10 w-full px-5 md:px-0">
 			<div className="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -97,8 +131,8 @@ export function ComboSection({ combos }: { combos: ComboProduct[] }) {
 			<ul role="list" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
 				{combos.map((combo) => {
 					const price = combo.pricing?.price;
-					const undiscountedPrice = combo.pricing?.undiscountedPrice;
-					const savings = combo.pricing?.savings?.amount ?? 0;
+					const originalPrice = getComboOriginalAmount(combo);
+					const saveAmount = price ? Math.max(originalPrice - price.amount, 0) : 0;
 					const isThisPending = isPending && pendingComboId === combo.id;
 					const isAvailable = combo.isAvailableForPurchase && !!price;
 
@@ -135,9 +169,9 @@ export function ComboSection({ combos }: { combos: ComboProduct[] }) {
 									Combo
 								</span>
 
-								{savings > 0 && (
+								{saveAmount > 0 && (
 									<span className="pointer-events-none absolute right-2 top-2 rounded-full bg-green-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow">
-										Save {formatMoney(savings, price?.currency ?? "INR")}
+										Save {formatMoney(saveAmount, price?.currency ?? "INR")}
 									</span>
 								)}
 							</button>
@@ -184,15 +218,11 @@ export function ComboSection({ combos }: { combos: ComboProduct[] }) {
 													<span className="text-xl font-bold text-[#ed4264]">
 														{formatMoney(price.amount, price.currency)}
 													</span>
-													{undiscountedPrice &&
-														undiscountedPrice.amount > price.amount && (
-															<span className="text-sm font-medium text-neutral-400 line-through">
-																{formatMoney(
-																	undiscountedPrice.amount,
-																	price.currency,
-																)}
-															</span>
-														)}
+													{originalPrice > price.amount && (
+														<span className="text-sm font-medium text-neutral-400 line-through">
+															{formatMoney(originalPrice, price.currency)}
+														</span>
+													)}
 												</div>
 												<p className="text-[11px] font-semibold text-green-600">
 													Combo price for you
@@ -337,23 +367,25 @@ export function ComboSection({ combos }: { combos: ComboProduct[] }) {
 														selectedCombo.pricing.price.currency,
 													)}
 												</span>
-												{selectedCombo.pricing.undiscountedPrice.amount >
+												{selectedOriginalPrice >
 													selectedCombo.pricing.price.amount && (
 														<span className="text-sm font-medium text-neutral-400 line-through">
 															{formatMoney(
-																selectedCombo.pricing.undiscountedPrice.amount,
+																selectedOriginalPrice,
 																selectedCombo.pricing.price.currency,
 															)}
 														</span>
 													)}
 											</div>
-											<p className="text-[11px] font-semibold text-green-600">
-												You save{" "}
-												{formatMoney(
-													selectedCombo.pricing.savings.amount,
-													selectedCombo.pricing.price.currency,
-												)}
-											</p>
+											{selectedSaveAmount > 0 && (
+												<p className="text-[11px] font-semibold text-green-600">
+													You save{" "}
+													{formatMoney(
+														selectedSaveAmount,
+														selectedCombo.pricing.price.currency,
+													)}
+												</p>
+											)}
 										</>
 									) : (
 										<p className="text-sm font-semibold text-neutral-500">Price unavailable</p>

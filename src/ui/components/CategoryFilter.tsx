@@ -21,6 +21,7 @@ export const CategoryFilter = ({ categories }: { categories: CategoryNode[] }) =
 	const effectiveSelected = optimisticSelected.size > 0 
 		? Array.from(optimisticSelected)
 		: selectedCategories;
+	const isCombosView = searchParams.get("view") === "combos";
 
 	// Sync optimistic state with actual searchParams when they change
 	useEffect(() => {
@@ -88,6 +89,9 @@ export const CategoryFilter = ({ categories }: { categories: CategoryNode[] }) =
 		startTransition(() => {
 			const newParams = new URLSearchParams(searchParams.toString());
 			const currentSelected = newParams.getAll("categories");
+			// Returning to a normal product listing clears the combos view and resets paging.
+			newParams.delete("view");
+			newParams.delete("page");
 
 			if (checked) {
 				// Add main category
@@ -125,6 +129,24 @@ export const CategoryFilter = ({ categories }: { categories: CategoryNode[] }) =
 			newParams.delete("cursor");
 
 			// Use replace instead of push for better performance (no history entry)
+			router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
+		});
+	};
+
+	const handleCombosClick = () => {
+		setOptimisticSelected(new Set());
+		startTransition(() => {
+			const newParams = new URLSearchParams(searchParams.toString());
+			newParams.delete("page");
+			newParams.delete("cursor");
+
+			if (isCombosView) {
+				newParams.delete("view");
+			} else {
+				newParams.delete("categories");
+				newParams.set("view", "combos");
+			}
+
 			router.replace(`${pathname}?${newParams.toString()}`, { scroll: false });
 		});
 	};
@@ -235,6 +257,38 @@ export const CategoryFilter = ({ categories }: { categories: CategoryNode[] }) =
 							);
 						})}
 						</ul>
+
+						<div className="mt-4 border-t border-gray-200 pt-4 md:mt-6 md:pt-5">
+							<button
+								type="button"
+								onClick={handleCombosClick}
+								aria-pressed={isCombosView}
+								className={`flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm font-medium transition-colors md:px-3 ${
+									isCombosView
+										? "bg-[#ed4264]/10 text-[#47141e] ring-1 ring-[#ed4264]/30"
+										: "text-gray-700 hover:bg-gray-100 hover:text-[#47141e]"
+								}`}
+							>
+								<span
+									className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded ${
+										isCombosView ? "bg-[#ed4264] text-white" : "bg-gray-100 text-[#ed4264]"
+									}`}
+								>
+									<svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"
+										/>
+									</svg>
+								</span>
+								<span className="flex-1">Combos</span>
+								<span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-green-700">
+									Save
+								</span>
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>

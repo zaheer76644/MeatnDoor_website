@@ -14,8 +14,10 @@
 
 import CustomCarousel from "../customcomponents/CustomCarousel";
 import { CustomSlider } from "../customcomponents/CustomSlider";
-import { ComboSection, type ComboProduct } from "../customcomponents/ComboSection";
+import { ComboSection } from "../customcomponents/ComboSection";
 import { type ProductListItemFragment } from "@/gql/graphql";
+import { getCombos } from "@/lib/combos";
+import { filterProductsForListing, sortProductsBySortIndex } from "@/lib/productSort";
 
 export interface BestSellerProduct {
 	id: string;
@@ -24,7 +26,10 @@ export interface BestSellerProduct {
 	thumbnail: { url: string; alt: string | null } | null;
 	category: { id: string; name: string; slug: string } | null;
 	variants: { id: string; name: string; pricing: any }[] | null;
-	attributes: { attribute: { name: string }; values: { name: string }[] }[];
+	attributes: {
+		attribute: { id: string; name: string; slug: string };
+		values: { id: string; name: string; slug?: string | null; value?: string | null }[];
+	}[];
 	pricing: {
 		priceRange: {
 			start: { gross: { amount: number; currency: string } };
@@ -52,6 +57,19 @@ const BEST_SELLERS_QUERY = `
           id
           name
           slug
+          attributes {
+            attribute {
+              id
+              name
+              slug
+            }
+            values {
+              id
+              name
+              slug
+              value
+            }
+          }
           thumbnail(size: 1024) {
             url
             alt
@@ -117,86 +135,10 @@ async function getBestSellerProducts(): Promise<ProductListItemFragment[]> {
 	});
 
 	const { data } = (await response.json()) as { data: BestSellerCollectionResponse };
-	return (data.collection?.products.edges.map((edge) => edge.node) as unknown as ProductListItemFragment[]) ?? [];
-}
+	const products =
+		(data.collection?.products.edges.map((edge) => edge.node) as unknown as ProductListItemFragment[]) ?? [];
 
-const COMBOS_QUERY = `
-	query Combos($channel: String!) {
-		combos(first: 20, channel: $channel) {
-			edges {
-				node {
-					id
-					name
-					slug
-					description
-					image {
-						url
-						alt
-					}
-					imageAlt
-					isAvailableForPurchase(channel: $channel)
-					pricing(channel: $channel) {
-						price {
-							amount
-							currency
-						}
-						undiscountedPrice {
-							amount
-						}
-						savings {
-							amount
-						}
-					}
-					items {
-						id
-						quantity
-						variant {
-							id
-							name
-							product {
-								id
-								name
-								slug
-								thumbnail(size: 1024) {
-									url
-									alt
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-`;
-
-type ComboCollectionResponse = {
-	combos: {
-		edges: { node: ComboProduct }[];
-	} | null;
-};
-
-async function getCombos(channel: string): Promise<ComboProduct[]> {
-	try {
-		const response = await fetch(process.env.NEXT_PUBLIC_SALEOR_API_URL as string, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({ query: COMBOS_QUERY, variables: { channel } }),
-			next: { revalidate: 60 },
-		});
-
-		if (!response.ok) {
-			return [];
-		}
-
-		const { data } = (await response.json()) as { data: ComboCollectionResponse };
-		return data.combos?.edges.map((edge) => edge.node) ?? [];
-	} catch (error) {
-		console.error("Could not load combos", error);
-		return [];
-	}
+	return sortProductsBySortIndex(filterProductsForListing(products));
 }
 
 // Page component

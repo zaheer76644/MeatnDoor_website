@@ -1,6 +1,10 @@
 // import { useEffect, useState } from "react";
 import { ProductElement } from "./ProductElement";
 import { type ProductListItemFragment } from "@/gql/graphql";
+import {
+	filterProductsForListing,
+	sortProductsBySortIndex,
+} from "@/lib/productSort";
 
 export const ProductList = ({
 	products,
@@ -10,34 +14,7 @@ export const ProductList = ({
 	cartItems?: Record<string, { lineId: string; quantity: number }>;
 }) => {
 
-	const isOutOfStock = (item: ProductListItemFragment) =>
-		item?.variants?.every(
-			(variant) => variant?.quantityAvailable === 0
-		) ?? false;
-
-	const getSortIndex = (item: ProductListItemFragment) =>
-		item?.attributes
-			?.find((attr) => attr.attribute?.name === "Sort index")
-			?.values?.[0]?.name;
-    const filteredProducts = [...products]
-    .filter((item) => item.category?.name)
-    .sort((a, b) => {
-      const aOut = isOutOfStock(a);
-      const bOut = isOutOfStock(b);
-
-      // 🔴 Out-of-stock to bottom
-      if (aOut && !bOut) return 1;
-      if (!aOut && bOut) return -1;
-
-      const aVal = Number(getSortIndex(a)) || 0;
-      const bVal = Number(getSortIndex(b)) || 0;
-
-      if (!aVal && !bVal) return 0;
-      if (!aVal) return 1;
-      if (!bVal) return -1;
-
-      return aVal - bVal;
-    });
+	const filteredProducts = sortProductsBySortIndex(filterProductsForListing(products));
 	return (
 		<ul
 			role="list"
